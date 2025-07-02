@@ -153,6 +153,8 @@ class TestWorkflowProcessor(TestCase):
         self.assertEqual(len(output_files), 2)
         self.assertTrue(any("first_test" in str(file) for file in output_files))
         self.assertTrue(any("second_test" in str(file) for file in output_files))
+
+    def test_invalid_workflow_handling(self):
         """Test handling of invalid workflow files."""
         # Create invalid test file
         invalid_file = self.source_dir / "invalid.yaml"
@@ -163,8 +165,9 @@ class TestWorkflowProcessor(TestCase):
         result = processor.process_file(invalid_file)
 
         # Check results
-        self.assertFalse(result.is_valid)
-        self.assertTrue(any("Invalid YAML syntax" in e for e in result.errors))
+        self.assertFalse(result)
+        output_files = list(self.output_dir.glob("*.yaml"))
+        self.assertEqual(len(output_files), 0)
 
     def test_duplicate_name_handling(self):
         """Test handling of workflows with duplicate names."""
