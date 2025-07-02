@@ -216,7 +216,7 @@ class WorkflowProcessor:
                     self.warnings.append((file_path, warning))
                 
                 # Generate output filename and save
-                output_filename = self.splitter.generate_filename(validated_workflow)
+                output_filename = self.splitter.generate_filename(validation_result.data)
                 output_path = self.output_dir / output_filename
                 
                 # Ensure we don't overwrite existing files

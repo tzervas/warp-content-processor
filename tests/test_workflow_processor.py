@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, main
 
-from warp_content_processor.workflow_processor import WorkflowProcessor, WorkflowValidator, ValidationResult
+from warp_content_processor import WorkflowProcessor, WorkflowValidator, ProcessingResult
 
 class TestWorkflowValidator(TestCase):
     """Test the workflow validator functionality."""

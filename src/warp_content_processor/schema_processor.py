@@ -12,6 +12,11 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+from .workflow_processor import WorkflowProcessor
+from .processors.prompt_processor import PromptProcessor
+from .processors.notebook_processor import NotebookProcessor
+from .processors.env_var_processor import EnvVarProcessor
+from .processors.rule_processor import RuleProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +37,30 @@ class ContentType:
     ENV_VAR = "env_var"
     RULE = "rule"
     UNKNOWN = "unknown"
+
+    # Regular expression patterns for content detection
+    PATTERNS = {
+        WORKFLOW: [
+            r'name:\s*.+\s*command:\s*.+',  # Basic workflow pattern
+            r'shells:\s*\[.*\]|shells:\s*-\s*\w+',  # Shell specifications
+        ],
+        PROMPT: [
+            r'name:\s*.+\s*prompt:\s*.+',  # Basic prompt pattern
+            r'completion:\s*|response:\s*',  # Common prompt fields
+        ],
+        NOTEBOOK: [
+            r'---\s*title:\s*.+\s*---',  # Markdown front matter
+            r'#\s+.*\n.*```.*```',  # Markdown with code blocks
+        ],
+        ENV_VAR: [
+            r'environment:\s*|env:\s*|variables:\s*',
+            r'export\s+\w+=.*|\w+=.*',
+        ],
+        RULE: [
+            r'title:\s*.+\s*description:\s*.+\s*guidelines?:\s*',
+            r'standards?:\s*|rules?:\s*',
+        ]
+    }
 
 class SchemaDetector:
     """Detects schema type from content."""

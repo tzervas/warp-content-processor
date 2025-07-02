@@ -10,7 +10,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from schema_processor import SchemaProcessor, ProcessingResult, ContentType
+from ..schema_processor import SchemaProcessor, ProcessingResult, ContentType
 
 class PromptProcessor(SchemaProcessor):
     """Processor for prompt files."""

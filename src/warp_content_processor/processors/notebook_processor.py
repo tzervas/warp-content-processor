@@ -10,7 +10,7 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
-from schema_processor import SchemaProcessor, ProcessingResult, ContentType
+from ..schema_processor import SchemaProcessor, ProcessingResult, ContentType
 
 class NotebookProcessor(SchemaProcessor):
     """Processor for notebook files."""
