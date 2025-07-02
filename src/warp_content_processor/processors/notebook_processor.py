@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-
 """
 Processor for Warp Terminal notebook files.
-Handles validation and processing of notebook schemas.
 """
 
 import re
@@ -10,7 +7,8 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
-from ..schema_processor import SchemaProcessor, ProcessingResult, ContentType
+from ..base_processor import SchemaProcessor, ProcessingResult
+from ..schema_processor import ContentType
 
 class NotebookProcessor(SchemaProcessor):
     """Processor for notebook files."""
@@ -145,29 +143,3 @@ class NotebookProcessor(SchemaProcessor):
         # Clean title for use as filename
         clean_title = ''.join(c if c.isalnum() else '_' for c in title.lower())
         return f"{clean_title}.md"
-    
-    def normalize_content(self, content: str) -> str:
-        """
-        Normalize notebook content to ensure proper formatting.
-        Fixes common issues with front matter and markdown formatting.
-        """
-        # Ensure proper front matter delimiters
-        if not content.startswith('---\n'):
-            content = '---\n' + content
-        
-        # Find the end of front matter
-        front_matter_end = content.find('\n---\n')
-        if front_matter_end == -1:
-            # If no end delimiter found, add it after what appears to be front matter
-            lines = content.split('\n')
-            for i, line in enumerate(lines):
-                if line and not line.startswith('#') and ':' not in line:
-                    lines.insert(i, '---')
-                    content = '\n'.join(lines)
-                    break
-        
-        # Ensure proper spacing around code blocks
-        content = re.sub(r'```(\w+)\n', r'```\1\n', content)  # Add language identifier if missing
-        content = re.sub(r'\n```\n', r'\n```\n\n', content)  # Add spacing after code blocks
-        
-        return content

@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-
 """
 Schema detection and processing for Warp Terminal content types.
-Handles workflows, prompts, notebooks, environment variables, and rules.
 """
 
 import re
@@ -10,8 +7,8 @@ import yaml
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
-from dataclasses import dataclass
-from abc import ABC, abstractmethod
+
+from .base_processor import ProcessingResult, SchemaProcessor
 from .workflow_processor import WorkflowProcessor
 from .processors.prompt_processor import PromptProcessor
 from .processors.notebook_processor import NotebookProcessor
@@ -19,15 +16,6 @@ from .processors.env_var_processor import EnvVarProcessor
 from .processors.rule_processor import RuleProcessor
 
 logger = logging.getLogger(__name__)
-
-@dataclass
-class ProcessingResult:
-    """Results from content processing."""
-    content_type: str
-    is_valid: bool
-    data: Optional[Dict]
-    errors: List[str]
-    warnings: List[str]
 
 class ContentType:
     """Enumeration of supported content types."""
@@ -65,30 +53,6 @@ class ContentType:
 class SchemaDetector:
     """Detects schema type from content."""
     
-    # Regex patterns for content type detection
-    PATTERNS = {
-        ContentType.WORKFLOW: [
-            r'name:\s*.+\s*command:\s*.+',  # Basic workflow pattern
-            r'shells:\s*\[.*\]|shells:\s*-\s*\w+',  # Shell specifications
-        ],
-        ContentType.PROMPT: [
-            r'name:\s*.+\s*prompt:\s*.+',  # Basic prompt pattern
-            r'completion:\s*|response:\s*',  # Common prompt fields
-        ],
-        ContentType.NOTEBOOK: [
-            r'---\s*title:\s*.+\s*---',  # Markdown front matter
-            r'#\s+.*\n.*```.*```',  # Markdown with code blocks
-        ],
-        ContentType.ENV_VAR: [
-            r'environment:\s*|env:\s*|variables:\s*',
-            r'export\s+\w+=.*|\w+=.*',
-        ],
-        ContentType.RULE: [
-            r'title:\s*.+\s*description:\s*.+\s*guidelines?:\s*',
-            r'standards?:\s*|rules?:\s*',
-        ]
-    }
-    
     @classmethod
     def detect_type(cls, content: str) -> str:
         """
@@ -98,7 +62,7 @@ class SchemaDetector:
         scores = {ctype: 0 for ctype in ContentType.PATTERNS.keys()}
         
         # Check each type's patterns
-        for content_type, patterns in cls.PATTERNS.items():
+        for content_type, patterns in ContentType.PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, content, re.MULTILINE | re.IGNORECASE):
                     scores[content_type] += 1
@@ -108,38 +72,6 @@ class SchemaDetector:
             return max(scores.items(), key=lambda x: x[1])[0]
         
         return ContentType.UNKNOWN
-
-class SchemaProcessor(ABC):
-    """Base class for schema processors."""
-    
-    def __init__(self):
-        self.required_fields: Set[str] = set()
-        self.optional_fields: Set[str] = set()
-    
-    @abstractmethod
-    def validate(self, data: Dict) -> Tuple[bool, List[str], List[str]]:
-        """
-        Validate data against schema.
-        
-        Returns:
-            Tuple[bool, List[str], List[str]]: (is_valid, errors, warnings)
-        """
-        pass
-    
-    @abstractmethod
-    def process(self, content: str) -> ProcessingResult:
-        """
-        Process and validate content.
-        
-        Returns:
-            ProcessingResult: Processing results including validation status
-        """
-        pass
-    
-    @abstractmethod
-    def generate_filename(self, data: Dict) -> str:
-        """Generate appropriate filename for the content."""
-        pass
 
 class ContentSplitter:
     """Splits combined content into individual documents."""
@@ -214,7 +146,7 @@ class ContentProcessor:
     def __init__(self, output_dir: Union[str, Path]):
         self.output_dir = Path(output_dir)
         self.processors = {
-            ContentType.WORKFLOW: WorkflowProcessor(),
+            ContentType.WORKFLOW: WorkflowProcessor(self.output_dir),
             ContentType.PROMPT: PromptProcessor(),
             ContentType.NOTEBOOK: NotebookProcessor(),
             ContentType.ENV_VAR: EnvVarProcessor(),

@@ -1,8 +1,5 @@
-#!/usr/bin/env python3
-
 """
 Processor for Warp Terminal prompt files.
-Handles validation and processing of prompt schemas.
 """
 
 import re
@@ -10,7 +7,8 @@ import yaml
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-from ..schema_processor import SchemaProcessor, ProcessingResult, ContentType
+from ..base_processor import SchemaProcessor, ProcessingResult
+from ..schema_processor import ContentType
 
 class PromptProcessor(SchemaProcessor):
     """Processor for prompt files."""
@@ -20,7 +18,7 @@ class PromptProcessor(SchemaProcessor):
         self.required_fields = {'name', 'prompt'}
         self.optional_fields = {'description', 'arguments', 'tags'}
         
-        # Regex patterns for validation
+        # Regex patterns
         self.placeholder_pattern = re.compile(r'{{[a-zA-Z_][a-zA-Z0-9_]*}}')
         self.valid_tag_pattern = re.compile(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$')
     
@@ -53,7 +51,7 @@ class PromptProcessor(SchemaProcessor):
             if not isinstance(data['arguments'], list):
                 errors.append("'arguments' must be a list")
             else:
-                arg_names = {arg.get('name') for arg in data['arguments'] 
+                arg_names = {arg.get('name') for arg in data['arguments']
                            if isinstance(arg, dict)}
                 missing_args = placeholders - arg_names
                 unused_args = arg_names - placeholders
@@ -79,7 +77,6 @@ class PromptProcessor(SchemaProcessor):
     def process(self, content: str) -> ProcessingResult:
         """Process and validate prompt content."""
         try:
-            # Try to parse as YAML
             data = yaml.safe_load(content)
             if not isinstance(data, dict):
                 return ProcessingResult(
@@ -90,9 +87,7 @@ class PromptProcessor(SchemaProcessor):
                     warnings=[]
                 )
             
-            # Validate the data
             is_valid, errors, warnings = self.validate(data)
-            
             return ProcessingResult(
                 content_type=ContentType.PROMPT,
                 is_valid=is_valid,
