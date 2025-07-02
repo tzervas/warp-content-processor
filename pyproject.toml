@@ -12,6 +12,33 @@ license = "MIT"
 authors = [
     { name = "Warp Content Processor Contributors" },
 ]
+dependencies = [
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.1.0",
+]
+dev = [
+    "black>=23.0.0",
+    "isort>=5.12.0",
+    "pylint>=2.17.0",
+    "ruff>=0.0.280",
+    "mypy>=1.4.0",
+    "types-PyYAML>=6.0.0",
+]
+
+[project.urls]
+homepage = "https://github.com/tzervas/warp-content-processor"
+repository = "https://github.com/tzervas/warp-content-processor.git"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/warp_content_processor"]
+
+[tool.hatch.build.targets.sdist]
+packages = ["src/warp_content_processor"]
 
 [tool.pytest.ini_options]
 addopts = "--cov=src --cov-report=term-missing"
