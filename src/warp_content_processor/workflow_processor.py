@@ -168,24 +168,35 @@ class WorkflowValidator(SchemaProcessor):
 
     def process(self, content: str) -> ProcessingResult:
         """Process and validate workflow content."""
-        # Check for empty content
-        if not content or content.isspace():
+        # Check for empty or invalid content
+        if not content:
             return ProcessingResult(
                 content_type=ContentType.WORKFLOW,
                 is_valid=False,
                 data=None,
-                errors=["Empty or whitespace-only content"],
+                errors=["Empty content provided"],
+                warnings=[],
+            )
+            
+        if content.isspace():
+            return ProcessingResult(
+                content_type=ContentType.WORKFLOW,
+                is_valid=False,
+                data=None,
+                errors=["Content contains only whitespace"],
                 warnings=[],
             )
 
         try:
             data = yaml.safe_load(content)
-            if data is None:
+            
+            # Handle None (empty YAML) and empty structures
+            if data is None or (isinstance(data, (dict, list)) and not data):
                 return ProcessingResult(
                     content_type=ContentType.WORKFLOW,
                     is_valid=False,
                     data=None,
-                    errors=["Empty YAML content"],
+                    errors=["Empty YAML content (document contains no actual data)"],
                     warnings=[],
                 )
             if not isinstance(data, dict):
