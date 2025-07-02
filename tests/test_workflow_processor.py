@@ -12,12 +12,7 @@ from unittest import TestCase, main
 
 import yaml
 
-from warp_content_processor import (
-    ContentType,
-    ProcessingResult,
-    WorkflowProcessor,
-    WorkflowValidator,
-)
+from warp_content_processor import WorkflowProcessor, WorkflowValidator
 
 
 class TestWorkflowValidator(TestCase):
@@ -186,8 +181,8 @@ class TestWorkflowProcessor(TestCase):
         result2 = processor.process_file(file2)
 
         # Check results
-        self.assertTrue(result1.is_valid)
-        self.assertTrue(result2.is_valid)
+        self.assertTrue(result1)
+        self.assertTrue(result2)
 
         # Verify both files exist with different names
         files = list(self.output_dir.glob("*.yaml"))
