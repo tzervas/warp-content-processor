@@ -32,7 +32,7 @@ class WorkflowValidator(SchemaProcessor):
             "author_url",
             "shells",
         }
-        self.known_shells = {'bash', 'zsh', 'fish', 'pwsh', 'cmd'}
+        self.known_shells = {"bash", "zsh", "fish", "pwsh", "cmd"}
         self.logger = logging.getLogger(__name__)
 
         # Regex patterns
@@ -59,7 +59,7 @@ class WorkflowValidator(SchemaProcessor):
         if "arguments" in normalized and not isinstance(normalized["arguments"], list):
             self.logger.warning(
                 "'arguments' field is not a list (got type %s). Discarding its value.",
-                type(normalized["arguments"]).__name__
+                type(normalized["arguments"]).__name__,
             )
             normalized["arguments"] = []
 
@@ -168,71 +168,49 @@ class WorkflowValidator(SchemaProcessor):
 
     def process(self, content: str) -> ProcessingResult:
         """Process and validate workflow content."""
-        # Check for empty or invalid content
+        errors: List[str] = []
+        warnings: List[str] = []
+        data = None
+
+        # Early returns for invalid content
         if not content:
-            return ProcessingResult(
-                content_type=ContentType.WORKFLOW,
-                is_valid=False,
-                data=None,
-                errors=["Empty content provided"],
-                warnings=[],
-            )
-            
-        if content.isspace():
-            return ProcessingResult(
-                content_type=ContentType.WORKFLOW,
-                is_valid=False,
-                data=None,
-                errors=["Content contains only whitespace"],
-                warnings=[],
-            )
+            errors.append("Empty content provided")
+        elif content.isspace():
+            errors.append("Content contains only whitespace")
+        else:
+            try:
+                data = yaml.safe_load(content)
+                # Handle None (empty YAML) and empty structures
+                if data is None or (isinstance(data, (dict, list)) and not data):
+                    errors.append("Empty YAML content (document contains no actual data)")
+                elif not isinstance(data, dict):
+                    errors.append("Content must be a YAML dictionary")
+                else:
+                    # Validate content
+                    is_valid, val_errors, val_warnings, normalized_data = self.validate(data)
+                    if is_valid:
+                        return ProcessingResult(
+                            content_type=ContentType.WORKFLOW,
+                            is_valid=True,
+                            data=normalized_data,
+                            errors=[],
+                            warnings=val_warnings,
+                        )
+                    errors.extend(val_errors)
+                    warnings.extend(val_warnings)
+            except yaml.YAMLError as e:
+                errors.append(f"Invalid YAML syntax: {str(e)}")
+            except Exception as e:
+                errors.append(f"Error processing workflow: {str(e)}")
 
-        try:
-            data = yaml.safe_load(content)
-            
-            # Handle None (empty YAML) and empty structures
-            if data is None or (isinstance(data, (dict, list)) and not data):
-                return ProcessingResult(
-                    content_type=ContentType.WORKFLOW,
-                    is_valid=False,
-                    data=None,
-                    errors=["Empty YAML content (document contains no actual data)"],
-                    warnings=[],
-                )
-            if not isinstance(data, dict):
-                return ProcessingResult(
-                    content_type=ContentType.WORKFLOW,
-                    is_valid=False,
-                    data=None,
-                    errors=["Content must be a YAML dictionary"],
-                    warnings=[],
-                )
-
-            is_valid, errors, warnings = self.validate(data)
-            return ProcessingResult(
-                content_type=ContentType.WORKFLOW,
-                is_valid=is_valid,
-                data=data if is_valid else None,
-                errors=errors,
-                warnings=warnings,
-            )
-
-        except yaml.YAMLError as e:
-            return ProcessingResult(
-                content_type=ContentType.WORKFLOW,
-                is_valid=False,
-                data=None,
-                errors=[f"Invalid YAML syntax: {str(e)}"],
-                warnings=[],
-            )
-        except Exception as e:
-            return ProcessingResult(
-                content_type=ContentType.WORKFLOW,
-                is_valid=False,
-                data=None,
-                errors=[f"Error processing workflow: {str(e)}"],
-                warnings=[],
-            )
+        # Return error result if we get here
+        return ProcessingResult(
+            content_type=ContentType.WORKFLOW,
+            is_valid=False,
+            data=None,
+            errors=errors,
+            warnings=warnings,
+        )
 
     def generate_filename(self, data: Dict) -> str:
         """Generate filename for workflow content."""
