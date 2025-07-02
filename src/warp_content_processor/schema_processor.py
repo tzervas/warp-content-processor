@@ -4,13 +4,14 @@ Schema detection and processing for Warp Terminal content types.
 
 import logging
 import re
-from enum import Enum, auto
+from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import List, Tuple, Union
 
 import yaml
 
 from .base_processor import ProcessingResult
+from .processor_factory import ProcessorFactory
 
 logger = logging.getLogger(__name__)
 
@@ -25,29 +26,30 @@ class ContentType(str, Enum):
     RULE = "rule"
     UNKNOWN = "unknown"
 
-    # Regular expression patterns for content detection
-    PATTERNS = {
-        ContentType.WORKFLOW: [
-            r"name:\s*.+\s*command:\s*.+",  # Basic workflow pattern
-            r"shells:\s*\[.*\]|shells:\s*-\s*\w+",  # Shell specifications
-        ],
-        ContentType.PROMPT: [
-            r"name:\s*.+\s*prompt:\s*.+",  # Basic prompt pattern
-            r"completion:\s*|response:\s*",  # Common prompt fields
-        ],
-        ContentType.NOTEBOOK: [
-            r"---\s*title:\s*.+\s*---",  # Markdown front matter
-            r"#\s+.*\n.*```.*```",  # Markdown with code blocks
-        ],
-        ContentType.ENV_VAR: [
-            r"environment:\s*|env:\s*|variables:\s*",
-            r"export\s+\w+=.*|\w+=.*",
-        ],
-        ContentType.RULE: [
-            r"title:\s*.+\s*description:\s*.+\s*guidelines?:\s*",
-            r"standards?:\s*|rules?:\s*",
-        ],
-    }
+
+# Regular expression patterns for content detection
+CONTENT_PATTERNS = {
+    "workflow": [
+        r"name:\s*.+\s*command:\s*.+",  # Basic workflow pattern
+        r"shells:\s*\[.*\]|shells:\s*-\s*\w+",  # Shell specifications
+    ],
+    "prompt": [
+        r"name:\s*.+\s*prompt:\s*.+",  # Basic prompt pattern
+        r"completion:\s*|response:\s*",  # Common prompt fields
+    ],
+    "notebook": [
+        r"---\s*title:\s*.+\s*---",  # Markdown front matter
+        r"#\s+.*\n.*```.*```",  # Markdown with code blocks
+    ],
+    "env_var": [
+        r"environment:\s*|env:\s*|variables:\s*",
+        r"export\s+\w+=.*|\w+=.*",
+    ],
+    "rule": [
+        r"title:\s*.+\s*description:\s*.+\s*guidelines?:\s*",
+        r"standards?:\s*|rules?:\s*",
+    ],
+}
 
 
 class ContentTypeDetector:
@@ -68,10 +70,11 @@ class ContentTypeDetector:
         if not content or content.isspace():
             return ContentType.UNKNOWN
 
-        scores = {ctype: 0 for ctype in ContentType.PATTERNS.keys()}
+        scores = {ContentType(ctype): 0 for ctype in CONTENT_PATTERNS}
 
         # Check each type's patterns
-        for content_type, patterns in ContentType.PATTERNS.items():
+        for content_type_str, patterns in CONTENT_PATTERNS.items():
+            content_type = ContentType(content_type_str)
             for pattern in patterns:
                 if re.search(pattern, content, re.MULTILINE | re.IGNORECASE):
                     scores[content_type] += 1
@@ -159,17 +162,14 @@ class ContentProcessor:
     def __init__(self, output_dir: Union[str, Path]):
         self.output_dir = Path(output_dir)
         self.processors = {
-            ContentType.WORKFLOW: WorkflowProcessor(self.output_dir),
-            ContentType.PROMPT: PromptProcessor(),
-            ContentType.NOTEBOOK: NotebookProcessor(),
-            ContentType.ENV_VAR: EnvVarProcessor(),
-            ContentType.RULE: RuleProcessor(),
+            content_type: ProcessorFactory.create_processor(content_type, self.output_dir)
+            for content_type in ContentType
+            if content_type != ContentType.UNKNOWN
         }
 
         # Create output directories
-        for content_type in ContentType.__dict__.values():
-            if isinstance(content_type, str) and content_type != "UNKNOWN":
-                (self.output_dir / content_type).mkdir(parents=True, exist_ok=True)
+        for content_type in self.processors.keys():
+            (self.output_dir / str(content_type)).mkdir(parents=True, exist_ok=True)
 
     def process_file(self, file_path: Union[str, Path]) -> List[ProcessingResult]:
         """
@@ -179,7 +179,7 @@ class ContentProcessor:
             List[ProcessingResult]: Results for each processed document
         """
         try:
-            content = Path(file_path).read_text()
+            content = Path(file_path).read_text(encoding="utf-8")
             documents = ContentSplitter.split_content(content)
             results = []
 
