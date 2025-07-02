@@ -12,7 +12,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, main
 
-from schema_processor import (
+from warp_content_processor.schema_processor import (
     ContentProcessor,
     ContentSplitter,
     SchemaDetector,
