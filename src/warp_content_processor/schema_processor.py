@@ -51,15 +51,24 @@ class ContentType:
         ]
     }
 
-class SchemaDetector:
-    """Detects schema type from content."""
+class ContentTypeDetector:
+    """Detects content type from input."""
     
     @classmethod
     def detect_type(cls, content: str) -> str:
         """
-        Detect the schema type from content.
+        Detect the content type from input text.
         Uses pattern matching and heuristics to determine the most likely type.
+        
+        Args:
+            content: String content to analyze
+            
+        Returns:
+            str: Detected content type (from ContentType class)
         """
+        if not content or content.isspace():
+            return ContentType.UNKNOWN
+            
         scores = {ctype: 0 for ctype in ContentType.PATTERNS.keys()}
         
         # Check each type's patterns
@@ -69,7 +78,7 @@ class SchemaDetector:
                     scores[content_type] += 1
         
         # Get type with highest score
-        if max(scores.values()) > 0:
+        if scores and max(scores.values()) > 0:
             return max(scores.items(), key=lambda x: x[1])[0]
         
         return ContentType.UNKNOWN

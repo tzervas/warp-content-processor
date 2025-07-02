@@ -7,10 +7,13 @@ import re
 import yaml
 import logging
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 from .base_processor import SchemaProcessor, ProcessingResult
 from .schema_processor import ContentType
+from .utils.validation import validate_placeholders, validate_tags
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +47,10 @@ class WorkflowValidator(SchemaProcessor):
         
         # Ensure arguments is a list
         if 'arguments' in normalized and not isinstance(normalized['arguments'], list):
+            logger.warning(
+                "'arguments' field is not a list (got type %s). Discarding its value.",
+                type(normalized['arguments']).__name__
+            )
             normalized['arguments'] = []
         
         # Normalize argument fields
@@ -60,10 +67,18 @@ class WorkflowValidator(SchemaProcessor):
         
         return normalized
     
-    def validate(self, data: Dict) -> Tuple[bool, List[str], List[str]]:
+    def validate(self, data: Dict[str, Any]) -> Tuple[bool, List[str], List[str]]:
         """Validate workflow data against schema."""
         errors = []
         warnings = []
+        
+        # Make a copy to avoid modifying input
+        data = data.copy()
+        
+        # Check for empty data
+        if not data:
+            errors.append("Empty or invalid workflow data")
+            return False, errors, warnings
         
         # Check required fields
         missing_fields = self.required_fields - set(data.keys())
@@ -82,42 +97,34 @@ class WorkflowValidator(SchemaProcessor):
             warnings.append(f"Unknown fields present: {unknown_fields}")
         
         # Validate command placeholders match arguments
-        if 'command' in data:
-            placeholders = set(self.command_pattern.findall(data['command']))
-            placeholders = {p[2:-2] for p in placeholders}  # Remove {{ and }}
-            
+        if 'command' in data and isinstance(data['command'], str):
             if 'arguments' in data:
-                if not isinstance(data['arguments'], list):
-                    errors.append("'arguments' must be a list")
-                else:
-                    arg_names = {arg.get('name') for arg in data['arguments']
-                               if isinstance(arg, dict)}
-                    missing_args = placeholders - arg_names
-                    unused_args = arg_names - placeholders
-                    
-                    if missing_args:
-                        warnings.append(f"Command references undefined arguments: {missing_args}")
-                    if unused_args:
-                        warnings.append(f"Defined arguments not used in command: {unused_args}")
+                arg_errors, arg_warnings = validate_placeholders(
+                    data['command'], 
+                    data.get('arguments', [])
+                )
+                errors.extend(arg_errors)
+                warnings.extend(arg_warnings)
         
         # Validate tags
         if 'tags' in data:
-            if not isinstance(data['tags'], list):
-                errors.append("'tags' must be a list")
-            else:
-                invalid_tags = [tag for tag in data['tags']
-                              if not isinstance(tag, str) or
-                              not self.valid_tag_pattern.match(tag)]
-                if invalid_tags:
-                    warnings.append(f"Invalid tag format: {invalid_tags}")
+            tag_errors, tag_warnings = validate_tags(
+                data.get('tags', []), 
+                pattern=self.valid_tag_pattern.pattern
+            )
+            errors.extend(tag_errors)
+            warnings.extend(tag_warnings)
         
         # Validate shells
         if 'shells' in data:
             if not isinstance(data['shells'], list):
                 errors.append("'shells' must be a list")
             else:
-                normalized_shells = [s.lower() if isinstance(s, str) else s for s in data['shells']]
-                unknown_shells = [orig for orig, norm in zip(data['shells'], normalized_shells) if norm not in self.known_shells]
+                # Make a copy of shells for normalization
+                shells = data['shells'].copy()
+                normalized_shells = [s.lower() if isinstance(s, str) else s for s in shells]
+                unknown_shells = [orig for orig, norm in zip(shells, normalized_shells) 
+                                if norm not in self.known_shells]
                 if unknown_shells:
                     warnings.append(f"Unknown shell types: {unknown_shells}")
                 # Update shells to normalized versions
@@ -127,8 +134,26 @@ class WorkflowValidator(SchemaProcessor):
     
     def process(self, content: str) -> ProcessingResult:
         """Process and validate workflow content."""
+        # Check for empty content
+        if not content or content.isspace():
+            return ProcessingResult(
+                content_type=ContentType.WORKFLOW,
+                is_valid=False,
+                data=None,
+                errors=["Empty or whitespace-only content"],
+                warnings=[]
+            )
+
         try:
             data = yaml.safe_load(content)
+            if data is None:
+                return ProcessingResult(
+                    content_type=ContentType.WORKFLOW,
+                    is_valid=False,
+                    data=None,
+                    errors=["Empty YAML content"],
+                    warnings=[]
+                )
             if not isinstance(data, dict):
                 return ProcessingResult(
                     content_type=ContentType.WORKFLOW,
@@ -191,7 +216,7 @@ class WorkflowProcessor(WorkflowValidator):
             bool: True if processing was successful
         """
         try:
-            content = file_path.read_text()
+            content = file_path.read_text(encoding='utf-8')
             workflows = yaml.safe_load(content)
             
             if not isinstance(workflows, (dict, list)):
@@ -229,7 +254,7 @@ class WorkflowProcessor(WorkflowValidator):
                     output_path = self.output_dir / f"{base_name}_{counter}.yaml"
                     counter += 1
                 
-                output_path.write_text(yaml.dump(result.data))
+                output_path.write_text(yaml.dump(result.data), encoding='utf-8')
                 logger.info(f"Created workflow file: {output_path}")
                 self.processed_files.append((file_path, output_path))
             
