@@ -15,18 +15,15 @@ from .base_processor import ProcessingResult
 logger = logging.getLogger(__name__)
 
 
-class ContentType(Enum):
+class ContentType(str, Enum):
     """Enumeration of supported content types."""
 
-    WORKFLOW = auto()
-    PROMPT = auto()
-    NOTEBOOK = auto()
-    ENV_VAR = auto()
-    RULE = auto()
-    UNKNOWN = auto()
-    
-    def __str__(self) -> str:
-        return self.name.lower()
+    WORKFLOW = "workflow"
+    PROMPT = "prompt"
+    NOTEBOOK = "notebook"
+    ENV_VAR = "env_var"
+    RULE = "rule"
+    UNKNOWN = "unknown"
 
     # Regular expression patterns for content detection
     PATTERNS = {
