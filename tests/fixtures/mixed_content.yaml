@@ -1,0 +1,84 @@
+# Mixed content file containing workflows, prompts, and rules
+
+---
+# Workflow section
+name: Git Status Check
+command: git status
+description: Check git repository status
+tags:
+  - git
+  - version-control
+shells:
+  - bash
+  - zsh
+---
+
+---
+# Prompt section
+name: Code Review Prompt
+prompt: Please review the following code changes and provide feedback about {{aspect}}
+description: AI-assisted code review
+arguments:
+  - name: aspect
+    description: Specific aspect to focus on (e.g., security, performance)
+    default_value: general
+tags:
+  - code-review
+  - ai-assistance
+---
+
+# Development Standards Rule
+title: Use Semantic Versioning
+description: All projects must follow semantic versioning for releases
+guidelines:
+  - Version numbers should follow the pattern MAJOR.MINOR.PATCH
+  - MAJOR version indicates breaking changes
+  - MINOR version indicates new features
+  - PATCH version indicates bug fixes
+category: versioning
+tags:
+  - versioning
+  - releases
+
+---
+# Environment Variables
+variables:
+  NODE_ENV: development
+  DEBUG: "true"
+  LOG_LEVEL: debug
+scope: user
+platform: 
+  - linux
+  - macos
+
+---
+# Notebook
+title: Git Workflow Guide
+description: A guide to common git workflows
+tags:
+  - git
+  - tutorial
+---
+
+# Git Workflow Guide
+
+This guide covers common git workflows and best practices.
+
+## Basic Commands
+
+```bash
+# Check repository status
+git status
+
+# Stage changes
+git add .
+
+# Commit changes
+git commit -m "feat: add new feature"
+```
+
+## Best Practices
+
+- Write clear commit messages
+- Use feature branches
+- Keep commits atomic

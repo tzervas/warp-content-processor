@@ -1,0 +1,13 @@
+name: Git Status and Diff
+description: Show git status and optional diff
+command: git status && {{show_diff:git diff}}
+arguments:
+  - name: show_diff
+    description: Optional command to show diff
+    default_value: ""
+tags:
+  - git
+  - version-control
+shells:
+  - bash
+  - zsh
