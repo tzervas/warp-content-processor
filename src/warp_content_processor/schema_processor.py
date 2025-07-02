@@ -4,6 +4,7 @@ Schema detection and processing for Warp Terminal content types.
 
 import re
 import yaml
+from enum import Enum
 import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
@@ -28,23 +29,23 @@ class ContentType:
 
     # Regular expression patterns for content detection
     PATTERNS = {
-        WORKFLOW: [
+        ContentType.WORKFLOW: [
             r'name:\s*.+\s*command:\s*.+',  # Basic workflow pattern
             r'shells:\s*\[.*\]|shells:\s*-\s*\w+',  # Shell specifications
         ],
-        PROMPT: [
+        ContentType.PROMPT: [
             r'name:\s*.+\s*prompt:\s*.+',  # Basic prompt pattern
             r'completion:\s*|response:\s*',  # Common prompt fields
         ],
-        NOTEBOOK: [
+        ContentType.NOTEBOOK: [
             r'---\s*title:\s*.+\s*---',  # Markdown front matter
             r'#\s+.*\n.*```.*```',  # Markdown with code blocks
         ],
-        ENV_VAR: [
+        ContentType.ENV_VAR: [
             r'environment:\s*|env:\s*|variables:\s*',
             r'export\s+\w+=.*|\w+=.*',
         ],
-        RULE: [
+        ContentType.RULE: [
             r'title:\s*.+\s*description:\s*.+\s*guidelines?:\s*',
             r'standards?:\s*|rules?:\s*',
         ]

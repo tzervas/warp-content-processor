@@ -44,3 +44,16 @@ class SchemaProcessor(ABC):
     def generate_filename(self, data: Dict) -> str:
         """Generate appropriate filename for the content."""
         pass
+        
+    def normalize_content(self, data: Dict) -> Dict:
+        """
+        Normalize content to a consistent format.
+        Override this method in derived classes to implement specific normalization.
+        
+        Args:
+            data: Dictionary of data to normalize
+        
+        Returns:
+            Dict: Normalized data
+        """
+        return data  # Default implementation returns unmodified data

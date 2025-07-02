@@ -27,6 +27,38 @@ class WorkflowValidator(SchemaProcessor):
         # Regex patterns
         self.command_pattern = re.compile(r'{{[a-zA-Z_][a-zA-Z0-9_]*}}')
         self.valid_tag_pattern = re.compile(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$')
+        
+    def normalize_content(self, data: Dict) -> Dict:
+        """Normalize workflow content to consistent format."""
+        normalized = data.copy()
+        
+        # Normalize shells to lowercase
+        if 'shells' in normalized:
+            normalized['shells'] = [s.lower() if isinstance(s, str) else s 
+                                  for s in normalized['shells']]
+        
+        # Normalize tags to lowercase
+        if 'tags' in normalized:
+            normalized['tags'] = [t.lower() if isinstance(t, str) else t 
+                                for t in normalized['tags']]
+        
+        # Ensure arguments is a list
+        if 'arguments' in normalized and not isinstance(normalized['arguments'], list):
+            normalized['arguments'] = []
+        
+        # Normalize argument fields
+        if 'arguments' in normalized:
+            for arg in normalized['arguments']:
+                if isinstance(arg, dict):
+                    # Ensure required argument fields
+                    if 'name' not in arg:
+                        arg['name'] = 'unnamed_arg'
+                    if 'type' not in arg:
+                        arg['type'] = 'text'
+                    # Convert type to lowercase
+                    arg['type'] = arg['type'].lower()
+        
+        return normalized
     
     def validate(self, data: Dict) -> Tuple[bool, List[str], List[str]]:
         """Validate workflow data against schema."""
@@ -84,9 +116,12 @@ class WorkflowValidator(SchemaProcessor):
             if not isinstance(data['shells'], list):
                 errors.append("'shells' must be a list")
             else:
-                unknown_shells = set(data['shells']) - self.known_shells
+                normalized_shells = [s.lower() if isinstance(s, str) else s for s in data['shells']]
+                unknown_shells = [orig for orig, norm in zip(data['shells'], normalized_shells) if norm not in self.known_shells]
                 if unknown_shells:
                     warnings.append(f"Unknown shell types: {unknown_shells}")
+                # Update shells to normalized versions
+                data['shells'] = normalized_shells
         
         return len(errors) == 0, errors, warnings
     
