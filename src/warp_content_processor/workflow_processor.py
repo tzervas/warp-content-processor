@@ -67,21 +67,32 @@ class WorkflowValidator(SchemaProcessor):
         
         return normalized
     
-    def validate(self, data: Dict[str, Any]) -> Tuple[bool, List[str], List[str]]:
-        """Validate workflow data against schema."""
+    def validate(self, data: Dict[str, Any]) -> Tuple[bool, List[str], List[str], Optional[Dict[str, Any]]]:
+        """Validate workflow data against schema.
+        
+        Args:
+            data: Dictionary of workflow data to validate
+            
+        Returns:
+            Tuple containing:
+                bool: Whether the data is valid
+                List[str]: Error messages
+                List[str]: Warning messages
+                Optional[Dict[str, Any]]: Normalized data if valid, None otherwise
+        """
         errors = []
         warnings = []
         
-        # Make a copy to avoid modifying input
-        data = data.copy()
+        # Make a copy for normalization
+        normalized_data = data.copy()
         
         # Check for empty data
-        if not data:
+        if not normalized_data:
             errors.append("Empty or invalid workflow data")
-            return False, errors, warnings
+            return False, errors, warnings, None
         
         # Check required fields
-        missing_fields = self.required_fields - set(data.keys())
+        missing_fields = self.required_fields - set(normalized_data.keys())
         if missing_fields:
             errors.append(f"Missing required fields: {missing_fields}")
         
@@ -92,7 +103,7 @@ class WorkflowValidator(SchemaProcessor):
             errors.append("Field 'command' must be a string")
         
         # Check for unknown fields
-        unknown_fields = set(data.keys()) - self.required_fields - self.optional_fields
+        unknown_fields = set(normalized_data.keys()) - self.required_fields - self.optional_fields
         if unknown_fields:
             warnings.append(f"Unknown fields present: {unknown_fields}")
         
@@ -130,7 +141,8 @@ class WorkflowValidator(SchemaProcessor):
                 # Update shells to normalized versions
                 data['shells'] = normalized_shells
         
-        return len(errors) == 0, errors, warnings
+        # Only return normalized data if validation passed
+        return len(errors) == 0, errors, warnings, normalized_data if len(errors) == 0 else None
     
     def process(self, content: str) -> ProcessingResult:
         """Process and validate workflow content."""

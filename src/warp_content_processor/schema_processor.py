@@ -112,7 +112,7 @@ class ContentSplitter:
                 for doc in yaml_docs:
                     if doc:  # Skip empty documents
                         doc_content = yaml.dump(doc)
-                        doc_type = SchemaDetector.detect_type(doc_content)
+                        doc_type = ContentTypeDetector.detect_type(doc_content)
                         documents.append((doc_type, doc_content))
                 return documents
         except yaml.YAMLError:
@@ -137,14 +137,14 @@ class ContentSplitter:
                 # Extract document content
                 doc_content = content[current_pos:next_doc_start].strip()
                 if doc_content:  # Don't add empty documents
-                    doc_type = SchemaDetector.detect_type(doc_content)
+                    doc_type = ContentTypeDetector.detect_type(doc_content)
                     documents.append((doc_type, doc_content))
                 current_pos = next_doc_start
             else:
                 # No more boundaries found, add remaining content if any
                 remaining = content[current_pos:].strip()
                 if remaining:
-                    doc_type = SchemaDetector.detect_type(remaining)
+                    doc_type = ContentTypeDetector.detect_type(remaining)
                     documents.append((doc_type, remaining))
                 break
         

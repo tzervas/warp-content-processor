@@ -45,15 +45,20 @@ class SchemaProcessor(ABC):
         """Generate appropriate filename for the content."""
         pass
         
-    def normalize_content(self, data: Dict) -> Dict:
+    @abstractmethod
+    def normalize_content(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Normalize content to a consistent format.
-        Override this method in derived classes to implement specific normalization.
+        This method must not modify the input dictionary.
         
         Args:
-            data: Dictionary of data to normalize
-        
+            data: Dictionary of content data to normalize
+            
         Returns:
-            Dict: Normalized data
+            Dict[str, Any]: New dictionary with normalized content
+            
+        Note:
+            This method MUST NOT modify the input dictionary.
+            Always return a new dictionary with normalized content.
         """
-        return data  # Default implementation returns unmodified data
+        return data.copy()  # Base implementation returns a shallow copy
