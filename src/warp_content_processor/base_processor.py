@@ -19,7 +19,7 @@ class ProcessingResult:
 class SchemaProcessor(ABC):
     """Base class for schema processors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.required_fields: Set[str] = set()
         self.optional_fields: Set[str] = set()
 
@@ -31,7 +31,6 @@ class SchemaProcessor(ABC):
         Returns:
             Tuple[bool, List[str], List[str]]: (is_valid, errors, warnings)
         """
-        pass
 
     @abstractmethod
     def process(self, content: str) -> ProcessingResult:
@@ -41,12 +40,10 @@ class SchemaProcessor(ABC):
         Returns:
             ProcessingResult: Processing results including validation status
         """
-        pass
 
     @abstractmethod
     def generate_filename(self, data: Dict) -> str:
         """Generate appropriate filename for the content."""
-        pass
 
     @abstractmethod
     def normalize_content(self, data: Dict[str, Any]) -> Dict[str, Any]:

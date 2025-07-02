@@ -6,15 +6,16 @@ Handles validation, splitting, and organization of various content types.
 """
 
 import logging
-import os
 import sys
 from pathlib import Path
 from typing import Dict, List, Union
 
+from warp_content_processor.base_processor import ProcessingResult
+
 from .schema_processor import ContentProcessor
 
 
-def setup_logging():
+def setup_logging() -> None:
     """Configure logging for the application."""
     logging.basicConfig(
         level=logging.INFO,
@@ -31,7 +32,7 @@ def process_directory(
 ) -> Dict[str, List[ProcessingResult]]:
     """Process all files in a directory and its subdirectories."""
     processor = ContentProcessor(output_dir)
-    results = {}
+    results: Dict[str, List[ProcessingResult]] = {}
 
     # Process all yaml, yml, and md files
     for ext in ["*.yaml", "*.yml", "*.md"]:
@@ -45,7 +46,7 @@ def process_directory(
     return results
 
 
-def main():
+def main() -> None:
     """Main entry point for content processing."""
     setup_logging()
     logger = logging.getLogger(__name__)

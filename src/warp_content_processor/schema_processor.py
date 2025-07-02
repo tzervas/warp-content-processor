@@ -4,27 +4,16 @@ Schema detection and processing for Warp Terminal content types.
 
 import logging
 import re
-from enum import Enum
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import yaml
 
-from .base_processor import ProcessingResult
+from .base_processor import ProcessingResult, SchemaProcessor
+from .content_type import ContentType
 from .processor_factory import ProcessorFactory
 
 logger = logging.getLogger(__name__)
-
-
-class ContentType(str, Enum):
-    """Enumeration of supported content types."""
-
-    WORKFLOW = "workflow"
-    PROMPT = "prompt"
-    NOTEBOOK = "notebook"
-    ENV_VAR = "env_var"
-    RULE = "rule"
-    UNKNOWN = "unknown"
 
 
 # Regular expression patterns for content detection
@@ -38,8 +27,9 @@ CONTENT_PATTERNS = {
         r"completion:\s*|response:\s*",  # Common prompt fields
     ],
     "notebook": [
-        r"---\s*title:\s*.+\s*---",  # Markdown front matter
-        r"#\s+.*\n.*```.*```",  # Markdown with code blocks
+        r"---[\s\S]*?title:[\s\S]*?---",  # Markdown front matter with title
+        r"```[^`]*```",  # Code blocks
+        r"^\s*#\s+",  # Markdown headers
     ],
     "env_var": [
         r"environment:\s*|env:\s*|variables:\s*",
@@ -94,7 +84,9 @@ class ContentSplitter:
         ContentType.WORKFLOW: r"(?:^|\n)---\s*(?:workflow|name):\s*.*?(?=\n---|\Z)",
         ContentType.PROMPT: r"(?:^|\n)---\s*(?:prompt|name):\s*.*?(?=\n---|\Z)",
         ContentType.NOTEBOOK: r"(?:^|\n)---\s*title:\s*.*?(?=\n---|\Z)",
-        ContentType.ENV_VAR: r"(?:^|\n)(?:environment|variables):\s*.*?(?=\n(?:environment|variables)|\Z)",
+        ContentType.ENV_VAR: (
+            r"(?:^|\n)(?:environment|variables):\s*.*?(?=\n(?:environment|variables)|\Z)"
+        ),
         ContentType.RULE: r"(?:^|\n)---\s*(?:rule|title):\s*.*?(?=\n---|\Z)",
     }
 
@@ -161,8 +153,10 @@ class ContentProcessor:
 
     def __init__(self, output_dir: Union[str, Path]):
         self.output_dir = Path(output_dir)
-        self.processors = {
-            content_type: ProcessorFactory.create_processor(content_type, self.output_dir)
+        self.processors: Dict[ContentType, SchemaProcessor] = {
+            content_type: ProcessorFactory.create_processor(
+                content_type, self.output_dir
+            )
             for content_type in ContentType
             if content_type != ContentType.UNKNOWN
         }
@@ -183,40 +177,42 @@ class ContentProcessor:
             documents = ContentSplitter.split_content(content)
             results = []
 
-            for doc_type, doc_content in documents:
-                if doc_type in self.processors:
-                    processor = self.processors[doc_type]
-                    result = processor.process(doc_content)
+            for doc_type_str, doc_content in documents:
+                try:
+                    doc_type = ContentType(doc_type_str)
+                    if doc_type in self.processors:
+                        processor = self.processors[doc_type]
+                        result = processor.process(doc_content)
 
-                    if result.is_valid:
-                        # Generate filename and save
-                        filename = processor.generate_filename(result.data)
-                        output_path = self.output_dir / doc_type / filename
+                        if result.is_valid and result.data is not None:
+                            # Generate filename and save
+                            filename = processor.generate_filename(result.data)
+                            output_path = self.output_dir / doc_type / filename
 
-                        # Ensure unique filename
-                        counter = 1
-                        while output_path.exists():
-                            base_name = filename.rsplit(".", 1)[0]
-                            ext = filename.rsplit(".", 1)[1]
-                            output_path = (
-                                self.output_dir
-                                / doc_type
-                                / f"{base_name}_{counter}.{ext}"
-                            )
-                            counter += 1
+                            # Ensure unique filename
+                            counter = 1
+                            while output_path.exists():
+                                base_name = filename.rsplit(".", 1)[0]
+                                ext = filename.rsplit(".", 1)[1]
+                                output_path = (
+                                    self.output_dir
+                                    / doc_type
+                                    / f"{base_name}_{counter}.{ext}"
+                                )
+                                counter += 1
 
-                        output_path.write_text(doc_content)
-                        logger.info("Saved %s content to %s", doc_type, output_path)
+                            output_path.write_text(doc_content)
+                            logger.info("Saved %s content to %s", doc_type, output_path)
 
-                    results.append(result)
-                else:
+                        results.append(result)
+                except ValueError:
                     logger.warning("Unknown content type in %s", file_path)
                     results.append(
                         ProcessingResult(
                             content_type=ContentType.UNKNOWN,
                             is_valid=False,
                             data=None,
-                            errors=[f"Unknown content type"],
+                            errors=["Unknown content type"],
                             warnings=[],
                         )
                     )

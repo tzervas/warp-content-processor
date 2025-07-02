@@ -2,7 +2,11 @@
     "name": "Warp Content Processor Dev",
     "image": "mcr.microsoft.com/devcontainers/python:3.10",
     "features": {
-        "ghcr.io/devcontainers/features/github-cli:1": {}
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22.16.0"
+        },
+        "ghcr.io/trunk-io/devcontainer-feature/trunk:1": {}
     },
     "customizations": {
         "vscode": {
@@ -10,19 +14,28 @@
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "ms-python.black-formatter",
-                "ms-python.isort"
+                "trunk.io",
+                "streetsidesoftware.code-spell-checker",
+                "eamodio.gitlens",
+                "visualstudioexptteam.vscodeintellicode",
+                "njpwerner.autodocstring"
             ],
             "settings": {
-                "python.defaultInterpreterPath": "/usr/local/bin/python",
-                "python.formatting.provider": "black",
+                "python.defaultInterpreterPath": ".venv/bin/python",
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.diagnosticMode": "workspace",
                 "python.linting.enabled": true,
                 "python.linting.pylintEnabled": true,
-                "[python]": {
-                    "editor.formatOnSave": true,
-                    "editor.codeActionsOnSave": {
-                        "source.organizeImports": true
-                    }
-                }
+                "python.linting.mypyEnabled": true,
+                "python.formatting.provider": "black",
+                "python.formatting.blackArgs": ["--line-length", "100"],
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                },
+                "files.trimTrailingWhitespace": true,
+                "files.insertFinalNewLine": true,
+                "files.trimFinalNewlines": true
             }
         }
     },

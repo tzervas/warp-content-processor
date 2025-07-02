@@ -18,25 +18,24 @@ def validate_placeholders(
     Returns:
         Tuple[List[str], List[str]]: (errors, warnings)
     """
-    errors = []
-    warnings = []
+    errors: List[str] = []
+    warnings: List[str] = []
 
-    placeholder_pattern = re.compile(pattern)
-    placeholders = set(placeholder_pattern.findall(content))
-    placeholders = {p[2:-2] for p in placeholders}  # Remove {{ and }}
+    if isinstance(arguments, list):
+        placeholder_pattern = re.compile(pattern)
+        placeholders = set(placeholder_pattern.findall(content))
+        placeholders = {p[2:-2] for p in placeholders}  # Remove {{ and }}
 
-    if not isinstance(arguments, list):
-        errors.append("'arguments' must be a list")
-        return errors, warnings
+        arg_names = {arg.get("name") for arg in arguments if isinstance(arg, dict)}
+        missing_args = placeholders - arg_names
+        unused_args = arg_names - placeholders
 
-    arg_names = {arg.get("name") for arg in arguments if isinstance(arg, dict)}
-    missing_args = placeholders - arg_names
-    unused_args = arg_names - placeholders
-
-    if missing_args:
-        warnings.append(f"References undefined arguments: {missing_args}")
-    if unused_args:
-        warnings.append(f"Defined arguments not used: {unused_args}")
+        if missing_args:
+            warnings.append(f"References undefined arguments: {missing_args}")
+        if unused_args:
+            warnings.append(f"Defined arguments not used: {unused_args}")
+    else:
+        errors.append("'arguments' must be a list")  # type: ignore[unreachable]
 
     return errors, warnings
 
@@ -54,19 +53,20 @@ def validate_tags(
     Returns:
         Tuple[List[str], List[str]]: (errors, warnings)
     """
-    errors = []
-    warnings = []
+    errors: List[str] = []
+    warnings: List[str] = []
 
-    if not isinstance(tags, list):
-        errors.append("'tags' must be a list")
-        return errors, warnings
+    if isinstance(tags, list):
+        tag_pattern = re.compile(pattern)
+        invalid_tags = [
+            tag
+            for tag in tags
+            if not isinstance(tag, str) or not tag_pattern.match(tag)
+        ]
 
-    tag_pattern = re.compile(pattern)
-    invalid_tags = [
-        tag for tag in tags if not isinstance(tag, str) or not tag_pattern.match(tag)
-    ]
-
-    if invalid_tags:
-        warnings.append(f"Invalid tag format: {invalid_tags}")
+        if invalid_tags:
+            warnings.append(f"Invalid tag format: {invalid_tags}")
+    else:
+        errors.append("'tags' must be a list")  # type: ignore[unreachable]
 
     return errors, warnings

@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import yaml
 
 from .base_processor import ProcessingResult, SchemaProcessor
-from .schema_processor import ContentType
+from .content_type import ContentType
 from .utils.validation import validate_placeholders, validate_tags
 
 logger = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class WorkflowValidator(SchemaProcessor):
     """Validates workflow YAML files against schema requirements."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.required_fields = {"name", "command"}
         self.optional_fields = {
@@ -77,9 +77,7 @@ class WorkflowValidator(SchemaProcessor):
 
         return normalized
 
-    def validate(
-        self, data: Dict[str, Any]
-    ) -> Tuple[bool, List[str], List[str], Optional[Dict[str, Any]]]:
+    def validate(self, data: Dict[str, Any]) -> Tuple[bool, List[str], List[str]]:
         """Validate workflow data against schema.
 
         Args:
@@ -92,8 +90,8 @@ class WorkflowValidator(SchemaProcessor):
                 List[str]: Warning messages
                 Optional[Dict[str, Any]]: Normalized data if valid, None otherwise
         """
-        errors = []
-        warnings = []
+        errors: List[str] = []
+        warnings: List[str] = []
 
         # Make a copy for normalization
         normalized_data = data.copy()
@@ -101,7 +99,7 @@ class WorkflowValidator(SchemaProcessor):
         # Check for empty data
         if not normalized_data:
             errors.append("Empty or invalid workflow data")
-            return False, errors, warnings, None
+            return False, errors, warnings
 
         # Check required fields
         missing_fields = self.required_fields - set(normalized_data.keys())
@@ -159,12 +157,10 @@ class WorkflowValidator(SchemaProcessor):
                 data["shells"] = normalized_shells
 
         # Only return normalized data if validation passed
-        return (
-            len(errors) == 0,
-            errors,
-            warnings,
-            normalized_data if len(errors) == 0 else None,
-        )
+        # Store normalized data for later use if validation passes
+        self._last_normalized_data = normalized_data if len(errors) == 0 else None
+
+        return len(errors) == 0, errors, warnings
 
     def process(self, content: str) -> ProcessingResult:
         """Process and validate workflow content."""
@@ -182,12 +178,15 @@ class WorkflowValidator(SchemaProcessor):
                 data = yaml.safe_load(content)
                 # Handle None (empty YAML) and empty structures
                 if data is None or (isinstance(data, (dict, list)) and not data):
-                    errors.append("Empty YAML content (document contains no actual data)")
+                    errors.append(
+                        "Empty YAML content (document contains no actual data)"
+                    )
                 elif not isinstance(data, dict):
                     errors.append("Content must be a YAML dictionary")
                 else:
                     # Validate content
-                    is_valid, val_errors, val_warnings, normalized_data = self.validate(data)
+                    is_valid, val_errors, val_warnings = self.validate(data)
+                    normalized_data = self._last_normalized_data
                     if is_valid:
                         return ProcessingResult(
                             content_type=ContentType.WORKFLOW,
@@ -223,12 +222,13 @@ class WorkflowValidator(SchemaProcessor):
 class WorkflowProcessor(WorkflowValidator):
     """Main class for processing workflow files."""
 
-    def __init__(self, output_dir: Path):
+    def __init__(self, output_dir: Path) -> None:
         super().__init__()
         self.output_dir = Path(output_dir)
-        self.processed_files = []
-        self.failed_files = []
-        self.warnings = []
+        self.processed_files: List[Tuple[Path, Path]] = []
+        self.failed_files: List[Tuple[Path, str]] = []
+        self.warnings: List[Tuple[Path, str]] = []
+        self._last_normalized_data: Optional[Dict[str, Any]] = None
 
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -258,7 +258,8 @@ class WorkflowProcessor(WorkflowValidator):
 
                 if not result.is_valid:
                     logger.error(
-                        f"Validation failed for workflow in {file_path}: {result.errors}"
+                        f"Validation failed for workflow in {file_path}: "
+                        f"{result.errors}"
                     )
                     self.failed_files.append((file_path, result.errors[0]))
                     success = False
@@ -269,9 +270,12 @@ class WorkflowProcessor(WorkflowValidator):
                     logger.warning(f"Warning for {file_path}: {warning}")
                     self.warnings.append((file_path, warning))
 
-                # Generate output filename and save
-                filename = self.generate_filename(result.data)
-                output_path = self.output_dir / filename
+                    # Generate output filename and save
+                    if result.data is not None:
+                        filename = self.generate_filename(result.data)
+                        output_path = self.output_dir / filename
+                    else:
+                        continue
 
                 # Ensure unique filename
                 counter = 1
