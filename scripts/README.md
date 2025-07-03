@@ -12,6 +12,35 @@ The scripts follow the user's development standards and provide automated toolin
 
 ## Scripts
 
+### Unified Entry Point
+
+#### `wcp` (Recommended)
+Unified cross-platform CI management script that works on Windows, Linux, macOS, and devcontainers.
+
+**Usage:**
+```bash
+# Make executable (Linux/macOS)
+chmod +x scripts/wcp
+
+# Run commands
+./scripts/wcp                    # Full CI workflow
+./scripts/wcp quality            # Code quality checks and fixes
+./scripts/wcp quality --no-fix   # Quality checks without fixes
+./scripts/wcp security           # Security scanning
+./scripts/wcp test               # Test suite with coverage
+
+# Or call directly with Python
+python scripts/wcp ci
+python scripts/wcp quality --no-fix
+```
+
+**Features:**
+- ✅ Cross-platform compatibility (Windows, Linux, macOS)
+- ✅ Automatic UV detection and usage
+- ✅ Devcontainer support
+- ✅ Proper Python executable detection
+- ✅ Unified interface for all workflows
+
 ### Core Python Scripts
 
 #### `quality_check.py`

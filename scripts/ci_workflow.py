@@ -10,8 +10,23 @@ This script orchestrates all tooling in a single clean workflow:
 
 Follows user development standards: isort, black, ruff, mypy, trunk, then pytest test suites.
 Leverages UV for project and package management and venv management.
+
+Usage:
+    python scripts/ci_workflow.py [command] [options]
+    
+Commands:
+    quality   - Run code quality checks and fixes
+    security  - Run security scanning
+    test      - Run test suite with coverage
+    ci        - Run full CI workflow (default)
+    
+Options:
+    --no-fix  - Skip automated fixes (quality checks only)
+    --verbose - Show detailed output
+    --help    - Show this help message
 """
 
+import argparse
 import subprocess
 import sys
 from pathlib import Path
@@ -222,16 +237,50 @@ class CIWorkflow:
         print(f"\n📁 Detailed reports available in: {self.reports_dir}")
 
 
+def parse_arguments() -> argparse.Namespace:
+    """Parse command-line arguments."""
+    parser = argparse.ArgumentParser(description='CI Workflow Management')
+    parser.add_argument('command', nargs='?', choices=['quality', 'security', 'test', 'ci'], default='ci',
+                        help='Command to execute: quality, security, test, ci (default: ci)')
+    parser.add_argument('--no-fix', action='store_true', help='Skip automated fixes (only for quality checks)')
+    parser.add_argument('--verbose', action='store_true', help='Show detailed output')
+
+    return parser.parse_args()
+
+
 def main():
     """Main entry point for CI workflow."""
+    args = parse_arguments()
     workflow = CIWorkflow()
-    results = workflow.run_full_workflow()
-    workflow.print_workflow_summary(results)
-    workflow.generate_ci_report(results)
 
-    # Exit with error code if any steps failed
-    if not all(results.values()):
-        sys.exit(1)
+    if args.verbose:
+        print("Verbose mode enabled")
+
+    command_mapping = {
+        'quality': workflow.run_quality_checks,
+        'security': workflow.run_security_scans,
+        'test': workflow.run_tests_with_coverage,
+        'ci': workflow.run_full_workflow,
+    }
+
+    if args.no_fix and args.command == 'quality':
+        print("Skipping fixes in quality checks")
+        # Customize the call if --no-fix
+        workflow.run_quality_checks = lambda: workflow.run_command(
+            ['python', str(workflow.scripts_dir / 'quality_check.py'), '--no-fix'],
+            "Code quality checks without fixes"
+        )[0]
+
+    # Execute selected command
+    results = command_mapping[args.command]()
+
+    if args.command == 'ci':
+        workflow.print_workflow_summary(results)
+        workflow.generate_ci_report(results)
+
+        # Exit with error code if any steps failed
+        if not all(results.values()):
+            sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -214,13 +214,21 @@ fi
 echo "📚 Setting up development aliases..."
 cat >> ~/.bashrc << 'EOF'
 
-# Warp Content Processor development aliases
+# Warp Content Processor development aliases (legacy)
 alias wcp-test='bash scripts/run-tests.sh'
 alias wcp-check='bash scripts/check-quality.sh'
 alias wcp-fix='bash scripts/fix-code.sh'
 alias wcp-security='bash scripts/check-security.sh'
 alias wcp-ci='bash scripts/ci-workflow.sh'
 alias wcp-activate='source .venv/bin/activate'
+
+# New unified CI script aliases
+alias wcp='./scripts/wcp'
+alias wcp-quality='./scripts/wcp quality'
+alias wcp-quality-check='./scripts/wcp quality --no-fix'
+alias wcp-sec='./scripts/wcp security'
+alias wcp-tests='./scripts/wcp test'
+alias wcp-full='./scripts/wcp ci'
 EOF
 
 echo "✅ Development environment setup complete!"

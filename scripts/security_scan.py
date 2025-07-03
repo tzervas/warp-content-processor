@@ -29,6 +29,25 @@ class SecurityScanner:
         self.src_path = self.project_root / "src"
         self.reports_dir = self.project_root / "security_reports"
         self.reports_dir.mkdir(exist_ok=True)
+        self.use_uv = self._detect_uv()
+
+    def _detect_uv(self) -> bool:
+        """Detect if UV package manager is available."""
+        try:
+            result = subprocess.run(
+                ["uv", "--version"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                print(f"🐍 Detected UV package manager: {result.stdout.strip()}")
+                return True
+        except FileNotFoundError:
+            pass
+        
+        print("🐍 Using standard Python package management")
+        return False
 
     def run_command(
         self, cmd: List[str], description: str, capture_json: bool = False
@@ -36,6 +55,11 @@ class SecurityScanner:
         """Run a command and return success status and output."""
         print(f"\n🔍 {description}...")
         try:
+            # Use UV if available for running Python tools
+            if self.use_uv and cmd[0] == "python" and cmd[1] == "-m":
+                uv_cmd = ["uv", "run"] + cmd[2:]
+                cmd = uv_cmd
+            
             result = subprocess.run(
                 cmd,
                 cwd=self.project_root,
