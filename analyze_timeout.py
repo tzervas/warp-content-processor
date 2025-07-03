@@ -95,11 +95,7 @@ class TimeoutAnalyzer:
                 timeout=timeout + 10,  # Add buffer to pytest timeout
             )
 
-            # Read log file if it exists
-            log_content = ""
-            if log_file.exists():
-                log_content = log_file.read_text()
-
+            log_content = log_file.read_text() if log_file.exists() else ""
             return result.stdout, log_content, result.returncode
 
         except subprocess.TimeoutExpired:
