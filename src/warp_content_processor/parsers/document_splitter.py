@@ -171,8 +171,7 @@ class DocumentSplitter(SimpleParser):
 
         # Add final block
         if current_block:
-            block_content = "\n".join(current_block).strip()
-            if block_content:
+            if block_content := "\n".join(current_block).strip():
                 blocks.append(block_content)
 
         # Return blocks if we found multiple, otherwise original content
