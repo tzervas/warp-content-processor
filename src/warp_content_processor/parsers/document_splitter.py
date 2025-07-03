@@ -98,8 +98,7 @@ class DocumentSplitter(SimpleParser):
             # Filter out empty parts and clean up
             documents = []
             for part in parts:
-                cleaned = part.strip()
-                if cleaned:  # Only include non-empty documents
+                if cleaned := part.strip():
                     documents.append(cleaned)
 
             # If we found multiple documents, return them
