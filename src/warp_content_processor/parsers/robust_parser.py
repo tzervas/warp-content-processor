@@ -29,8 +29,6 @@ class RobustParser(SimpleParser):
 
     def __init__(self):
         super().__init__()
-        self.parse_count = 0
-        self.success_count = 0
         self.stats = {
             "total_attempts": 0,
             "successful_parses": 0,
