@@ -400,9 +400,6 @@ class IntelligentCleaner:
         Returns:
             Tuple of (cleaned_content, fixes_applied, errors_found)
         """
-        if not content or not content.strip():
-            return content, [], []
-
         # Step 1: Tokenize the content
         tokens = self.tokenizer.tokenize(content)
 
