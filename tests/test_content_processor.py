@@ -52,9 +52,9 @@ class TestContentTypeDetector(TestCase):
         title: Test Notebook
         description: A test notebook
         ---
-        
+
         # Test
-        
+
         ```bash
         echo "test"
         ```
@@ -174,22 +174,18 @@ class TestContentProcessor:
         pytest.param(
             ContentType.WORKFLOW,
             {"name": "test", "command": "echo test"},
-            id="workflow"
+            id="workflow",
         ),
         pytest.param(
-            ContentType.PROMPT,
-            {"name": "test", "prompt": "do {{action}}"},
-            id="prompt"
+            ContentType.PROMPT, {"name": "test", "prompt": "do {{action}}"}, id="prompt"
         ),
         pytest.param(
             ContentType.NOTEBOOK,
             "---\ntitle: test\n---\n# Test\n```bash\necho test\n```",
-            id="notebook"
+            id="notebook",
         ),
         pytest.param(
-            ContentType.ENV_VAR,
-            {"variables": {"TEST": "value"}},
-            id="env_var"
+            ContentType.ENV_VAR, {"variables": {"TEST": "value"}}, id="env_var"
         ),
         pytest.param(
             ContentType.RULE,
@@ -198,7 +194,7 @@ class TestContentProcessor:
                 "description": "A test rule",
                 "guidelines": ["Test guideline"],
             },
-            id="rule"
+            id="rule",
         ),
     ]
 
@@ -224,10 +220,10 @@ class TestContentProcessor:
         result = processor.process(content)
 
         # Centralized assertion logic
-        assert result.is_valid, \
-            f"Validation failed for {content_type}: {result.errors}"
-        assert not result.errors, \
-            f"Unexpected errors for {content_type}: {result.errors}"
+        assert result.is_valid, f"Validation failed for {content_type}: {result.errors}"
+        assert (
+            not result.errors
+        ), f"Unexpected errors for {content_type}: {result.errors}"
 
     # Parameter sets for invalid content testing
     INVALID_CONTENT_PARAMETERS = [
@@ -235,13 +231,13 @@ class TestContentProcessor:
             ContentType.WORKFLOW,
             {},  # Empty content
             "empty yaml content",
-            id="workflow-empty"
+            id="workflow-empty",
         ),
         pytest.param(
             ContentType.PROMPT,
             {"name": "test"},  # Missing prompt field
             "missing required fields",
-            id="prompt-no-prompt"
+            id="prompt-no-prompt",
         ),
         # Note: ENV_VAR processor seems to have default handling,
         # so invalid content still validates
@@ -251,7 +247,7 @@ class TestContentProcessor:
 
     @pytest.mark.parametrize(
         "content_type,invalid_content,expected_error_pattern",
-        INVALID_CONTENT_PARAMETERS
+        INVALID_CONTENT_PARAMETERS,
     )
     @pytest.mark.timeout(90)
     def test_content_type_validation_errors(
@@ -277,15 +273,17 @@ class TestContentProcessor:
         result = processor.process(content)
 
         # Centralized error assertion logic
-        assert not result.is_valid, \
-            f"Expected validation to fail for {content_type} with invalid content"
+        assert (
+            not result.is_valid
+        ), f"Expected validation to fail for {content_type} with invalid content"
         assert result.errors, f"Expected errors for invalid {content_type} content"
 
         # Check that the expected error pattern appears in the error messages
         error_text = " ".join(result.errors)
-        assert expected_error_pattern.lower() in error_text.lower(), \
-            f"Expected error pattern '{expected_error_pattern}' not found in errors: " \
+        assert expected_error_pattern.lower() in error_text.lower(), (
+            f"Expected error pattern '{expected_error_pattern}' not found in errors: "
             f"{result.errors}"
+        )
 
 
 if __name__ == "__main__":

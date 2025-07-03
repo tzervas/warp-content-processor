@@ -303,9 +303,9 @@ This is some additional markdown content.
         ---
         name: Code Review
         ---
-        
+
         Please review this {{language}} code and provide feedback on {{aspect}}:
-        
+
         {{code}}
         """
 
@@ -423,9 +423,9 @@ tags:
 name: Review Code
 prompt: |
   Please review the following {{language}} code:
-  
+
   {{code}}
-  
+
   Focus on {{aspect}} and provide detailed feedback.
 arguments:
   - name: language

@@ -30,7 +30,14 @@ class TestContentArchaeologistInitialization:
             (1024, 0, 1024, 0, 0),  # Invalid timeout (still initializes)
         ],
     )
-    def test_initialization_parameters(self, max_size, timeout, expected_max_size, expected_timeout, expected_extractions):
+    def test_initialization_parameters(
+        self,
+        max_size,
+        timeout,
+        expected_max_size,
+        expected_timeout,
+        expected_extractions,
+    ):
         """Test archaeologist initialization with various parameter combinations."""
         archaeologist = ContentArchaeologist(max_size, timeout)
         assert archaeologist.max_content_size == expected_max_size
@@ -128,12 +135,24 @@ class TestSecurityValidation:
         [
             ("<script>alert('xss')</script>", 0, {}, True),  # XSS attempt
             ("javascript:void(0)", 0, {}, True),  # JavaScript URL
-            ("normal yaml content", None, None, False),  # Safe content (variable results)
+            (
+                "normal yaml content",
+                None,
+                None,
+                False,
+            ),  # Safe content (variable results)
             ("name: <script>test</script>", 0, {}, True),  # Embedded script
             ("just some text", None, None, False),  # Plain text (variable results)
         ],
     )
-    def test_security_validation(self, archaeologist, dangerous_content, expected_artifacts, expected_stats, should_patch_sanitizer):
+    def test_security_validation(
+        self,
+        archaeologist,
+        dangerous_content,
+        expected_artifacts,
+        expected_stats,
+        should_patch_sanitizer,
+    ):
         """Test security validation blocks dangerous content."""
         if should_patch_sanitizer:
             with patch(

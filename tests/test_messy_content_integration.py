@@ -9,6 +9,8 @@ import unittest
 
 import pytest
 
+from warp_content_processor import ContentSplitter
+
 from .helpers import (
     create_large_messy_content,
     create_malicious_content_samples,
@@ -17,7 +19,6 @@ from .helpers import (
     read_mixed_content_file,
     validate_output_yaml_files,
 )
-from warp_content_processor import ContentSplitter
 
 
 class TestMessyContentIntegration:
@@ -30,21 +31,26 @@ class TestMessyContentIntegration:
             (1, {"workflow", "prompt", "rule"}),  # Expected content types in messy file
         ],
     )
-    def test_parse_messy_mixed_content(self, messy_content_file, expected_min_documents, expected_types):
+    def test_parse_messy_mixed_content(
+        self, messy_content_file, expected_min_documents, expected_types
+    ):
         """Test parsing of intentionally messy mixed content."""
         content = read_mixed_content_file(messy_content_file)
         documents = ContentSplitter.split_content(content)
 
         # Should successfully parse despite formatting issues
-        assert len(documents) >= expected_min_documents, "Should parse at least one document"
+        assert (
+            len(documents) >= expected_min_documents
+        ), "Should parse at least one document"
 
         # Check that we get the expected content types
         types_found = extract_document_types(documents)
 
         # Verify all expected types are found
         for expected_type in expected_types:
-            assert expected_type in types_found, \
-                f"Should detect {expected_type} content. Found types: {types_found}"
+            assert (
+                expected_type in types_found
+            ), f"Should detect {expected_type} content. Found types: {types_found}"
 
     @pytest.mark.timeout(30)
     def test_robust_parsing_with_syntax_errors(self):
@@ -61,7 +67,7 @@ class TestMessyContentIntegration:
           - zsh
         invalid: {unclosed dict
         ---
-        
+
         name: Another Workflow
         command: ls -la
         description: This one is valid
@@ -103,9 +109,9 @@ class TestMessyContentIntegration:
         """Test parsing of mixed Markdown and YAML content."""
         mixed_content = """
         # My Project Workflows
-        
+
         This document contains workflows and other content.
-        
+
         ---
         name: Build Project
         command: npm run build
@@ -114,9 +120,9 @@ class TestMessyContentIntegration:
           - build
           - npm
         ---
-        
+
         ## Coding Standards
-        
+
         title: Code Quality Rules
         description: Rules for maintaining code quality
         guidelines:
@@ -134,9 +140,10 @@ class TestMessyContentIntegration:
         types = extract_document_types(documents)
         assert "workflow" in types
 
-
     @pytest.mark.timeout(60)
-    def test_end_to_end_processing_messy_content(self, messy_content_file, content_processor, output_dir):
+    def test_end_to_end_processing_messy_content(
+        self, messy_content_file, content_processor, output_dir
+    ):
         """Test complete end-to-end processing of messy content."""
         # Process the messy file
         results = content_processor.process_file(messy_content_file)
@@ -148,6 +155,7 @@ class TestMessyContentIntegration:
         # Check that output files were created and are valid
         validation_errors = validate_output_yaml_files(output_dir)
         assert not validation_errors, f"Output validation failed: {validation_errors}"
+
     @pytest.mark.timeout(10)
     @pytest.mark.parametrize(
         "content_count,expected_documents,expected_type",
@@ -155,7 +163,9 @@ class TestMessyContentIntegration:
             (50, 50, "workflow"),  # Large content test with 50 workflows
         ],
     )
-    def test_performance_with_large_messy_content(self, content_count, expected_documents, expected_type):
+    def test_performance_with_large_messy_content(
+        self, content_count, expected_documents, expected_type
+    ):
         """Test performance with large amounts of messy content."""
         large_messy_content = create_large_messy_content(count=content_count)
         documents = ContentSplitter.split_content(large_messy_content)
@@ -177,7 +187,7 @@ class TestMessyContentIntegration:
         command:{malicious_samples['script_injection']}
         description:This tries to be malicious
         ---
-        
+
         name:Another Evil One
         command:{malicious_samples['command_injection_pipe']}
         """

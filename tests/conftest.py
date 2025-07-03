@@ -37,15 +37,18 @@ def fixtures_dir():
     """Fixture for accessing the fixtures directory."""
     return Path(__file__).parent / "fixtures"
 
+
 @pytest.fixture
 def messy_content_file(fixtures_dir):
     """Fixture providing the messy_mixed_content.yaml file."""
     return fixtures_dir / "messy_mixed_content.yaml"
 
+
 @pytest.fixture
 def content_processor(output_dir):
     """Fixture providing a ContentProcessor with output directory."""
     from warp_content_processor import ContentProcessor
+
     return ContentProcessor(output_dir)
 
 

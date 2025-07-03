@@ -22,11 +22,12 @@ def test_logging_setup():
     assert len(handlers) >= 2  # May have additional handlers from other tests
 
     # Look for specific handler types or their pytest equivalents
-    stream_handler_found = any('StreamHandler' in str(type(h)) for h in handlers)
-    file_handler_found = any('FileHandler' in str(type(h)) for h in handlers)
+    stream_handler_found = any("StreamHandler" in str(type(h)) for h in handlers)
+    file_handler_found = any("FileHandler" in str(type(h)) for h in handlers)
 
-    assert stream_handler_found, \
-        f"No StreamHandler found in {[type(h) for h in handlers]}"
+    assert (
+        stream_handler_found
+    ), f"No StreamHandler found in {[type(h) for h in handlers]}"
     assert file_handler_found, f"No FileHandler found in {[type(h) for h in handlers]}"
 
     # Verify logs directory is created
@@ -35,6 +36,7 @@ def test_logging_setup():
     test_message = "Test log message"
     logger.info(test_message)
     # The test passes if logging setup completed without errors
+
 
 @pytest.fixture(autouse=True)
 def cleanup_logs():

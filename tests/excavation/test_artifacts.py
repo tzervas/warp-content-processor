@@ -419,15 +419,6 @@ class TestArtifactQualityMetrics:
         """Test quality assessment based on confidence and contamination."""
         contamination_types = set(list(ContaminationType)[:contamination_count])
 
-        context = ExtractionContext(
-            source_type="test",
-            start_offset=0,
-            end_offset=10,
-            contamination_types=contamination_types,
-            extraction_method="test",
-            original_surrounding="",
-        )
-
         # artifact = SchemaArtifact(
         #     content_type=ContentType.YAML,
         #     raw_content="test",
