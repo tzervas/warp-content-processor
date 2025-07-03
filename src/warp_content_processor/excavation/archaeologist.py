@@ -195,7 +195,7 @@ class ContentArchaeologist:
             is_valid=parse_result.success,
             extraction_context=context,
             validation_errors=(
-                [parse_result.error_message] if not parse_result.success else []
+                [] if parse_result.success else [parse_result.error_message]
             ),
             cleaning_warnings=island.cleaning_warnings,
         )
