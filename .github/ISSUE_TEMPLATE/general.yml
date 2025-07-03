@@ -1,0 +1,74 @@
+name: General Issue
+description: Create a new issue for bugs, features, or improvements
+labels: ["triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this issue! Please provide as much detail as possible.
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: What type of issue would you like to report?
+      options:
+        - Bug Report
+        - Feature Request
+        - Improvement
+        - Documentation
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please describe the issue in detail
+      placeholder: Clear and concise description of what the issue is...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: For bugs, please list the steps to reproduce the behavior
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What did you expect to happen?
+      placeholder: Describe what you expected to happen...
+    validations:
+      required: false
+
+  - type: textarea
+    id: system
+    attributes:
+      label: System Information
+      description: Please provide your system information
+      placeholder: |
+        - OS: [e.g. Ubuntu 22.04]
+        - Browser/Version: [e.g. Chrome 91]
+        - Version: [e.g. v1.0.0]
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Add any other context about the issue here
+      placeholder: Add any other relevant information here...
+    validations:
+      required: false
