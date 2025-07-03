@@ -272,14 +272,11 @@ class SchemaIslandDetector:
         if not content.strip():
             return None
 
-        # Detect contamination types in content and surrounding context
-        contamination_types = set()
-
-        # Check the content itself
-        for cont_type, pattern in self.contamination_patterns.items():
-            if pattern.search(content):
-                contamination_types.add(cont_type)
-
+        contamination_types = {
+            cont_type
+            for cont_type, pattern in self.contamination_patterns.items()
+            if pattern.search(content)
+        }
         # Also check surrounding context for contamination indicators
         if surrounding:
             for cont_type, pattern in self.contamination_patterns.items():
