@@ -119,8 +119,7 @@ class ContentArchaeologist:
                     logger.warning("Excavation timeout reached, stopping extraction")
                     break
 
-                artifact = self._extract_artifact_from_island(island)
-                if artifact:
+                if artifact := self._extract_artifact_from_island(island):
                     artifacts.append(artifact)
 
                     # Update stats
