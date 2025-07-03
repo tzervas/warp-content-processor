@@ -1,0 +1,89 @@
+name: Security Vulnerability
+description: Report a security vulnerability
+labels: ["security"]
+assignees:
+  - tzervas
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # SECURITY NOTICE
+        ⚠️ PLEASE DO NOT DISCLOSE SENSITIVE DETAILS PUBLICLY ⚠️
+        
+        For critical security vulnerabilities, please follow our private reporting process:
+        1. Email security@company.com (replace with actual security contact)
+        2. Use our security PGP key for encrypted communication
+        3. Wait for acknowledgment before any public disclosure
+
+  - type: checkboxes
+    id: confidentiality
+    attributes:
+      label: Confidentiality Confirmation
+      description: Please confirm you understand our security reporting process
+      options:
+        - label: I understand this is a private security report and will maintain confidentiality
+          required: true
+        - label: I have checked that this vulnerability hasn't been previously reported
+          required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Assessment
+      description: What is your assessment of this vulnerability's severity?
+      options:
+        - Critical
+        - High
+        - Medium
+        - Low
+        - Info
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Provide a clear description of the security vulnerability
+      placeholder: Detailed description of the security issue...
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Potential Impact
+      description: What's the potential impact if this vulnerability is exploited?
+      placeholder: Describe the potential consequences...
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide detailed steps to reproduce the vulnerability
+      placeholder: |
+        1. Setup environment with...
+        2. Configure...
+        3. Execute...
+    validations:
+      required: true
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: Do you have any suggestions for fixing this vulnerability?
+      placeholder: Describe potential fixes or mitigations...
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Affected Version(s)
+      description: Which versions are affected by this vulnerability?
+      placeholder: e.g., v1.0.0 - v1.2.3
+    validations:
+      required: true
