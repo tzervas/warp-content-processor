@@ -11,6 +11,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, main
 
+import pytest
 import yaml
 
 from warp_content_processor import (
@@ -102,6 +103,7 @@ class TestContentSplitter(TestCase):
         documents = ContentSplitter.split_content(content)
         self.assertEqual(len(documents), 2)
 
+    @pytest.mark.timeout(120)
     def test_mixed_content_splitting(self):
         """Test splitting of mixed content types."""
         content = self.mixed_content_file.read_text()
@@ -132,6 +134,7 @@ class TestContentProcessor(TestCase):
         """Clean up test environment."""
         shutil.rmtree(self.test_dir)
 
+    @pytest.mark.timeout(90)
     def test_mixed_content_processing(self):
         """Test processing of mixed content file."""
         # Process the mixed content file
@@ -147,7 +150,7 @@ class TestContentProcessor(TestCase):
 
         # Check that files were created in correct directories
         for content_type in result_types:
-            type_dir = self.output_dir / content_type
+            type_dir = self.output_dir / content_type.value
             self.assertTrue(type_dir.exists())
             self.assertTrue(any(type_dir.iterdir()))
 
@@ -165,6 +168,7 @@ class TestContentProcessor(TestCase):
             self.assertTrue(all(not r.is_valid for r in results))
             self.assertTrue(all(r.errors for r in results))
 
+    @pytest.mark.timeout(90)
     def test_content_validation(self):
         """Test validation of each content type."""
         for content_type, processor in self.processor.processors.items():

@@ -14,10 +14,11 @@ from ..content_type import ContentType
 class EnvVarProcessor(SchemaProcessor):
     """Processor for environment variable files."""
 
-    def __init__(self) -> None:
+    def __init__(self, output_dir=None) -> None:
         super().__init__()
         self.required_fields = {"variables"}
         self.optional_fields = {"description", "scope", "platform"}
+        self.output_dir = output_dir
 
         # Regex patterns
         self.var_name_pattern = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
@@ -139,6 +140,24 @@ class EnvVarProcessor(SchemaProcessor):
                 errors.append(f"Invalid scope: {scope}")
 
         return len(errors) == 0, errors, warnings
+
+    def normalize_content(self, data: Dict) -> Dict:
+        """Normalize environment variable content to consistent format."""
+        normalized = data.copy()
+        
+        # Normalize platform specification
+        if "platform" in normalized:
+            platform = normalized["platform"]
+            if isinstance(platform, str):
+                normalized["platform"] = [platform.lower()]
+            elif isinstance(platform, list):
+                normalized["platform"] = [p.lower() if isinstance(p, str) else p for p in platform]
+        
+        # Normalize scope
+        if "scope" in normalized and isinstance(normalized["scope"], str):
+            normalized["scope"] = normalized["scope"].lower()
+        
+        return normalized
 
     def process(self, content: str) -> ProcessingResult:
         """Process and validate environment variable content."""

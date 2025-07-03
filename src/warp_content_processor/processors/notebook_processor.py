@@ -14,10 +14,11 @@ from ..content_type import ContentType
 class NotebookProcessor(SchemaProcessor):
     """Processor for notebook files."""
 
-    def __init__(self) -> None:
+    def __init__(self, output_dir=None) -> None:
         super().__init__()
         self.required_fields = {"title"}  # Only title is required in front matter
         self.optional_fields = {"description", "tags"}
+        self.output_dir = output_dir
 
         # Regex patterns
         self.front_matter_pattern = re.compile(r"^---\n(.*?)\n---\n", re.DOTALL)
@@ -110,24 +111,62 @@ class NotebookProcessor(SchemaProcessor):
 
         return len(errors) == 0, errors, warnings
 
+    def normalize_content(self, data: Dict) -> Dict:
+        """Normalize notebook content to consistent format."""
+        normalized = data.copy()
+        
+        # Normalize front matter
+        if "front_matter" in normalized and isinstance(normalized["front_matter"], dict):
+            front_matter = normalized["front_matter"].copy()
+            
+            # Normalize tags to lowercase
+            if "tags" in front_matter and isinstance(front_matter["tags"], list):
+                front_matter["tags"] = [
+                    tag.lower() if isinstance(tag, str) else tag 
+                    for tag in front_matter["tags"]
+                ]
+            
+            normalized["front_matter"] = front_matter
+        
+        return normalized
+
     def process(self, content: str) -> ProcessingResult:
         """Process and validate notebook content."""
         try:
-            # Extract front matter
-            front_matter, remaining_content, errors = self._extract_front_matter(
-                content
-            )
-            if errors:
-                return ProcessingResult(
-                    content_type=ContentType.NOTEBOOK,
-                    is_valid=False,
-                    data=None,
-                    errors=errors,
-                    warnings=[],
+            # Try to parse as structured YAML first
+            try:
+                yaml_data = yaml.safe_load(content)
+                if isinstance(yaml_data, dict) and "front_matter" in yaml_data and "content" in yaml_data:
+                    # Content is already structured
+                    data = yaml_data
+                else:
+                    # Fall back to front matter extraction
+                    front_matter, remaining_content, errors = self._extract_front_matter(
+                        content
+                    )
+                    if errors:
+                        return ProcessingResult(
+                            content_type=ContentType.NOTEBOOK,
+                            is_valid=False,
+                            data=None,
+                            errors=errors,
+                            warnings=[],
+                        )
+                    data = {"front_matter": front_matter, "content": remaining_content}
+            except yaml.YAMLError:
+                # Fall back to front matter extraction
+                front_matter, remaining_content, errors = self._extract_front_matter(
+                    content
                 )
-
-            # Prepare complete data for validation
-            data = {"front_matter": front_matter, "content": remaining_content}
+                if errors:
+                    return ProcessingResult(
+                        content_type=ContentType.NOTEBOOK,
+                        is_valid=False,
+                        data=None,
+                        errors=errors,
+                        warnings=[],
+                    )
+                data = {"front_matter": front_matter, "content": remaining_content}
 
             # Validate the data
             is_valid, errors, warnings = self.validate(data)

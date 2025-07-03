@@ -270,12 +270,12 @@ class WorkflowProcessor(WorkflowValidator):
                     logger.warning(f"Warning for {file_path}: {warning}")
                     self.warnings.append((file_path, warning))
 
-                    # Generate output filename and save
-                    if result.data is not None:
-                        filename = self.generate_filename(result.data)
-                        output_path = self.output_dir / filename
-                    else:
-                        continue
+                # Generate output filename and save
+                if result.data is not None:
+                    filename = self.generate_filename(result.data)
+                    output_path = self.output_dir / filename
+                else:
+                    continue
 
                 # Ensure unique filename
                 counter = 1
@@ -291,6 +291,6 @@ class WorkflowProcessor(WorkflowValidator):
             return success
 
         except Exception as e:
-            self.logger.error("Error processing %s: %s", file_path, str(e))
+            logger.error("Error processing %s: %s", file_path, str(e))
             self.failed_files.append((file_path, str(e)))
             return False

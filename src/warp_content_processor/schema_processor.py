@@ -1,5 +1,6 @@
 """
 Schema detection and processing for Warp Terminal content types.
+Includes security validation and content normalization.
 """
 
 import logging
@@ -12,6 +13,13 @@ import yaml
 from .base_processor import ProcessingResult, SchemaProcessor
 from .content_type import ContentType
 from .processor_factory import ProcessorFactory
+from .utils.security import (
+    ContentSanitizer, 
+    SecurityValidationError, 
+    secure_yaml_load, 
+    secure_yaml_dump
+)
+from .utils.normalizer import ContentNormalizer
 
 logger = logging.getLogger(__name__)
 
@@ -19,25 +27,29 @@ logger = logging.getLogger(__name__)
 # Regular expression patterns for content detection
 CONTENT_PATTERNS = {
     "workflow": [
-        r"name:\s*.+\s*command:\s*.+",  # Basic workflow pattern
-        r"shells:\s*\[.*\]|shells:\s*-\s*\w+",  # Shell specifications
+        r"name:\s*.+command:\s*",  # Basic workflow pattern
+        r"shells:\s*[\[\-]",  # Shell specifications
+        r"command:\s*.+",  # Command field
     ],
     "prompt": [
-        r"name:\s*.+\s*prompt:\s*.+",  # Basic prompt pattern
-        r"completion:\s*|response:\s*",  # Common prompt fields
+        r"name:\s*.+prompt:\s*",  # Basic prompt pattern
+        r"prompt:\s*.+\{\{.*\}\}",  # Prompt with template variables
+        r"arguments:\s*\-\s*name:",  # Prompt arguments
     ],
     "notebook": [
-        r"---[\s\S]*?title:[\s\S]*?---",  # Markdown front matter with title
+        r"title:\s*.+description:\s*.+tags:\s*\n\s*\-",  # Notebook with title/desc/tags
         r"```[^`]*```",  # Code blocks
-        r"^\s*#\s+",  # Markdown headers
+        r"^\s*##?\s+[^\n]*\n\s*\n.*```",  # Markdown headers with code blocks
     ],
     "env_var": [
-        r"environment:\s*|env:\s*|variables:\s*",
-        r"export\s+\w+=.*|\w+=.*",
+        r"variables:\s*\n\s+\w+:",  # Variables block
+        r"environment:\s*\n",  # Environment block
+        r"scope:\s*user",  # Scope indicator
     ],
     "rule": [
-        r"title:\s*.+\s*description:\s*.+\s*guidelines?:\s*",
-        r"standards?:\s*|rules?:\s*",
+        r"title:\s*.+description:\s*.+guidelines:\s*\-",  # Rule with guidelines
+        r"category:\s*\w+",  # Category field
+        r"guidelines:\s*\n\s*\-",  # Guidelines list
     ],
 }
 
@@ -77,73 +89,105 @@ class ContentTypeDetector:
 
 
 class ContentSplitter:
-    """Splits combined content into individual documents."""
-
-    # Patterns for document boundaries
-    DOCUMENT_PATTERNS = {
-        ContentType.WORKFLOW: r"(?:^|\n)---\s*(?:workflow|name):\s*.*?(?=\n---|\Z)",
-        ContentType.PROMPT: r"(?:^|\n)---\s*(?:prompt|name):\s*.*?(?=\n---|\Z)",
-        ContentType.NOTEBOOK: r"(?:^|\n)---\s*title:\s*.*?(?=\n---|\Z)",
-        ContentType.ENV_VAR: (
-            r"(?:^|\n)(?:environment|variables):\s*.*?(?=\n(?:environment|variables)|\Z)"
-        ),
-        ContentType.RULE: r"(?:^|\n)---\s*(?:rule|title):\s*.*?(?=\n---|\Z)",
-    }
+    """Splits combined content into individual documents with security validation."""
 
     @classmethod
     def split_content(cls, content: str) -> List[Tuple[str, str]]:
         """
         Split content into individual documents and detect their types.
+        Includes security validation and content normalization.
 
         Returns:
             List[Tuple[str, str]]: List of (content_type, document_content) pairs
         """
+        try:
+            # Validate and sanitize input
+            content = ContentSanitizer.validate_content(content)
+        except SecurityValidationError as e:
+            logger.error(f"Security validation failed: {e}")
+            return []
+        
         documents = []
 
+        # First try simple document separation before normalization
+        try:
+            simple_docs = cls._simple_split_content(content)
+            if len(simple_docs) > 1:
+                # Multiple documents found, use simple splitting
+                return simple_docs
+        except Exception as e:
+            logger.warning(f"Simple splitting failed: {e}")
+        
+        # Use the enhanced normalizer for single document or complex parsing
+        try:
+            normalized_docs = ContentNormalizer.normalize_mixed_content(content)
+            for content_type, normalized_data in normalized_docs:
+                if content_type != 'unknown':
+                    # Convert back to string format for processing
+                    try:
+                        doc_content = secure_yaml_dump(normalized_data)
+                        documents.append((ContentType(content_type), doc_content))
+                    except Exception as e:
+                        logger.warning(f"Failed to serialize {content_type}: {e}")
+                        # Fall back to raw content
+                        if 'content' in normalized_data:
+                            documents.append((ContentType.UNKNOWN, normalized_data['content']))
+                else:
+                    # Handle unknown content types
+                    if isinstance(normalized_data, dict) and 'content' in normalized_data:
+                        doc_type = ContentTypeDetector.detect_type(normalized_data['content'])
+                        documents.append((doc_type, normalized_data['content']))
+            
+            if documents:
+                return documents
+        except Exception as e:
+            logger.warning(f"Normalization failed, falling back to simple splitting: {e}")
+
+        # Fallback to simple splitting if normalization fails
+        return cls._simple_split_content(content)
+    
+    @classmethod
+    def _simple_split_content(cls, content: str) -> List[Tuple[str, str]]:
+        """Simple content splitting as fallback."""
+        documents = []
+        
         # First try to split by YAML documents
         try:
             yaml_docs = list(yaml.safe_load_all(content))
             if len(yaml_docs) > 1:
                 for doc in yaml_docs:
                     if doc:  # Skip empty documents
-                        doc_content = yaml.dump(doc)
-                        doc_type = ContentTypeDetector.detect_type(doc_content)
-                        documents.append((doc_type, doc_content))
+                        try:
+                            doc_content = secure_yaml_dump(doc)
+                            doc_type = ContentTypeDetector.detect_type(doc_content)
+                            documents.append((doc_type, doc_content))
+                        except Exception as e:
+                            logger.warning(f"Failed to process YAML document: {e}")
                 return documents
         except yaml.YAMLError:
             pass
 
-        # If YAML splitting fails, try pattern-based splitting
-        current_pos = 0
-        content_length = len(content)
+        # If YAML splitting fails, split by YAML document separators (with possible indentation)
+        parts = re.split(r'^\s*---\s*$', content, flags=re.MULTILINE)
+        
+        for part in parts:
+            part = part.strip()
+            if part:  # Skip empty parts
+                try:
+                    part = ContentSanitizer.sanitize_string(part)
+                    doc_type = ContentTypeDetector.detect_type(part)
+                    documents.append((doc_type, part))
+                except SecurityValidationError as e:
+                    logger.warning(f"Part failed security validation: {e}")
 
-        while current_pos < content_length:
-            # Try to find the next document boundary
-            next_doc_start = content_length
-            detected_type = None
-
-            for content_type, pattern in cls.DOCUMENT_PATTERNS.items():
-                match = re.search(
-                    pattern, content[current_pos:], re.MULTILINE | re.DOTALL
-                )
-                if match and match.start() + current_pos < next_doc_start:
-                    next_doc_start = match.start() + current_pos
-                    detected_type = content_type
-
-            if detected_type:
-                # Extract document content
-                doc_content = content[current_pos:next_doc_start].strip()
-                if doc_content:  # Don't add empty documents
-                    doc_type = ContentTypeDetector.detect_type(doc_content)
-                    documents.append((doc_type, doc_content))
-                current_pos = next_doc_start
-            else:
-                # No more boundaries found, add remaining content if any
-                remaining = content[current_pos:].strip()
-                if remaining:
-                    doc_type = ContentTypeDetector.detect_type(remaining)
-                    documents.append((doc_type, remaining))
-                break
+        # If no documents found, treat entire content as single document
+        if not documents:
+            try:
+                content = ContentSanitizer.sanitize_string(content)
+                doc_type = ContentTypeDetector.detect_type(content)
+                documents.append((doc_type, content))
+            except SecurityValidationError as e:
+                logger.error(f"Content failed security validation: {e}")
 
         return documents
 
@@ -163,17 +207,24 @@ class ContentProcessor:
 
         # Create output directories
         for content_type in self.processors.keys():
-            (self.output_dir / str(content_type)).mkdir(parents=True, exist_ok=True)
+            (self.output_dir / content_type.value).mkdir(parents=True, exist_ok=True)
 
     def process_file(self, file_path: Union[str, Path]) -> List[ProcessingResult]:
         """
         Process a single file that may contain multiple content types.
+        Includes security validation for file paths and content.
 
         Returns:
             List[ProcessingResult]: Results for each processed document
         """
         try:
-            content = Path(file_path).read_text(encoding="utf-8")
+            # Validate file path for security
+            validated_path = ContentSanitizer.validate_file_path(file_path)
+            
+            # Read and validate content
+            content = validated_path.read_text(encoding="utf-8")
+            content = ContentSanitizer.validate_content(content)
+            
             documents = ContentSplitter.split_content(content)
             results = []
 
@@ -187,7 +238,7 @@ class ContentProcessor:
                         if result.is_valid and result.data is not None:
                             # Generate filename and save
                             filename = processor.generate_filename(result.data)
-                            output_path = self.output_dir / doc_type / filename
+                            output_path = self.output_dir / doc_type.value / filename
 
                             # Ensure unique filename
                             counter = 1
@@ -196,13 +247,21 @@ class ContentProcessor:
                                 ext = filename.rsplit(".", 1)[1]
                                 output_path = (
                                     self.output_dir
-                                    / doc_type
+                                    / doc_type.value
                                     / f"{base_name}_{counter}.{ext}"
                                 )
                                 counter += 1
 
-                            output_path.write_text(doc_content)
-                            logger.info("Saved %s content to %s", doc_type, output_path)
+                            # Save the processed and normalized data instead of raw content
+                            try:
+                                processed_content = secure_yaml_dump(result.data)
+                                output_path.write_text(processed_content)
+                                logger.info("Saved %s content to %s", doc_type, output_path)
+                            except Exception as save_error:
+                                logger.error("Failed to save %s to %s: %s", doc_type, output_path, save_error)
+                                # Fall back to original content if serialization fails
+                                output_path.write_text(doc_content)
+                                logger.info("Saved %s content to %s (fallback)", doc_type, output_path)
 
                         results.append(result)
                 except ValueError:

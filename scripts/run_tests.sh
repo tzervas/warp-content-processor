@@ -42,4 +42,4 @@ fi
 
 # Run pytest with coverage and optional fail-fast
 echo "Running pytest with coverage..."
-python -m pytest tests/ -v --cov=src/warp_content_processor $FAIL_FAST
+python -m pytest tests/ -v --cov=src/warp_content_processor --timeout=60 -vv --log-cli-level=DEBUG $FAIL_FAST
