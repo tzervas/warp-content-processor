@@ -98,6 +98,15 @@ pytest tests/
 4. Run tests
 5. Submit a pull request
 
+### Issue Templates
+
+When creating issues, please use our issue templates:
+
+- **Bug Reports**: Use the Bug Report template for reporting bugs. Include steps to reproduce, expected behavior, and your environment details.
+- **Enhancements**: Use the Enhancement Request template for suggesting improvements. This covers feature requests, performance improvements, documentation updates, and more.
+
+The templates will help ensure all necessary information is provided, making it easier for maintainers to understand and address your issue.
+
 ## License
 
 [MIT License](LICENSE)
