@@ -11,9 +11,7 @@ This replaces regex-heavy approaches with a structured token-based system that c
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import List, Optional, Tuple
-
-import yaml
+from typing import Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +42,7 @@ class Token:
     value: str
     line: int
     column: int
-    original_value: str = None  # Store original for error reporting
+    original_value: Optional[str] = None  # Store original for error reporting
 
 
 class ContentTokenizer:
@@ -54,10 +52,11 @@ class ContentTokenizer:
     Much more maintainable than regex patterns - each token type has clear rules.
     """
 
-    def __init__(self):
-        self.tokens = []
-        self.current_line = 1
-        self.current_column = 1
+    def __init__(self) -> None:
+        """Initialize the content tokenizer."""
+        self.tokens: List[Token] = []
+        self.current_line: int = 1
+        self.current_column: int = 1
 
     def tokenize(self, content: str) -> List[Token]:
         """Convert content into tokens for intelligent processing."""
@@ -212,9 +211,9 @@ class ContentTokenizer:
 class StructureRecovery:
     """Recovers structure from tokenized content."""
 
-    def __init__(self):
-        self.errors = []
-        self.fixes_applied = []
+    def __init__(self) -> None:
+        self.errors: List[str] = []
+        self.fixes_applied: List[str] = []
 
     def recover_structures(self, tokens: List[Token]) -> List[Token]:
         """Apply intelligent recovery to fix structural issues."""
@@ -235,7 +234,7 @@ class StructureRecovery:
         fixed_tokens = []
 
         # Group tokens by line to analyze line-by-line
-        lines = {}
+        lines: Dict[int, List[Token]] = {}
         for token in tokens:
             if token.line not in lines:
                 lines[token.line] = []
@@ -257,6 +256,8 @@ class StructureRecovery:
         return fixed_tokens
 
     def _line_has_unclosed_structures(self, line_tokens: List[Token]) -> bool:
+        """Determine if a line of tokens has unclosed structures (brackets/braces)."""
+        stack = []
         """Check if a line has unclosed brackets or braces."""
         stack = []
 
@@ -373,7 +374,7 @@ class StructureRecovery:
         }
         return typo_fixes.get(key.lower(), key)
 
-    def _record_fix(self, message: str):
+    def _record_fix(self, message: str) -> None:
         """Record a fix that was applied."""
         self.fixes_applied.append(message)
 
@@ -385,11 +386,14 @@ class IntelligentCleaner:
     This replaces the regex-heavy approach with a maintainable, extensible system.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.tokenizer = ContentTokenizer()
         self.recovery = StructureRecovery()
 
     def clean_content(self, content: str) -> Tuple[str, List[str], List[str]]:
+        """Clean content intelligently. Returns cleaned content, fixes, and errors found."""
+        if not content or not content.strip():
+            return content, [], []
         """
         Clean content intelligently.
 
@@ -420,9 +424,10 @@ class IntelligentCleaner:
         return "".join(result)
 
     def extract_key_value_pairs(self, content: str) -> List[Tuple[str, str]]:
+        """Extract key-value pairs from content using token-based analysis."""
         """Extract key-value pairs using intelligent tokenization."""
         tokens = self.tokenizer.tokenize(content)
-        pairs = []
+        pairs: List[Tuple[str, str]] = []
 
         # First check if content is likely to contain valid YAML/structured data
         has_colon = any(token.type == TokenType.COLON for token in tokens)
@@ -498,7 +503,16 @@ class IntelligentCleaner:
     def detect_content_type(self, content: str) -> Tuple[str, float]:
         """Detect content type using token-based analysis."""
         tokens = self.tokenizer.tokenize(content)
-        indicators = {
+        indicators: Dict[str, int] = {
+            "workflow": 0,
+            "prompt": 0,
+            "notebook": 0,
+            "env_var": 0,
+            "rule": 0,
+        }
+        """Detect content type using token-based analysis."""
+        tokens = self.tokenizer.tokenize(content)
+        indicators: Dict[str, int] = {
             "workflow": 0,
             "prompt": 0,
             "notebook": 0,
@@ -544,18 +558,18 @@ class IntelligentCleaner:
 
                 # Check for command-like content
                 if any(cmd in value for cmd in ["echo", "ls", "bash", "sh", "git"]):
-                    indicators["workflow"] += 0.5
+                    indicators["workflow"] += 1
 
                 # Check for shell names
                 if any(shell in value for shell in ["bash", "zsh", "fish", "sh"]):
-                    indicators["workflow"] += 0.3
+                    indicators["workflow"] += 1
 
         # Find the type with the highest score
         if not any(indicators.values()):
             return "unknown", 0.0
 
         best_type = max(indicators.items(), key=lambda x: x[1])
-        confidence = best_type[1] / max(
+        confidence = float(best_type[1]) / max(
             1, len([t for t in tokens if t.type == TokenType.KEY])
         )
 
