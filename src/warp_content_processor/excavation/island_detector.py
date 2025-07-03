@@ -391,7 +391,7 @@ class SchemaIslandDetector:
             elif line.startswith("- "):
                 schema_lines += 1
 
-        if len(lines) > 0:
+        if lines:
             schema_ratio = schema_lines / len([line for line in lines if line.strip()])
             score += schema_ratio * 0.3
 
