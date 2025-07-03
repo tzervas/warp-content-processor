@@ -1,0 +1,44 @@
+{
+    "name": "Warp Content Processor Dev",
+    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+    "features": {
+        "ghcr.io/devcontainers/features/github-cli:1": {},
+        "ghcr.io/devcontainers/features/node:1": {
+            "version": "22.16.0"
+        },
+        "ghcr.io/trunk-io/devcontainer-feature/trunk:1": {}
+    },
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.black-formatter",
+                "trunk.io",
+                "streetsidesoftware.code-spell-checker",
+                "eamodio.gitlens",
+                "visualstudioexptteam.vscodeintellicode",
+                "njpwerner.autodocstring"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": ".venv/bin/python",
+                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.diagnosticMode": "workspace",
+                "python.linting.enabled": true,
+                "python.linting.pylintEnabled": true,
+                "python.linting.mypyEnabled": true,
+                "python.formatting.provider": "black",
+                "python.formatting.blackArgs": ["--line-length", "100"],
+                "editor.formatOnSave": true,
+                "editor.codeActionsOnSave": {
+                    "source.organizeImports": true
+                },
+                "files.trimTrailingWhitespace": true,
+                "files.insertFinalNewLine": true,
+                "files.trimFinalNewlines": true
+            }
+        }
+    },
+    "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && uv pip install --system --managed-python -r requirements.txt",
+    "remoteUser": "vscode"
+}
