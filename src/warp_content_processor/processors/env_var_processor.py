@@ -226,7 +226,8 @@ class EnvVarProcessor(SchemaProcessor):
         if len(var_names) > 30:
             import hashlib
 
-            var_hash = hashlib.md5(var_names.encode()).hexdigest()[:8]
+            # Using SHA-256 for non-cryptographic purposes
+            var_hash = hashlib.sha256(var_names.encode()).hexdigest()[:8]
             parts.append(var_hash)
         else:
             parts.append(var_names)
