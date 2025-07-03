@@ -1,3 +1,5 @@
+logs/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -25,6 +27,7 @@ venv/
 env/
 ENV/
 .env
+.venv/
 
 # IDE
 .idea/
@@ -44,4 +47,11 @@ processed/
 Thumbs.db
 
 =*
+
+# Testing and Coverage
 .coverage
+.pytest_cache/
+coverage.xml
+htmlcov/
+.tox/
+nosetests.xml

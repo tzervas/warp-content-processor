@@ -127,18 +127,18 @@ class PromptProcessor(SchemaProcessor):
     def normalize_content(self, data: Dict) -> Dict:
         """Normalize prompt content to consistent format."""
         normalized = data.copy()
-        
+
         # Normalize tags to lowercase
         if "tags" in normalized and isinstance(normalized["tags"], list):
             normalized["tags"] = [
-                tag.lower() if isinstance(tag, str) else tag 
+                tag.lower() if isinstance(tag, str) else tag
                 for tag in normalized["tags"]
             ]
-        
+
         # Ensure arguments is a list
         if "arguments" in normalized and not isinstance(normalized["arguments"], list):
             normalized["arguments"] = []
-        
+
         # Normalize argument fields
         if "arguments" in normalized and isinstance(normalized["arguments"], list):
             for arg in normalized["arguments"]:
@@ -151,7 +151,7 @@ class PromptProcessor(SchemaProcessor):
                     # Convert type to lowercase
                     if isinstance(arg["type"], str):
                         arg["type"] = arg["type"].lower()
-        
+
         return normalized
 
     def generate_filename(self, data: Dict) -> str:

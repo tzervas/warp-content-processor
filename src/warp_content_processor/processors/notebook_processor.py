@@ -114,20 +114,22 @@ class NotebookProcessor(SchemaProcessor):
     def normalize_content(self, data: Dict) -> Dict:
         """Normalize notebook content to consistent format."""
         normalized = data.copy()
-        
+
         # Normalize front matter
-        if "front_matter" in normalized and isinstance(normalized["front_matter"], dict):
+        if "front_matter" in normalized and isinstance(
+            normalized["front_matter"], dict
+        ):
             front_matter = normalized["front_matter"].copy()
-            
+
             # Normalize tags to lowercase
             if "tags" in front_matter and isinstance(front_matter["tags"], list):
                 front_matter["tags"] = [
-                    tag.lower() if isinstance(tag, str) else tag 
+                    tag.lower() if isinstance(tag, str) else tag
                     for tag in front_matter["tags"]
                 ]
-            
+
             normalized["front_matter"] = front_matter
-        
+
         return normalized
 
     def process(self, content: str) -> ProcessingResult:
@@ -136,13 +138,17 @@ class NotebookProcessor(SchemaProcessor):
             # Try to parse as structured YAML first
             try:
                 yaml_data = yaml.safe_load(content)
-                if isinstance(yaml_data, dict) and "front_matter" in yaml_data and "content" in yaml_data:
+                if (
+                    isinstance(yaml_data, dict)
+                    and "front_matter" in yaml_data
+                    and "content" in yaml_data
+                ):
                     # Content is already structured
                     data = yaml_data
                 else:
                     # Fall back to front matter extraction
-                    front_matter, remaining_content, errors = self._extract_front_matter(
-                        content
+                    front_matter, remaining_content, errors = (
+                        self._extract_front_matter(content)
                     )
                     if errors:
                         return ProcessingResult(

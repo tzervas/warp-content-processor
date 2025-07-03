@@ -5,7 +5,6 @@ Test suite for content splitting and processing functionality.
 Tests handling of mixed content files and content type detection.
 """
 
-import os
 import shutil
 import tempfile
 from pathlib import Path

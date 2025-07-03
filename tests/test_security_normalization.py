@@ -5,21 +5,20 @@ Test suite for security validation and content normalization.
 Tests input sanitization, vulnerability prevention, and messy content parsing.
 """
 
-import tempfile
 import unittest
 from pathlib import Path
 
 import pytest
 
+from warp_content_processor.schema_processor import ContentSplitter
+from warp_content_processor.utils.normalizer import ContentNormalizer
 from warp_content_processor.utils.security import (
     ContentSanitizer,
     InputValidator,
     SecurityValidationError,
-    secure_yaml_load,
     secure_yaml_dump,
+    secure_yaml_load,
 )
-from warp_content_processor.utils.normalizer import ContentNormalizer
-from warp_content_processor.schema_processor import ContentSplitter, ContentTypeDetector
 
 
 class TestSecurityValidation(unittest.TestCase):
@@ -32,7 +31,7 @@ class TestSecurityValidation(unittest.TestCase):
         command: <script>alert('xss')</script>
         description: This contains dangerous content
         """
-        
+
         with self.assertRaises(SecurityValidationError):
             ContentSanitizer.validate_content(dangerous_content)
 
@@ -45,7 +44,7 @@ class TestSecurityValidation(unittest.TestCase):
             "test $(evil_command)",
             "path/../../etc/passwd",
         ]
-        
+
         for cmd in dangerous_commands:
             with self.assertRaises(SecurityValidationError):
                 ContentSanitizer.validate_command_content(cmd)
@@ -59,7 +58,7 @@ class TestSecurityValidation(unittest.TestCase):
             "\\\\server\\share\\file",
             "file.exe",  # Not allowed extension
         ]
-        
+
         for path in dangerous_paths:
             with self.assertRaises(SecurityValidationError):
                 ContentSanitizer.validate_file_path(path)
@@ -72,7 +71,7 @@ class TestSecurityValidation(unittest.TestCase):
             "document.md",
             "data.txt",
         ]
-        
+
         for path in valid_paths:
             try:
                 result = ContentSanitizer.validate_file_path(path)
@@ -86,10 +85,10 @@ class TestSecurityValidation(unittest.TestCase):
         deeply_nested = {"a": {"b": {"c": {"d": {}}}}}
         for _ in range(25):  # Create very deep nesting
             deeply_nested = {"level": deeply_nested}
-        
+
         with self.assertRaises(SecurityValidationError):
             ContentSanitizer.validate_yaml_structure(deeply_nested)
-        
+
         # Test large arrays
         large_array = list(range(2000))
         with self.assertRaises(SecurityValidationError):
@@ -99,7 +98,7 @@ class TestSecurityValidation(unittest.TestCase):
         """Test Unicode normalization and control character removal."""
         dangerous_unicode = "test\x00\x01\x02\x1f\x7f"
         sanitized = ContentSanitizer.sanitize_string(dangerous_unicode)
-        
+
         self.assertEqual(sanitized, "test")
         self.assertNotIn("\x00", sanitized)
 
@@ -107,14 +106,14 @@ class TestSecurityValidation(unittest.TestCase):
         """Test workflow name validation."""
         valid_names = ["Test Workflow", "Git-Status", "build_script"]
         invalid_names = ["<script>", "evil;command", "test\x00name"]
-        
+
         for name in valid_names:
             try:
                 result = InputValidator.validate_workflow_name(name)
                 self.assertTrue(result)
             except SecurityValidationError:
                 self.fail(f"Valid name {name} was rejected")
-        
+
         for name in invalid_names:
             with self.assertRaises(SecurityValidationError):
                 InputValidator.validate_workflow_name(name)
@@ -123,30 +122,26 @@ class TestSecurityValidation(unittest.TestCase):
         """Test tag validation."""
         valid_tags = ["git", "test-tag", "v1"]
         invalid_tags = ["invalid tag", "tag!", "TAG", "-invalid"]
-        
+
         for tag in valid_tags:
             try:
                 result = InputValidator.validate_tag(tag)
                 self.assertTrue(result)
             except SecurityValidationError:
                 self.fail(f"Valid tag {tag} was rejected")
-        
+
         for tag in invalid_tags:
             with self.assertRaises(SecurityValidationError):
                 InputValidator.validate_tag(tag)
 
     def test_secure_yaml_operations(self):
         """Test secure YAML loading and dumping."""
-        safe_data = {
-            "name": "Test",
-            "command": "echo hello",
-            "tags": ["test", "safe"]
-        }
-        
+        safe_data = {"name": "Test", "command": "echo hello", "tags": ["test", "safe"]}
+
         # Test secure dump
         yaml_content = secure_yaml_dump(safe_data)
         self.assertIsInstance(yaml_content, str)
-        
+
         # Test secure load
         loaded_data = secure_yaml_load(yaml_content)
         self.assertEqual(loaded_data, safe_data)
@@ -163,9 +158,9 @@ class TestContentNormalization(unittest.TestCase):
         tags:git,version-control
         shells:bash,zsh
         """
-        
+
         normalized = ContentNormalizer.normalize_messy_yaml(messy_yaml)
-        
+
         # Should add proper spacing
         self.assertIn("name: Git Status Check", normalized)
         self.assertIn("command: git status", normalized)
@@ -181,12 +176,12 @@ description: A test workflow
 
 This is some additional markdown content.
 """
-        
+
         frontmatter, remaining = ContentNormalizer.normalize_yaml_frontmatter(content)
-        
+
         self.assertIsInstance(frontmatter, dict)
-        self.assertEqual(frontmatter['name'], 'Test Workflow')
-        self.assertIn('Additional Content', remaining)
+        self.assertEqual(frontmatter["name"], "Test Workflow")
+        self.assertIn("Additional Content", remaining)
 
     def test_workflow_content_normalization(self):
         """Test workflow content normalization from various formats."""
@@ -198,13 +193,13 @@ This is some additional markdown content.
         tags: git version-control
         shells: bash zsh
         """
-        
+
         normalized = ContentNormalizer.normalize_workflow_content(messy_workflow)
-        
-        self.assertEqual(normalized['name'], 'Git Status Workflow')
-        self.assertEqual(normalized['command'], 'git status && git diff')
-        self.assertIsInstance(normalized['tags'], list)
-        self.assertIn('git', normalized['tags'])
+
+        self.assertEqual(normalized["name"], "Git Status Workflow")
+        self.assertEqual(normalized["command"], "git status && git diff")
+        self.assertIsInstance(normalized["tags"], list)
+        self.assertIn("git", normalized["tags"])
 
     def test_prompt_content_normalization(self):
         """Test prompt content normalization."""
@@ -217,12 +212,12 @@ This is some additional markdown content.
         
         {{code}}
         """
-        
+
         normalized = ContentNormalizer.normalize_prompt_content(messy_prompt)
-        
-        self.assertEqual(normalized['name'], 'Code Review')
-        self.assertIn('{{language}}', normalized['prompt'])
-        self.assertIn('{{code}}', normalized['prompt'])
+
+        self.assertEqual(normalized["name"], "Code Review")
+        self.assertIn("{{language}}", normalized["prompt"])
+        self.assertIn("{{code}}", normalized["prompt"])
 
     def test_mixed_content_normalization(self):
         """Test normalization of mixed content types."""
@@ -247,14 +242,14 @@ guidelines:
   - Version numbers should follow MAJOR.MINOR.PATCH
   - Use git tags for releases
 """
-        
+
         documents = ContentNormalizer.normalize_mixed_content(mixed_content)
-        
+
         # Should detect multiple content types
         types = [doc[0] for doc in documents]
-        self.assertIn('workflow', types)
-        self.assertIn('prompt', types)
-        self.assertIn('rule', types)
+        self.assertIn("workflow", types)
+        self.assertIn("prompt", types)
+        self.assertIn("rule", types)
 
     def test_code_block_extraction(self):
         """Test extraction of code blocks from Markdown."""
@@ -276,14 +271,14 @@ def hello():
     print("Hello, World!")
 ```
 """
-        
+
         code_blocks = ContentNormalizer.extract_code_blocks(markdown_content)
-        
+
         self.assertEqual(len(code_blocks), 2)
-        self.assertEqual(code_blocks[0]['language'], 'bash')
-        self.assertIn('git status', code_blocks[0]['content'])
-        self.assertEqual(code_blocks[1]['language'], 'python')
-        self.assertIn('def hello', code_blocks[1]['content'])
+        self.assertEqual(code_blocks[0]["language"], "bash")
+        self.assertIn("git status", code_blocks[0]["content"])
+        self.assertEqual(code_blocks[1]["language"], "python")
+        self.assertIn("def hello", code_blocks[1]["content"])
 
 
 class TestRobustParsing(unittest.TestCase):
@@ -302,13 +297,13 @@ arguments:
  description:Whether to show diff
  default_value:true
 """
-        
+
         documents = ContentSplitter.split_content(poorly_formatted)
-        
+
         self.assertTrue(len(documents) > 0)
         # Should be detected as workflow despite poor formatting
         doc_type, _ = documents[0]
-        self.assertEqual(doc_type.value, 'workflow')
+        self.assertEqual(doc_type.value, "workflow")
 
     def test_parse_mixed_markdown_yaml(self):
         """Test parsing of mixed Markdown and YAML content."""
@@ -357,16 +352,16 @@ guidelines:
   - Document public APIs
 category: development
 """
-        
+
         documents = ContentSplitter.split_content(mixed_content)
-        
+
         # Should parse multiple documents
         self.assertGreaterEqual(len(documents), 3)
-        
+
         # Check that different types are detected
         types = [doc_type.value for doc_type, _ in documents]
-        self.assertIn('workflow', types)
-        self.assertIn('prompt', types)
+        self.assertIn("workflow", types)
+        self.assertIn("prompt", types)
 
     def test_parse_malformed_yaml_with_recovery(self):
         """Test parsing of malformed YAML with error recovery."""
@@ -380,7 +375,7 @@ shells:
   - zsh
 invalid_field: {unclosed: dict
 """
-        
+
         # Should not crash and should attempt to parse what it can
         try:
             documents = ContentSplitter.split_content(malformed_yaml)
@@ -395,7 +390,8 @@ invalid_field: {unclosed: dict
         # Create large but valid content
         large_content_parts = []
         for i in range(100):
-            large_content_parts.append(f"""
+            large_content_parts.append(
+                f"""
 ---
 name: Workflow {i}
 command: echo "Processing item {i}"
@@ -406,13 +402,14 @@ tags:
   - item-{i}
 shells:
   - bash
-""")
-        
-        large_content = '\n'.join(large_content_parts)
-        
+"""
+            )
+
+        large_content = "\n".join(large_content_parts)
+
         # Should parse without timeout
         documents = ContentSplitter.split_content(large_content)
-        
+
         # Should find all 100 workflows
         self.assertEqual(len(documents), 100)
 
@@ -425,13 +422,13 @@ command: <script>alert('xss')</script> && rm -rf /
 description: This tries to bypass validation
 ---
 """
-        
+
         # Should be caught by security validation
         documents = ContentSplitter.split_content(malicious_content)
-        
+
         # Should return empty list due to security rejection
         self.assertEqual(len(documents), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

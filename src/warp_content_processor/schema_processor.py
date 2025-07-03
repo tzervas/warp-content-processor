@@ -13,13 +13,12 @@ import yaml
 from .base_processor import ProcessingResult, SchemaProcessor
 from .content_type import ContentType
 from .processor_factory import ProcessorFactory
-from .utils.security import (
-    ContentSanitizer, 
-    SecurityValidationError, 
-    secure_yaml_load, 
-    secure_yaml_dump
-)
 from .utils.normalizer import ContentNormalizer
+from .utils.security import (
+    ContentSanitizer,
+    SecurityValidationError,
+    secure_yaml_dump,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +105,7 @@ class ContentSplitter:
         except SecurityValidationError as e:
             logger.error(f"Security validation failed: {e}")
             return []
-        
+
         documents = []
 
         # First try simple document separation before normalization
@@ -117,12 +116,12 @@ class ContentSplitter:
                 return simple_docs
         except Exception as e:
             logger.warning(f"Simple splitting failed: {e}")
-        
+
         # Use the enhanced normalizer for single document or complex parsing
         try:
             normalized_docs = ContentNormalizer.normalize_mixed_content(content)
             for content_type, normalized_data in normalized_docs:
-                if content_type != 'unknown':
+                if content_type != "unknown":
                     # Convert back to string format for processing
                     try:
                         doc_content = secure_yaml_dump(normalized_data)
@@ -130,27 +129,36 @@ class ContentSplitter:
                     except Exception as e:
                         logger.warning(f"Failed to serialize {content_type}: {e}")
                         # Fall back to raw content
-                        if 'content' in normalized_data:
-                            documents.append((ContentType.UNKNOWN, normalized_data['content']))
+                        if "content" in normalized_data:
+                            documents.append(
+                                (ContentType.UNKNOWN, normalized_data["content"])
+                            )
                 else:
                     # Handle unknown content types
-                    if isinstance(normalized_data, dict) and 'content' in normalized_data:
-                        doc_type = ContentTypeDetector.detect_type(normalized_data['content'])
-                        documents.append((doc_type, normalized_data['content']))
-            
+                    if (
+                        isinstance(normalized_data, dict)
+                        and "content" in normalized_data
+                    ):
+                        doc_type = ContentTypeDetector.detect_type(
+                            normalized_data["content"]
+                        )
+                        documents.append((doc_type, normalized_data["content"]))
+
             if documents:
                 return documents
         except Exception as e:
-            logger.warning(f"Normalization failed, falling back to simple splitting: {e}")
+            logger.warning(
+                f"Normalization failed, falling back to simple splitting: {e}"
+            )
 
         # Fallback to simple splitting if normalization fails
         return cls._simple_split_content(content)
-    
+
     @classmethod
     def _simple_split_content(cls, content: str) -> List[Tuple[str, str]]:
         """Simple content splitting as fallback."""
         documents = []
-        
+
         # First try to split by YAML documents
         try:
             yaml_docs = list(yaml.safe_load_all(content))
@@ -168,8 +176,8 @@ class ContentSplitter:
             pass
 
         # If YAML splitting fails, split by YAML document separators (with possible indentation)
-        parts = re.split(r'^\s*---\s*$', content, flags=re.MULTILINE)
-        
+        parts = re.split(r"^\s*---\s*$", content, flags=re.MULTILINE)
+
         for part in parts:
             part = part.strip()
             if part:  # Skip empty parts
@@ -220,11 +228,11 @@ class ContentProcessor:
         try:
             # Validate file path for security
             validated_path = ContentSanitizer.validate_file_path(file_path)
-            
+
             # Read and validate content
             content = validated_path.read_text(encoding="utf-8")
             content = ContentSanitizer.validate_content(content)
-            
+
             documents = ContentSplitter.split_content(content)
             results = []
 
@@ -256,12 +264,23 @@ class ContentProcessor:
                             try:
                                 processed_content = secure_yaml_dump(result.data)
                                 output_path.write_text(processed_content)
-                                logger.info("Saved %s content to %s", doc_type, output_path)
+                                logger.info(
+                                    "Saved %s content to %s", doc_type, output_path
+                                )
                             except Exception as save_error:
-                                logger.error("Failed to save %s to %s: %s", doc_type, output_path, save_error)
+                                logger.error(
+                                    "Failed to save %s to %s: %s",
+                                    doc_type,
+                                    output_path,
+                                    save_error,
+                                )
                                 # Fall back to original content if serialization fails
                                 output_path.write_text(doc_content)
-                                logger.info("Saved %s content to %s (fallback)", doc_type, output_path)
+                                logger.info(
+                                    "Saved %s content to %s (fallback)",
+                                    doc_type,
+                                    output_path,
+                                )
 
                         results.append(result)
                 except ValueError:

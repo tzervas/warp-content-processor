@@ -144,19 +144,21 @@ class EnvVarProcessor(SchemaProcessor):
     def normalize_content(self, data: Dict) -> Dict:
         """Normalize environment variable content to consistent format."""
         normalized = data.copy()
-        
+
         # Normalize platform specification
         if "platform" in normalized:
             platform = normalized["platform"]
             if isinstance(platform, str):
                 normalized["platform"] = [platform.lower()]
             elif isinstance(platform, list):
-                normalized["platform"] = [p.lower() if isinstance(p, str) else p for p in platform]
-        
+                normalized["platform"] = [
+                    p.lower() if isinstance(p, str) else p for p in platform
+                ]
+
         # Normalize scope
         if "scope" in normalized and isinstance(normalized["scope"], str):
             normalized["scope"] = normalized["scope"].lower()
-        
+
         return normalized
 
     def process(self, content: str) -> ProcessingResult:

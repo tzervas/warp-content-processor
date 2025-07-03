@@ -17,12 +17,15 @@ from .schema_processor import ContentProcessor
 
 def setup_logging() -> None:
     """Configure logging for the application."""
+    # Create logs directory if it doesn't exist
+    Path("logs").mkdir(exist_ok=True)
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler("workflow_processing.log"),
+            logging.FileHandler("logs/workflow_processing.log"),
         ],
     )
 
