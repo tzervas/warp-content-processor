@@ -25,11 +25,13 @@ class TestSchemaIslandDetectorInitialization:
         assert len(detector.json_patterns) > 0
         assert len(detector.contamination_patterns) > 0
 
-        # Verify pattern types
-        for pattern in detector.yaml_patterns:
-            assert hasattr(pattern, "search")  # Compiled regex
+        # Verify pattern types using helper methods
+        self._verify_compiled_patterns(detector.yaml_patterns)
+        self._verify_compiled_patterns(detector.json_patterns)
 
-        for pattern in detector.json_patterns:
+    def _verify_compiled_patterns(self, patterns):
+        """Helper to verify patterns are compiled regex objects."""
+        for pattern in patterns:
             assert hasattr(pattern, "search")  # Compiled regex
 
 
@@ -80,10 +82,15 @@ class TestYamlIslandDetection:
         """Test quality scoring for YAML islands."""
         islands = detector.find_islands(yaml_content)
 
-        if islands:  # If islands found
-            island = islands[0]
-            min_quality, max_quality = expected_quality_range
-            assert min_quality <= island.quality_score <= max_quality
+        # Use helper method to validate quality score
+        self._validate_quality_score(islands, expected_quality_range)
+
+    def _validate_quality_score(self, islands, expected_quality_range):
+        """Helper to validate quality score is within expected range."""
+        assert len(islands) > 0, "Expected islands to be found for quality validation"
+        island = islands[0]
+        min_quality, max_quality = expected_quality_range
+        assert min_quality <= island.quality_score <= max_quality
 
 
 class TestJsonIslandDetection:
@@ -203,10 +210,10 @@ class TestContentCleaning:
         """Test content cleaning with various contamination types."""
         contamination_types = set()
 
-        # Detect contamination types
-        for cont_type, pattern in detector.contamination_patterns.items():
-            if pattern.search(contaminated_content):
-                contamination_types.add(cont_type)
+        # Detect contamination types using helper method
+        contamination_types = self._detect_contamination_types(
+            detector, contaminated_content
+        )
 
         cleaned_content, warnings = detector._clean_content(
             contaminated_content, contamination_types
@@ -216,6 +223,18 @@ class TestContentCleaning:
         assert cleaned_content.strip() == expected_cleaned.strip()
 
         # Should have warnings if cleaning was done
+        self._validate_cleaning_warnings(contamination_types, warnings)
+
+    def _detect_contamination_types(self, detector, content):
+        """Helper to detect contamination types in content."""
+        contamination_types = set()
+        for cont_type, pattern in detector.contamination_patterns.items():
+            if pattern.search(content):
+                contamination_types.add(cont_type)
+        return contamination_types
+
+    def _validate_cleaning_warnings(self, contamination_types, warnings):
+        """Helper to validate cleaning warnings based on contamination."""
         if contamination_types:
             assert len(warnings) > 0
         else:
@@ -372,19 +391,14 @@ class TestIntegrationScenarios:
         """Test detection in mixed content with multiple formats."""
         mixed_content = """
         Some random text here.
-        
-        2024-01-01 [INFO] Starting processing...
-        
+        2024-01-01T12:00:00 [INFO] Starting processing...
         name: test_workflow
         description: A test workflow
         steps:
           - name: step1
             action: test
-        
         ERROR: Something went wrong
-        
         {"config": {"debug": true, "timeout": 30}}
-        
         More random text.
         """
 
@@ -405,20 +419,16 @@ class TestIntegrationScenarios:
     def test_heavily_contaminated_content(self, detector):
         """Test with heavily contaminated content."""
         contaminated = """
-        2024-01-01 09:15:23 [ERROR] System failure detected
+        2024-01-01T09:15:23 [ERROR] System failure detected
         \x00\x01\x02Binary garbage here
         def corrupted_function():
             pass
         veryverylongwordthatmakesnosenseandshouldbedetectedasrandomtext
-        
         # But there's still some valid YAML:
         workflow:
-          name: recovery
-          steps:
-            - recover
-            - validate
-        
-        More log entries: 2024-01-01 09:16:00 [INFO] Recovery started
+          - validate
+          - recover
+        More log entries: 2024-01-01T09:16:00 [INFO] Recovery started
         """
 
         islands = detector.find_islands(contaminated)

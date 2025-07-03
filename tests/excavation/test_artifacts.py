@@ -116,31 +116,22 @@ class TestExtractionContext:
     )
     def test_context_offset_validation(self, start, end, valid):
         """Test extraction context with various offset values."""
+        # Create context regardless (validation is not enforced by dataclass)
+        context = ExtractionContext(
+            source_type="test",
+            start_offset=start,
+            end_offset=end,
+            contamination_types=set(),
+            extraction_method="test",
+            original_surrounding="",
+        )
+        # Values are stored as-is
+        assert context.start_offset == start
+        assert context.end_offset == end
+
+        # For valid ranges, additional checks could be added
         if valid:
-            context = ExtractionContext(
-                source_type="test",
-                start_offset=start,
-                end_offset=end,
-                contamination_types=set(),
-                extraction_method="test",
-                original_surrounding="",
-            )
-            assert context.start_offset == start
-            assert context.end_offset == end
-        else:
-            # Create context regardless (validation is not enforced by dataclass)
-            # but verify the values are stored as-is
-            context = ExtractionContext(
-                source_type="test",
-                start_offset=start,
-                end_offset=end,
-                contamination_types=set(),
-                extraction_method="test",
-                original_surrounding="",
-            )
-            # Values are stored but may be logically invalid
-            assert context.start_offset == start
-            assert context.end_offset == end
+            assert start <= end or start == end  # Allow same position
 
 
 class TestSchemaArtifact:
@@ -345,30 +336,8 @@ class TestExcavationResult:
         self, artifact_count, content_size, processing_time
     ):
         """Test excavation result with various metrics."""
-        # Create mock artifacts
-        artifacts = []
-        for i in range(artifact_count):
-            context = ExtractionContext(
-                source_type="test",
-                start_offset=i * 10,
-                end_offset=(i + 1) * 10,
-                contamination_types=set(),
-                extraction_method="test",
-                original_surrounding="",
-            )
-
-            artifact = SchemaArtifact(
-                content_type=ContentType.YAML,
-                raw_content=f"test{i}",
-                cleaned_content=f"test{i}",
-                parsed_data={"test": i},
-                confidence=ExtractionConfidence.MEDIUM,
-                is_valid=True,
-                extraction_context=context,
-                validation_errors=[],
-                cleaning_warnings=[],
-            )
-            artifacts.append(artifact)
+        # Create mock artifacts using helper
+        artifacts = self._create_mock_artifacts(artifact_count)
 
         result = ExcavationResult(
             artifacts=artifacts,
@@ -380,6 +349,30 @@ class TestExcavationResult:
         assert len(result.artifacts) == artifact_count
         assert result.total_content_size == content_size
         assert result.processing_time_ms == processing_time
+
+    def _create_mock_artifacts(self, count):
+        """Helper to create mock artifacts for testing."""
+        return [
+            SchemaArtifact(
+                content_type=ContentType.YAML,
+                raw_content=f"test{i}",
+                cleaned_content=f"test{i}",
+                parsed_data={"test": i},
+                confidence=ExtractionConfidence.MEDIUM,
+                is_valid=True,
+                extraction_context=ExtractionContext(
+                    source_type="test",
+                    start_offset=i * 10,
+                    end_offset=(i + 1) * 10,
+                    contamination_types=set(),
+                    extraction_method="test",
+                    original_surrounding="",
+                ),
+                validation_errors=[],
+                cleaning_warnings=[],
+            )
+            for i in range(count)
+        ]
 
     def test_empty_excavation_result(self):
         """Test creation of empty excavation result."""
@@ -435,42 +428,45 @@ class TestArtifactQualityMetrics:
             original_surrounding="",
         )
 
-        artifact = SchemaArtifact(
-            content_type=ContentType.YAML,
-            raw_content="test",
-            cleaned_content="test",
-            parsed_data={"test": "value"},
-            confidence=confidence,
-            is_valid=True,
-            extraction_context=context,
-            validation_errors=[],
-            cleaning_warnings=[],
-        )
+        # artifact = SchemaArtifact(
+        #     content_type=ContentType.YAML,
+        #     raw_content="test",
+        #     cleaned_content="test",
+        #     parsed_data={"test": "value"},
+        #     confidence=confidence,
+        #     is_valid=True,
+        #     extraction_context=context,
+        #     validation_errors=[],
+        #     cleaning_warnings=[],
+        # )
 
-        # Simple quality tier calculation
-        quality_score = 1.0
+        # Use helper to calculate quality tier
+        calculated_tier = self._calculate_quality_tier(confidence, contamination_types)
+        assert calculated_tier == expected_quality_tier
 
-        # Reduce for confidence
-        if confidence == ExtractionConfidence.MEDIUM:
-            quality_score -= 0.2
-        elif confidence == ExtractionConfidence.LOW:
-            quality_score -= 0.4
-        elif confidence == ExtractionConfidence.SUSPECT:
-            quality_score -= 0.6
+    def _calculate_quality_tier(self, confidence, contamination_types):
+        """Helper to calculate quality tier based on confidence and contamination."""
+        # Quality score mapping for confidence levels
+        confidence_scores = {
+            ExtractionConfidence.HIGH: 1.0,
+            ExtractionConfidence.MEDIUM: 0.8,
+            ExtractionConfidence.LOW: 0.6,
+            ExtractionConfidence.SUSPECT: 0.4,
+        }
+
+        quality_score = confidence_scores.get(confidence, 0.0)
 
         # Reduce for contamination
         quality_score -= len(contamination_types) * 0.1
 
-        # Map to quality tiers
+        # Quality tier thresholds
         if quality_score >= 0.9:
-            calculated_tier = "excellent"
+            return "excellent"
         elif quality_score >= 0.7:
-            calculated_tier = "good"
+            return "good"
         elif quality_score >= 0.5:
-            calculated_tier = "fair"
+            return "fair"
         elif quality_score >= 0.3:
-            calculated_tier = "poor"
+            return "poor"
         else:
-            calculated_tier = "very_poor"
-
-        assert calculated_tier == expected_quality_tier
+            return "very_poor"

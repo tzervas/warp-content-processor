@@ -21,27 +21,22 @@ class TestContentArchaeologistInitialization:
     """Test archaeologist initialization with different configurations."""
 
     @pytest.mark.parametrize(
-        "max_size,timeout,expected_valid",
+        "max_size,timeout,expected_max_size,expected_timeout,expected_extractions",
         [
-            (1024, 30, True),  # Small limits
-            (100 * 1024 * 1024, 300, True),  # Default limits
-            (1000 * 1024 * 1024, 600, True),  # Large limits
-            (0, 300, False),  # Invalid size
-            (1024, 0, False),  # Invalid timeout
+            (1024, 30, 1024, 30, 0),  # Small limits
+            (100 * 1024 * 1024, 300, 100 * 1024 * 1024, 300, 0),  # Default limits
+            (1000 * 1024 * 1024, 600, 1000 * 1024 * 1024, 600, 0),  # Large limits
+            (0, 300, 0, 300, 0),  # Invalid size (still initializes)
+            (1024, 0, 1024, 0, 0),  # Invalid timeout (still initializes)
         ],
     )
-    def test_initialization_parameters(self, max_size, timeout, expected_valid):
+    def test_initialization_parameters(self, max_size, timeout, expected_max_size, expected_timeout, expected_extractions):
         """Test archaeologist initialization with various parameter combinations."""
-        if expected_valid:
-            archaeologist = ContentArchaeologist(max_size, timeout)
-            assert archaeologist.max_content_size == max_size
-            assert archaeologist.extraction_timeout == timeout
-            assert archaeologist.total_extractions == 0
-        else:
-            # Invalid parameters should still initialize but may behave unexpectedly
-            archaeologist = ContentArchaeologist(max_size, timeout)
-            # Test continues - we validate behavior in later tests
-            assert isinstance(archaeologist, ContentArchaeologist)
+        archaeologist = ContentArchaeologist(max_size, timeout)
+        assert archaeologist.max_content_size == expected_max_size
+        assert archaeologist.extraction_timeout == expected_timeout
+        assert archaeologist.total_extractions == expected_extractions
+        assert isinstance(archaeologist, ContentArchaeologist)
 
 
 class TestContentArchaeologistExcavation:
@@ -129,18 +124,18 @@ class TestSecurityValidation:
         return ContentArchaeologist(max_content_size=100, extraction_timeout=5)
 
     @pytest.mark.parametrize(
-        "dangerous_content,should_raise",
+        "dangerous_content,expected_artifacts,expected_stats,should_patch_sanitizer",
         [
-            ("<script>alert('xss')</script>", True),  # XSS attempt
-            ("javascript:void(0)", True),  # JavaScript URL
-            ("normal yaml content", False),  # Safe content
-            ("name: <script>test</script>", True),  # Embedded script
-            ("just some text", False),  # Plain text
+            ("<script>alert('xss')</script>", 0, {}, True),  # XSS attempt
+            ("javascript:void(0)", 0, {}, True),  # JavaScript URL
+            ("normal yaml content", None, None, False),  # Safe content (variable results)
+            ("name: <script>test</script>", 0, {}, True),  # Embedded script
+            ("just some text", None, None, False),  # Plain text (variable results)
         ],
     )
-    def test_security_validation(self, archaeologist, dangerous_content, should_raise):
+    def test_security_validation(self, archaeologist, dangerous_content, expected_artifacts, expected_stats, should_patch_sanitizer):
         """Test security validation blocks dangerous content."""
-        if should_raise:
+        if should_patch_sanitizer:
             with patch(
                 "warp_content_processor.utils.security.ContentSanitizer.sanitize_string"
             ) as mock_sanitize:
@@ -151,8 +146,8 @@ class TestSecurityValidation:
                 result = archaeologist.excavate(dangerous_content)
 
                 # Should return empty result when security validation fails
-                assert len(result.artifacts) == 0
-                assert result.extraction_stats == {}
+                assert len(result.artifacts) == expected_artifacts
+                assert result.extraction_stats == expected_stats
         else:
             # Safe content should process normally
             result = archaeologist.excavate(dangerous_content)
