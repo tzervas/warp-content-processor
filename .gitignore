@@ -81,6 +81,10 @@ security_report.json
 scripts/*.log
 scripts/*.report
 
+# Script output directories
+security_reports/
+ci_reports/
+
 # Trunk Cache
 .trunk/out/
 .trunk/logs/
