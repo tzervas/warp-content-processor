@@ -191,6 +191,10 @@ class TestWorkflowProcessor(TestCase):
         # Verify both files exist with different names
         files = list(self.output_dir.glob("*.yaml"))
         self.assertEqual(len(files), 2)
+        self._verify_files_have_different_names(files)
+
+    def _verify_files_have_different_names(self, files):
+        """Helper to verify that files have different names."""
         self.assertNotEqual(files[0].name, files[1].name)
 
 

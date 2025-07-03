@@ -24,14 +24,12 @@ from warp_content_processor.parsers.yaml_strategies import (
     StandardYAMLStrategy,
 )
 
-# Initialize the parsers for tests that need it
-parser = RobustParser()
 
-
-class TestContentDetector(unittest.TestCase):
+class TestContentDetector:
     """Test the simplified ContentDetector."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         self.detector = ContentDetector()
 
     def test_simple_workflow_detection(self):
@@ -44,8 +42,8 @@ class TestContentDetector(unittest.TestCase):
         """
 
         content_type, confidence = self.detector.detect(content)
-        self.assertEqual(content_type, ContentType.WORKFLOW)
-        self.assertGreater(confidence, 0.3)
+        assert content_type == ContentType.WORKFLOW
+        assert confidence > 0.3
 
     def test_mangled_workflow_detection(self):
         """Test detection of mangled workflow content."""
@@ -56,7 +54,7 @@ class TestContentDetector(unittest.TestCase):
         """
 
         content_type, confidence = self.detector.detect(content)
-        self.assertEqual(content_type, ContentType.WORKFLOW)
+        assert content_type == ContentType.WORKFLOW
 
     def test_confidence_scoring(self):
         """Test that confidence scores work correctly."""
@@ -77,15 +75,15 @@ class TestContentDetector(unittest.TestCase):
         strong_type, strong_conf = self.detector.detect(strong_workflow)
         weak_type, weak_conf = self.detector.detect(weak_workflow)
 
-        self.assertGreater(strong_conf, weak_conf)
+        assert strong_conf > weak_conf
 
     def test_unknown_content(self):
         """Test handling of unknown content types."""
         content = "This is just random text with no structure."
 
         content_type, confidence = self.detector.detect(content)
-        self.assertEqual(content_type, ContentType.UNKNOWN)
-        self.assertEqual(confidence, 0.0)
+        assert content_type == ContentType.UNKNOWN
+        assert confidence == 0.0
 
 
 class TestDocumentSplitter(unittest.TestCase):
@@ -234,6 +232,7 @@ class TestMangledContentCleaner(unittest.TestCase):
         tags:git,test,broken
         description:This has many issues
         """
+        parser = RobustParser()
         reconstructed = parser.parse(mangled).data
 
         self.assertIsInstance(reconstructed, dict)
@@ -287,7 +286,7 @@ class TestYAMLStrategies(unittest.TestCase):
 
     def test_reconstructed_yaml_strategy(self):
         """Test reconstructed YAML strategy."""
-        strategy = parser
+        strategy = RobustParser()
 
         broken_yaml = """
         name:Broken Workflow
@@ -302,7 +301,7 @@ class TestYAMLStrategies(unittest.TestCase):
 
     def test_partial_yaml_strategy(self):
         """Test partial YAML extraction strategy."""
-        strategy = parser
+        strategy = RobustParser()
 
         severely_broken = """
         name: Salvageable Workflow
@@ -341,39 +340,48 @@ class TestErrorTolerantYAMLParser(unittest.TestCase):
         stats = self.parser.get_stats()
         self.assertEqual(stats["strategy_successes"]["standard_yaml"], 1)
 
-    def test_progressively_broken_yaml(self):
-        """Test parsing with progressively more broken YAML."""
-        test_cases = [
-            # Should work with standard strategy
-            """
+    def test_standard_strategy_parsing(self):
+        """Test parsing with standard strategy."""
+        yaml_content = """
             name: Good Workflow
             command: echo test
-            """,
-            # Should work with cleaned strategy
             """
+        result = self.parser.parse(yaml_content)
+        self.assertTrue(result.success, "Failed to parse standard YAML")
+        self.assertIn("name", result.data)
+
+    def test_cleaned_strategy_parsing(self):
+        """Test parsing with cleaned strategy."""
+        yaml_content = """
             name:Needs Cleaning
             command:echo test
             tags:[item1,item2]
-            """,
-            # Should work with mangled strategy
             """
+        result = self.parser.parse(yaml_content)
+        self.assertTrue(result.success, "Failed to parse cleanable YAML")
+        self.assertIn("name", result.data)
+
+    def test_mangled_strategy_parsing(self):
+        """Test parsing with mangled strategy."""
+        yaml_content = """
             name：Unicode Issues
             command：echo"test"
-            """,
-            # Should work with reconstruction
             """
+        result = self.parser.parse(yaml_content)
+        self.assertTrue(result.success, "Failed to parse mangled YAML")
+        self.assertIn("name", result.data)
+
+    def test_reconstruction_strategy_parsing(self):
+        """Test parsing with reconstruction strategy."""
+        yaml_content = """
             name:Reconstruction Needed
             command:echo test
             tags:[broken,list
             description:Missing brackets
-            """,
-        ]
-
-        for i, yaml_content in enumerate(test_cases):
-            with self.subTest(case=i):
-                result = self.parser.parse(yaml_content)
-                self.assertTrue(result.success, f"Failed to parse case {i}")
-                self.assertIn("name", result.data)
+            """
+        result = self.parser.parse(yaml_content)
+        self.assertTrue(result.success, "Failed to parse reconstructable YAML")
+        self.assertIn("name", result.data)
 
     def test_completely_broken_content(self):
         """Test handling of completely unparseable content."""
@@ -384,25 +392,26 @@ class TestErrorTolerantYAMLParser(unittest.TestCase):
         self.assertFalse(result.success)
         self.assertIsNotNone(result.error_message)
 
-    @pytest.mark.timeout(60)
-    def test_performance_with_mangled_content(self):
-        """Test performance with large amounts of mangled content."""
-        # Create large mangled content
-        mangled_parts = []
-        for i in range(100):
-            mangled_parts.append(
-                f"""
+    def get_large_mangled_content(self):
+        """Helper method to generate large mangled content for performance testing."""
+        mangled_parts = [
+            f"""
             name：Workflow {i}
             command：echo"test{i}"&&ls -la
             tags：[git，test，item{i}
             description：Workflow number {i} with issues
             """
-            )
+            for i in range(100)
+        ]
+        return "\n---\n".join(mangled_parts)
 
-        large_content = "\n---\n".join(mangled_parts)
-
+    @pytest.mark.timeout(60)
+    def test_performance_with_mangled_content(self):
+        """Test performance with large amounts of mangled content."""
         # Should complete within timeout
-        result = parser.parse(large_content)
+        large_mangled_content = self.get_large_mangled_content()
+        parser = RobustParser()
+        result = parser.parse(large_mangled_content)
         self.assertTrue(result.success)
 
 

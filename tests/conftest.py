@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import pytest
 import yaml
@@ -20,6 +21,7 @@ def source_dir(temp_dir):
     source_path = os.path.join(temp_dir, "source")
     os.makedirs(source_path)
     yield source_path
+    shutil.rmtree(source_path)
 
 
 @pytest.fixture
@@ -28,6 +30,23 @@ def output_dir(temp_dir):
     output_path = os.path.join(temp_dir, "output")
     os.makedirs(output_path)
     yield output_path
+
+
+@pytest.fixture
+def fixtures_dir():
+    """Fixture for accessing the fixtures directory."""
+    return Path(__file__).parent / "fixtures"
+
+@pytest.fixture
+def messy_content_file(fixtures_dir):
+    """Fixture providing the messy_mixed_content.yaml file."""
+    return fixtures_dir / "messy_mixed_content.yaml"
+
+@pytest.fixture
+def content_processor(output_dir):
+    """Fixture providing a ContentProcessor with output directory."""
+    from warp_content_processor import ContentProcessor
+    return ContentProcessor(output_dir)
 
 
 @pytest.fixture

@@ -9,7 +9,7 @@ import unittest
 
 import pytest
 
-from tests.helpers import (
+from .helpers import (
     create_large_messy_content,
     create_malicious_content_samples,
     create_unicode_test_content,

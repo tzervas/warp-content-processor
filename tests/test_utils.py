@@ -19,10 +19,37 @@ def capture_console_output():
 def read_log_file(log_dir, log_file):
     """Read contents of a log file from the logs directory."""
     log_path = os.path.join(log_dir, log_file)
-    if not os.path.exists(log_path):
+    try:
+        with open(log_path, "r") as f:
+            return f.read()
+    except FileNotFoundError:
         return ""
-    with open(log_path, "r") as f:
-        return f.read()
+
+
+def _get_initial_logs(log_dir):
+    """Helper to get initial state of log files."""
+    initial_logs = {}
+    try:
+        log_files = os.listdir(log_dir)
+        initial_logs = {
+            log_file: read_log_file(log_dir, log_file) for log_file in log_files
+        }
+    except FileNotFoundError:
+        pass
+    return initial_logs
+
+
+def _get_changed_logs(log_dir, initial_logs):
+    """Helper to get logs that have changed since initial state."""
+    try:
+        log_files = os.listdir(log_dir)
+        return {
+            log_file: read_log_file(log_dir, log_file)
+            for log_file in log_files
+            if read_log_file(log_dir, log_file) != initial_logs.get(log_file, "")
+        }
+    except FileNotFoundError:
+        return {}
 
 
 @contextmanager
@@ -32,10 +59,7 @@ def capture_logs(log_dir="logs"):
     os.makedirs(log_dir, exist_ok=True)
 
     # Get initial state of log files
-    initial_logs = {}
-    if os.path.exists(log_dir):
-        for log_file in os.listdir(log_dir):
-            initial_logs[log_file] = read_log_file(log_dir, log_file)
+    initial_logs = _get_initial_logs(log_dir)
 
     # Capture console output
     with capture_console_output() as (stdout, stderr):
@@ -44,11 +68,6 @@ def capture_logs(log_dir="logs"):
             "stderr": stderr,
             "get_logs": lambda: {
                 "console": {"stdout": stdout.getvalue(), "stderr": stderr.getvalue()},
-                "files": {
-                    log_file: read_log_file(log_dir, log_file)
-                    for log_file in os.listdir(log_dir)
-                    if read_log_file(log_dir, log_file)
-                    != initial_logs.get(log_file, "")
-                },
+                "files": _get_changed_logs(log_dir, initial_logs),
             },
         }

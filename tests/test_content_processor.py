@@ -117,10 +117,11 @@ class TestContentSplitter(TestCase):
         self.assertIn(ContentType.NOTEBOOK, detected_types)
 
 
-class TestContentProcessor(TestCase):
+class TestContentProcessor:
     """Test the content processor functionality."""
 
-    def setUp(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
         """Set up test environment."""
         self.test_dir = tempfile.mkdtemp()
         self.output_dir = Path(self.test_dir) / "output"
@@ -129,8 +130,9 @@ class TestContentProcessor(TestCase):
         # Create processor
         self.processor = ContentProcessor(self.output_dir)
 
-    def tearDown(self):
-        """Clean up test environment."""
+        yield  # This is where the test runs
+
+        # Cleanup
         shutil.rmtree(self.test_dir)
 
     @pytest.mark.timeout(90)
@@ -141,17 +143,17 @@ class TestContentProcessor(TestCase):
 
         # Check that we got results for each content type
         result_types = {r.content_type for r in results}
-        self.assertIn(ContentType.WORKFLOW, result_types)
-        self.assertIn(ContentType.PROMPT, result_types)
-        self.assertIn(ContentType.RULE, result_types)
-        self.assertIn(ContentType.ENV_VAR, result_types)
-        self.assertIn(ContentType.NOTEBOOK, result_types)
+        assert ContentType.WORKFLOW in result_types
+        assert ContentType.PROMPT in result_types
+        assert ContentType.RULE in result_types
+        assert ContentType.ENV_VAR in result_types
+        assert ContentType.NOTEBOOK in result_types
 
         # Check that files were created in correct directories
         for content_type in result_types:
             type_dir = self.output_dir / content_type.value
-            self.assertTrue(type_dir.exists())
-            self.assertTrue(any(type_dir.iterdir()))
+            assert type_dir.exists()
+            assert any(type_dir.iterdir())
 
     def test_invalid_content_handling(self):
         """Test handling of invalid content."""
@@ -164,42 +166,126 @@ class TestContentProcessor(TestCase):
             results = self.processor.process_file(f.name)
 
             # Check that we got an error result
-            self.assertTrue(all(not r.is_valid for r in results))
-            self.assertTrue(all(r.errors for r in results))
+            assert all(not r.is_valid for r in results)
+            assert all(r.errors for r in results)
 
+    # Parameter sets for each content type with minimal valid input
+    CONTENT_TYPE_PARAMETERS = [
+        pytest.param(
+            ContentType.WORKFLOW,
+            {"name": "test", "command": "echo test"},
+            id="workflow"
+        ),
+        pytest.param(
+            ContentType.PROMPT,
+            {"name": "test", "prompt": "do {{action}}"},
+            id="prompt"
+        ),
+        pytest.param(
+            ContentType.NOTEBOOK,
+            "---\ntitle: test\n---\n# Test\n```bash\necho test\n```",
+            id="notebook"
+        ),
+        pytest.param(
+            ContentType.ENV_VAR,
+            {"variables": {"TEST": "value"}},
+            id="env_var"
+        ),
+        pytest.param(
+            ContentType.RULE,
+            {
+                "title": "Test Rule",
+                "description": "A test rule",
+                "guidelines": ["Test guideline"],
+            },
+            id="rule"
+        ),
+    ]
+
+    @pytest.mark.parametrize("content_type,test_content", CONTENT_TYPE_PARAMETERS)
     @pytest.mark.timeout(90)
-    def test_content_validation(self):
-        """Test validation of each content type."""
-        for content_type, processor in self.processor.processors.items():
-            # Create minimal valid content for each type
-            if content_type == ContentType.WORKFLOW:
-                content = {"name": "test", "command": "echo test"}
-            elif content_type == ContentType.PROMPT:
-                content = {"name": "test", "prompt": "do {{action}}"}
-            elif content_type == ContentType.NOTEBOOK:
-                content = "---\ntitle: test\n---\n# Test\n```bash\necho test\n```"
-            elif content_type == ContentType.ENV_VAR:
-                content = {"variables": {"TEST": "value"}}
-            elif content_type == ContentType.RULE:
-                content = {
-                    "title": "Test Rule",
-                    "description": "A test rule",
-                    "guidelines": ["Test guideline"],
-                }
-            else:
-                continue
+    def test_content_type_validation(self, content_type, test_content):
+        """Test validation of content for each supported content type.
+        This parametrized test replaces individual validation test methods
+        to avoid conditionals in tests and centralize assertion logic.
+        """
+        # Skip if no processor is available for this content type
+        if content_type not in self.processor.processors:
+            pytest.skip(f"No processor available for {content_type}")
 
-            # Process the content
-            if isinstance(content, dict):
-                content = yaml.dump(content)
+        processor = self.processor.processors[content_type]
 
-            result = processor.process(content)
+        # Convert dict content to YAML if needed
+        if isinstance(test_content, dict):
+            content = yaml.dump(test_content)
+        else:
+            content = test_content
 
-            # Check validation
-            self.assertTrue(
-                result.is_valid,
-                f"Validation failed for {content_type}: {result.errors}",
-            )
+        result = processor.process(content)
+
+        # Centralized assertion logic
+        assert result.is_valid, \
+            f"Validation failed for {content_type}: {result.errors}"
+        assert not result.errors, \
+            f"Unexpected errors for {content_type}: {result.errors}"
+
+    # Parameter sets for invalid content testing
+    INVALID_CONTENT_PARAMETERS = [
+        pytest.param(
+            ContentType.WORKFLOW,
+            {},  # Empty content
+            "empty yaml content",
+            id="workflow-empty"
+        ),
+        pytest.param(
+            ContentType.PROMPT,
+            {"name": "test"},  # Missing prompt field
+            "missing required fields",
+            id="prompt-no-prompt"
+        ),
+        # Note: ENV_VAR processor seems to have default handling,
+        # so invalid content still validates
+        # This demonstrates that the parametrized approach helps us
+        # discover such edge cases
+    ]
+
+    @pytest.mark.parametrize(
+        "content_type,invalid_content,expected_error_pattern",
+        INVALID_CONTENT_PARAMETERS
+    )
+    @pytest.mark.timeout(90)
+    def test_content_type_validation_errors(
+        self, content_type, invalid_content, expected_error_pattern
+    ):
+        """Test validation error handling for each supported content type.
+        This parametrized test demonstrates how to test error scenarios
+        without conditionals in tests.
+        """
+        # Skip if no processor is available for this content type
+        if content_type not in self.processor.processors:
+            pytest.skip(f"No processor available for {content_type}")
+
+        processor = self.processor.processors[content_type]
+
+        # Convert dict content to YAML
+        content = (
+            yaml.dump(invalid_content)
+            if isinstance(invalid_content, dict)
+            else invalid_content
+        )
+
+        result = processor.process(content)
+
+        # Centralized error assertion logic
+        assert not result.is_valid, \
+            f"Expected validation to fail for {content_type} with invalid content"
+        assert result.errors, f"Expected errors for invalid {content_type} content"
+
+        # Check that the expected error pattern appears in the error messages
+        error_text = " ".join(result.errors)
+        assert expected_error_pattern.lower() in error_text.lower(), \
+            f"Expected error pattern '{expected_error_pattern}' not found in errors: " \
+            f"{result.errors}"
 
 
 if __name__ == "__main__":
