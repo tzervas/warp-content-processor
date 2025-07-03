@@ -137,8 +137,9 @@ class NotebookProcessor(SchemaProcessor):
                 elif not isinstance(tags, list):
                     tags = []
                 front_matter["tags"] = [
-                    tag.lower().strip() if isinstance(tag, str) else tag
+                    tag.lower().strip()
                     for tag in tags
+                    if isinstance(tag, str) and tag.strip()
                 ]
 
             normalized["front_matter"] = front_matter
