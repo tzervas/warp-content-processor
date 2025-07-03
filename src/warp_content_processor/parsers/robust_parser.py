@@ -65,7 +65,7 @@ class RobustParser(SimpleParser):
                     self.stats["successful_parses"] += 1
                     self.stats["strategy_successes"][strategy_name] += 1
                     return result
-            except Exception:
+            except Exception:  # nosec B112 - Intentional strategy fallback
                 continue
 
         return ParseResult.failure_result("All parsing strategies failed", content)
@@ -76,7 +76,7 @@ class RobustParser(SimpleParser):
             data = yaml.safe_load(content)
             if isinstance(data, dict) and data:
                 return ParseResult.success_result(data, content)
-        except Exception:
+        except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Standard parsing failed", content)
 
@@ -92,7 +92,7 @@ class RobustParser(SimpleParser):
             data = yaml.safe_load(cleaned)
             if isinstance(data, dict) and data:
                 return ParseResult.success_result(data, content)
-        except Exception:
+        except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Cleaned parsing failed", content)
 
@@ -116,7 +116,7 @@ class RobustParser(SimpleParser):
             data = yaml.safe_load(cleaned)
             if isinstance(data, dict) and data:
                 return ParseResult.success_result(data, content)
-        except Exception:
+        except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Aggressive parsing failed", content)
 
@@ -150,7 +150,7 @@ class RobustParser(SimpleParser):
                         if parsed is not None:
                             result[key] = parsed
                             continue
-                except Exception:
+                except Exception:  # nosec B110 - Expected YAML parsing failure
                     pass
 
                 # Fall back to string value
@@ -158,6 +158,6 @@ class RobustParser(SimpleParser):
 
             if result:
                 return ParseResult.success_result(result, content)
-        except Exception:
+        except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Key-value extraction failed", content)
