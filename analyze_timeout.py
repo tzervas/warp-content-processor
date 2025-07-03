@@ -286,10 +286,7 @@ class TimeoutAnalyzer:
         # Analyze hanging operations
         analysis = self.analyze_hanging_operation(traces)
 
-        # Generate report
-        report = self.generate_report(test_path, traces, analysis, log_content)
-
-        return report
+        return self.generate_report(test_path, traces, analysis, log_content)
 
 
 def main():
