@@ -9,7 +9,7 @@ class TestTimeoutScenarios:
     def test_simple_sleep_timeout(self):
         """A test that times out due to simple sleep - easy to identify."""
         print("Starting simple sleep test...")
-        time.sleep(10)  # This will timeout before completing
+        time.sleep(10)  # nosec B311 - Intentional timeout test scenario
         print("This should never print")
 
     def test_infinite_loop_timeout(self):
@@ -48,7 +48,7 @@ class TestTimeoutScenarios:
         def thread1_func():
             with lock1:
                 print("Thread 1 acquired lock1")
-                time.sleep(0.1)
+                time.sleep(0.1)  # nosec B311 - Intentional deadlock test timing
                 print("Thread 1 trying to acquire lock2")
                 with lock2:
                     print("Thread 1 acquired lock2")
@@ -56,7 +56,7 @@ class TestTimeoutScenarios:
         def thread2_func():
             with lock2:
                 print("Thread 2 acquired lock2")
-                time.sleep(0.1)
+                time.sleep(0.1)  # nosec B311 - Intentional deadlock test timing
                 print("Thread 2 trying to acquire lock1")
                 with lock1:
                     print("Thread 2 acquired lock1")
@@ -80,7 +80,7 @@ class TestTimeoutScenarios:
 
         def hanging_call(*args, **kwargs):
             print("Service call started...")
-            time.sleep(20)  # Simulate hanging service
+            time.sleep(20)  # nosec B311 - Intentional timeout test simulation
             return "success"
 
         mock_service.make_request = hanging_call
