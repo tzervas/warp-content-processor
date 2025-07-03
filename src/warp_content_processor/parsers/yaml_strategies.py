@@ -78,7 +78,8 @@ class StandardYAMLStrategy(ParsingStrategy):
         self, parsed_data: str, original_content: str
     ) -> bool:
         """Check if a string result from YAML parsing is meaningful structured data."""
-        # If the parsed string is almost identical to the original, it's probably just plain text
+        # If the parsed string is almost identical to the original,
+        # it's probably just plain text
         return len(parsed_data.strip()) < len(original_content.strip()) * 0.8
 
 
@@ -158,7 +159,8 @@ class CleanedYAMLStrategy(ParsingStrategy):
         self, parsed_data: str, original_content: str
     ) -> bool:
         """Check if a string result from YAML parsing is meaningful structured data."""
-        # If the parsed string is almost identical to the original, it's probably just plain text
+        # If the parsed string is almost identical to the original,
+        # it's probably just plain text
         return len(parsed_data.strip()) < len(original_content.strip()) * 0.8
 
 
@@ -242,7 +244,8 @@ class MangledYAMLStrategy(ParsingStrategy):
 
     def _is_meaningful_result(self, parsed_data: str, original_content: str) -> bool:
         """Check if a parsing result is meaningful."""
-        # If the parsed string is almost identical to the original, it's probably just plain text
+        # If the parsed string is almost identical to the original,
+        # it's probably just plain text
         return len(parsed_data.strip()) < len(original_content.strip()) * 0.8
 
 
@@ -277,9 +280,12 @@ class ReconstructedYAMLStrategy(ParsingStrategy):
                     "Reconstructed data is not a valid dict", content
                 )
 
-            # Additional validation: ensure we have at least one meaningful key-value pair
-            meaningful_keys = sum(bool(k and v and not k.startswith("_"))
-                              for k, v in reconstructed.items())
+            # Additional validation: ensure we have at least one meaningful
+            # key-value pair
+            meaningful_keys = sum(
+                bool(k and v and not k.startswith("_"))
+                for k, v in reconstructed.items()
+            )
 
             if meaningful_keys < 1:
                 return ParseResult.failure_result(

@@ -70,7 +70,7 @@ class TimeoutAnalyzer:
     ) -> Tuple[str, str, int]:
         """Run pytest with timeout and capture output."""
         import shlex
-        
+
         # Validate and sanitize inputs
         if not isinstance(test_path, str) or not test_path.strip():
             raise ValueError("Invalid test_path provided")
@@ -78,7 +78,7 @@ class TimeoutAnalyzer:
             raise ValueError("Invalid timeout value")
         if log_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
             raise ValueError("Invalid log_level provided")
-            
+
         # Sanitize test_path to prevent injection
         safe_test_path = shlex.quote(test_path)
         log_file_name = f"timeout_analysis_{Path(test_path).stem}.log"
@@ -153,7 +153,9 @@ class TimeoutAnalyzer:
                                     "function": func_name,
                                     "code": code_line.strip(),
                                 }
-                                for file_path, line_num, func_name, code_line in file_lines
+                                for file_path, line_num, func_name, code_line in (
+                                    file_lines
+                                )
                             ],
                         }
                     )

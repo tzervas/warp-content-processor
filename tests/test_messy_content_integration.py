@@ -44,13 +44,13 @@ class TestMessyContentIntegration:
         ), "Should parse at least one document"
 
         # Check that we get the expected content types
-        types_found = extract_document_types(documents)
+        types_found = set(extract_document_types(documents))
 
-        # Verify all expected types are found
-        for expected_type in expected_types:
-            assert (
-                expected_type in types_found
-            ), f"Should detect {expected_type} content. Found types: {types_found}"
+        # Verify all expected types are found using set operations
+        missing_types = expected_types - types_found
+        assert (
+            not missing_types
+        ), f"Expected types not found: {missing_types}. Found types: {types_found}"
 
     @pytest.mark.timeout(30)
     def test_robust_parsing_with_syntax_errors(self):
@@ -173,10 +173,12 @@ class TestMessyContentIntegration:
         # Should find all expected documents
         assert len(documents) == expected_documents
 
-        # All should be detected as expected type
-        types = extract_document_types(documents)
-        assert len(types) == expected_documents
-        assert all(doc_type == expected_type for doc_type in types)
+        # All should be detected as expected type using set operations
+        types = set(extract_document_types(documents))
+        assert len(types) == 1, f"Expected only one type but found: {types}"
+        assert (
+            expected_type in types
+        ), f"Expected type {expected_type} not found in {types}"
 
     def test_security_validation_in_messy_content(self):
         """Test that security validation works with messy content."""

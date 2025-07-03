@@ -37,14 +37,14 @@ def split_yaml_documents(content: str) -> List[str]:
         List of individual YAML document strings
     """
     # Split on YAML document separators
-    documents = []
     parts = content.split("---")
 
-    for part in parts:
-        stripped = part.strip()
-        # Skip empty parts or parts that are just comments
-        if stripped and not stripped.startswith("#"):
-            documents.append(stripped)
+    # Filter parts using list comprehension instead of loop
+    documents = [
+        part.strip()
+        for part in parts
+        if part.strip() and not part.strip().startswith("#")
+    ]
 
     return documents
 
@@ -91,6 +91,22 @@ description：Workflow number {i} with issues
     return "\n---\n".join(mangled_template.format(i=i) for i in range(count))
 
 
+def _validate_single_yaml_file(yaml_file: Path) -> Union[str, None]:
+    """
+    Validate a single YAML file.
+    Args:
+        yaml_file: Path to YAML file to validate
+    Returns:
+        Error message if invalid, None if valid
+    """
+    try:
+        with open(yaml_file) as f:
+            yaml.safe_load(f)
+        return None
+    except yaml.YAMLError as e:
+        return f"File {yaml_file} is not valid YAML: {e}"
+
+
 def validate_output_yaml_files(output_dir: Union[str, Path]) -> List[str]:
     """
     Validate that output files are valid YAML.
@@ -99,19 +115,20 @@ def validate_output_yaml_files(output_dir: Union[str, Path]) -> List[str]:
     Returns:
         List of validation error messages (empty if all valid)
     """
-    errors = []
     output_path = Path(output_dir)
 
     if not output_path.exists():
-        return errors
+        return []
 
     yaml_files = list(output_path.rglob("*.yaml"))
-    for yaml_file in yaml_files:
-        try:
-            with open(yaml_file) as f:
-                yaml.safe_load(f)
-        except yaml.YAMLError as e:
-            errors.append(f"File {yaml_file} is not valid YAML: {e}")
+
+    # Use list comprehension instead of loop
+    validation_results = [
+        _validate_single_yaml_file(yaml_file) for yaml_file in yaml_files
+    ]
+
+    # Filter out None values (valid files)
+    errors = [error for error in validation_results if error is not None]
 
     return errors
 
@@ -212,9 +229,11 @@ def create_deeply_nested_structure(depth: int = 25) -> Dict[str, Any]:
         Deeply nested dictionary structure
     """
     structure = {"a": {"b": {"c": {"d": {}}}}}
-    for _ in range(depth):
-        structure = {"level": structure}
-    return structure
+
+    # Use functools.reduce to build nested structure without explicit loop
+    from functools import reduce
+
+    return reduce(lambda acc, _: {"level": acc}, range(depth), structure)
 
 
 def create_large_array_structure(size: int = 2000) -> List[int]:

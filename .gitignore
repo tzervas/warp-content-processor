@@ -68,3 +68,23 @@ coverage.xml
 htmlcov/
 .tox/
 nosetests.xml
+
+# Code Quality and Security Tools
+.mypy_cache/
+.ruff_cache/
+security_report.json
+.bandit
+.safety-cache/
+.pre-commit-cache/
+
+# Development Scripts (scripts are committed, but logs/reports are not)
+scripts/*.log
+scripts/*.report
+
+# Trunk Cache
+.trunk/out/
+.trunk/logs/
+
+# Environment files
+.env.local
+.env.*.local

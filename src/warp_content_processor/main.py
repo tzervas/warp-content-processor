@@ -25,6 +25,7 @@ def setup_logging() -> None:
     except (PermissionError, OSError) as e:
         # Fall back to current directory or temp directory
         import tempfile
+
         log_file = Path(tempfile.gettempdir()) / "warp_workflow_processing.log"
         print(f"Warning: Could not create logs directory ({e}), using {log_file}")
 

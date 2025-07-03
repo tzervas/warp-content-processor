@@ -91,7 +91,8 @@ class ContentDetector(SimpleParser):
                 # Apply minimum confidence threshold
                 if confidence >= self.min_confidence:
                     logger.debug(
-                        f"Detected content type: {content_type.value} (confidence: {confidence:.2f})"
+                        f"Detected content type: {content_type.value} "
+                        f"(confidence: {confidence:.2f})"
                     )
                     return content_type, confidence
 

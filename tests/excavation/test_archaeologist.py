@@ -185,13 +185,19 @@ class TestSecurityValidation:
     def test_extraction_timeout(self, archaeologist):
         """Test extraction timeout is enforced."""
         with patch("time.time") as mock_time:
-            # Simulate timeout condition - need more values for all time.time() calls
+            # Simulate timeout condition - provide enough values for all
+            # time.time() calls
+            # Include extra values to handle logging and other internal time calls
             mock_time.side_effect = [
-                0,
-                0,
-                10,
-                10,
-            ]  # Start at 0, check multiple times, then timeout
+                0,  # Initial start time
+                0,  # Check during processing
+                10,  # Timeout check (exceeds 5 second limit)
+                10,  # Additional calls from logging
+                10,  # Additional calls from logging
+                10,  # Additional calls from logging
+                10,  # Additional calls from logging
+                10,  # Fallback for any extra calls
+            ]
 
             result = archaeologist.excavate("name: test")
 

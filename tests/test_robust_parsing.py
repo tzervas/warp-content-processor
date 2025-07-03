@@ -156,8 +156,14 @@ class TestCommonPatterns(unittest.TestCase):
         normalized = CommonPatterns.normalize_indentation(content)
         lines = normalized.split("\n")
 
-        # Should have removed common indentation
-        self.assertFalse(any(line.startswith("    ") for line in lines if line.strip()))
+        # Should have removed common indentation using helper
+        self._assert_no_common_indentation(lines)
+
+    def _assert_no_common_indentation(self, lines):
+        """Helper method to assert no common indentation exists."""
+        stripped_lines = [line.strip() for line in lines if line.strip()]
+        indented_lines = [line for line in stripped_lines if line.startswith("    ")]
+        self.assertEqual(len(indented_lines), 0, "Found lines with common indentation")
 
     def test_yaml_cleaning(self):
         """Test YAML content cleaning."""
@@ -394,6 +400,7 @@ class TestErrorTolerantYAMLParser(unittest.TestCase):
 
     def get_large_mangled_content(self):
         """Helper method to generate large mangled content for performance testing."""
+        # Using list comprehension (already functional approach)
         mangled_parts = [
             f"""
             name：Workflow {i}

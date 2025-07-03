@@ -391,7 +391,10 @@ class IntelligentCleaner:
         self.recovery = StructureRecovery()
 
     def clean_content(self, content: str) -> Tuple[str, List[str], List[str]]:
-        """Clean content intelligently. Returns cleaned content, fixes, and errors found."""
+        """Clean content intelligently.
+
+        Returns cleaned content, fixes, and errors found.
+        """
         if not content or not content.strip():
             return content, [], []
         """

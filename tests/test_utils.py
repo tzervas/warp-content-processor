@@ -43,10 +43,14 @@ def _get_changed_logs(log_dir, initial_logs):
     """Helper to get logs that have changed since initial state."""
     try:
         log_files = os.listdir(log_dir)
-        return {
-            log_file: read_log_file(log_dir, log_file)
+        # Use list comprehension and filter to replace explicit loop logic
+        changed_files = [
+            log_file
             for log_file in log_files
             if read_log_file(log_dir, log_file) != initial_logs.get(log_file, "")
+        ]
+        return {
+            log_file: read_log_file(log_dir, log_file) for log_file in changed_files
         }
     except FileNotFoundError:
         return {}

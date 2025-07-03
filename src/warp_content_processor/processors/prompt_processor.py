@@ -149,9 +149,11 @@ class PromptProcessor(SchemaProcessor):
                         arg["name"] = f"unnamed_arg_{unnamed_arg_counter}"
                         unnamed_arg_counter += 1
                         import warnings
+
                         warnings.warn(
                             "Argument is missing a 'name' field. "
-                            f"Assigned unique placeholder: {arg['name']}"
+                            f"Assigned unique placeholder: {arg['name']}",
+                            stacklevel=2
                         )
                     if "type" not in arg:
                         arg["type"] = "text"

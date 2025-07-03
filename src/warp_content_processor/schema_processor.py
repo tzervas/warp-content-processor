@@ -175,7 +175,8 @@ class ContentSplitter:
         except yaml.YAMLError:
             pass
 
-        # If YAML splitting fails, split by YAML document separators (with possible indentation)
+        # If YAML splitting fails, split by YAML document separators
+        # (with possible indentation)
         parts = re.split(r"^\s*---\s*$", content, flags=re.MULTILINE)
 
         for part in parts:
@@ -260,7 +261,8 @@ class ContentProcessor:
                                 )
                                 counter += 1
 
-                            # Save the processed and normalized data instead of raw content
+                            # Save the processed and normalized data instead of
+                            # raw content
                             try:
                                 processed_content = secure_yaml_dump(result.data)
                                 output_path.write_text(processed_content)

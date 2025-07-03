@@ -84,11 +84,10 @@ class TestYamlIslandDetection:
         """Test quality scoring for YAML islands."""
         islands = detector.find_islands(yaml_content)
 
-        # Use helper method to validate quality score only if islands should be found
-        if should_find_islands:
-            self._validate_quality_score(islands, expected_quality_range)
-        else:
-            assert len(islands) == 0, "Expected no islands for broken content"
+        # Use helper method to validate quality score based on expectation
+        self._validate_island_findings(
+            islands, should_find_islands, expected_quality_range
+        )
 
     def _validate_quality_score(self, islands, expected_quality_range):
         """Helper to validate quality score is within expected range."""
@@ -96,6 +95,15 @@ class TestYamlIslandDetection:
         island = islands[0]
         min_quality, max_quality = expected_quality_range
         assert min_quality <= island.quality_score <= max_quality
+
+    def _validate_island_findings(
+        self, islands, should_find_islands, expected_quality_range
+    ):
+        """Helper to validate island findings based on expectations."""
+        if should_find_islands:
+            self._validate_quality_score(islands, expected_quality_range)
+        else:
+            assert len(islands) == 0, "Expected no islands for broken content"
 
 
 class TestJsonIslandDetection:

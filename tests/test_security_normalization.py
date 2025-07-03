@@ -120,8 +120,10 @@ class TestSecurityValidation(unittest.TestCase):
     def get_deeply_nested_structure(self):
         """Helper creating deeply nested structure for testing."""
         deeply_nested = {"a": {"b": {"c": {"d": {}}}}}
-        for _ in range(25):  # Create very deep nesting
-            deeply_nested = {"level": deeply_nested}
+        # Create very deep nesting using reduce
+        from functools import reduce
+
+        deeply_nested = reduce(lambda acc, _: {"level": acc}, range(25), deeply_nested)
         return deeply_nested
 
     def get_large_array_structure(self):
@@ -494,6 +496,7 @@ invalid_field: {unclosed: dict
 
     def _generate_large_content(self):
         """Helper to generate large content for performance testing."""
+        # Generate large content using list comprehension (already functional)
         large_content_parts = [
             f"""
 ---

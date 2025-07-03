@@ -75,7 +75,9 @@ class RobustParser(SimpleParser):
         try:
             data = yaml.safe_load(content)
             if isinstance(data, dict) and data:
-                return ParseResult.success_result(data, content)
+                # Validate keys for safety
+                if self._validate_keys(data):
+                    return ParseResult.success_result(data, content)
         except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Standard parsing failed", content)
@@ -91,7 +93,9 @@ class RobustParser(SimpleParser):
 
             data = yaml.safe_load(cleaned)
             if isinstance(data, dict) and data:
-                return ParseResult.success_result(data, content)
+                # Validate keys for safety
+                if self._validate_keys(data):
+                    return ParseResult.success_result(data, content)
         except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Cleaned parsing failed", content)
@@ -115,7 +119,9 @@ class RobustParser(SimpleParser):
             cleaned = "\n".join(lines)
             data = yaml.safe_load(cleaned)
             if isinstance(data, dict) and data:
-                return ParseResult.success_result(data, content)
+                # Validate keys for safety
+                if self._validate_keys(data):
+                    return ParseResult.success_result(data, content)
         except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Aggressive parsing failed", content)
@@ -134,14 +140,38 @@ class RobustParser(SimpleParser):
                 if len(parts) != 2:
                     continue
 
-                key = parts[0].strip().lower()
+                key = parts[0].strip()
                 value = parts[1].strip()
 
                 # Basic key validation
                 if not key or key.startswith("#") or len(key) > 50:
                     continue
-                if not (key.isidentifier() or "_" in key or "-" in key):
-                    continue
+
+                # Handle quoted keys - preserve original case and allow
+                # spaces/special chars
+                if (key.startswith('"') and key.endswith('"')) or (
+                    key.startswith("'") and key.endswith("'")
+                ):
+                    # Remove quotes and validate the inner content
+                    inner_key = key[1:-1]
+                    # Reject keys with potentially unsafe patterns
+                    if (
+                        not inner_key
+                        or inner_key.startswith("#")
+                        or ".." in inner_key  # Path traversal
+                        or inner_key.startswith("/")  # Absolute paths
+                        or inner_key.startswith("\\")  # Windows paths
+                        or any(
+                            c in inner_key for c in ["<", ">", "|", "&", ";", "`", "$"]
+                        )  # Command injection chars
+                    ):
+                        continue
+                    key = inner_key
+                else:
+                    # Unquoted keys - apply stricter validation and convert to lowercase
+                    key = key.lower()
+                    if not (key.isidentifier() or "_" in key or "-" in key):
+                        continue
 
                 # Try to parse value as YAML
                 try:
@@ -161,3 +191,24 @@ class RobustParser(SimpleParser):
         except Exception:  # nosec B110 - Graceful fallback with proper error result
             pass
         return ParseResult.failure_result("Key-value extraction failed", content)
+
+    def _validate_keys(self, data: dict) -> bool:
+        """Validate that all keys in the dictionary are safe."""
+        for key in data.keys():
+            if not isinstance(key, str):
+                continue
+
+            # Check for potentially unsafe patterns
+            if (
+                not key
+                or key.startswith("#")
+                or len(key) > 50
+                or ".." in key  # Path traversal
+                or key.startswith("/")  # Absolute paths
+                or key.startswith("\\")  # Windows paths
+                or any(
+                    c in key for c in ["<", ">", "|", "&", ";", "`", "$"]
+                )  # Command injection chars
+            ):
+                return False
+        return True

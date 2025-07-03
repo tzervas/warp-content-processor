@@ -1,9 +1,36 @@
 """
 Processor for Warp Terminal environment variable files.
+
+This processor handles environment variable files with the following features:
+- Flattens nested lists of environment variable names and values
+- Validates and sanitizes variable types (only string values allowed)
+- Normalizes all variable names and values to lowercase
+- Supports various input formats including YAML and .env files
+- Platform and scope awareness for variable sets
+
+Input data schema:
+    variables: Dict[str, Union[str, List, Dict]]
+        Dictionary of environment variables. Values can be:
+        - Strings (used as-is after normalization)
+        - Lists (flattened and joined with spaces)
+        - Nested lists (recursively flattened)
+        All values are normalized to lowercase strings.
+
+    scope: str, optional
+        Scope of the variables: 'user', 'system', or 'session'
+        Defaults to 'user'
+
+    platform: Union[str, List[str]], optional
+        Target platform(s): 'linux', 'macos', 'windows', or 'all'
+        Can be a single platform or list of platforms
+        Defaults to 'all'
+
+    description: str, optional
+        Human-readable description of the variable set
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
@@ -141,23 +168,73 @@ class EnvVarProcessor(SchemaProcessor):
 
         return len(errors) == 0, errors, warnings
 
+    def _flatten_list(self, value: Any) -> List[str]:
+        """Recursively flatten nested lists and convert elements to strings."""
+        if isinstance(value, (str, int, float, bool)):
+            return [str(value).lower()]
+        elif isinstance(value, (list, tuple)):
+            result = []
+            for item in value:
+                result.extend(self._flatten_list(item))
+            return result
+        elif isinstance(value, dict):
+            # For dictionaries, use key=value format
+            result = []
+            for k, v in value.items():
+                flattened = self._flatten_list(v)
+                for f in flattened:
+                    result.append(f"{k.lower()}={f}")
+            return result
+        else:
+            # For unsupported types, convert to string and warn
+            return [str(value).lower()]
+
+    def _normalize_variable_value(self, value: Any) -> str:
+        """Normalize a variable value to a string."""
+        if isinstance(value, (str, int, float, bool)):
+            return str(value).lower()
+
+        # Handle nested structures
+        flattened = self._flatten_list(value)
+        return " ".join(flattened)
+
+    def _flatten_platforms(self, value: Any) -> List[str]:
+        """Recursively flatten nested lists into a single list of strings.
+
+        Then lowercase each entry.
+        """
+        if isinstance(value, str):
+            return [value.lower()]
+        elif isinstance(value, (list, tuple)):
+            result = []
+            for item in value:
+                result.extend(self._flatten_platforms(item))
+            return result
+        else:
+            # For any other type, convert to string and lowercase
+            return [str(value).lower()]
+
     def normalize_content(self, data: Dict) -> Dict:
         """Normalize environment variable content to consistent format."""
         normalized = data.copy()
 
-        # Normalize platform specification
+        # Normalize platform specification using recursive flattening
         if "platform" in normalized:
             platform = normalized["platform"]
-            if isinstance(platform, str):
-                normalized["platform"] = [platform.lower()]
-            elif isinstance(platform, list):
-                normalized["platform"] = [
-                    p.lower() if isinstance(p, str) else p for p in platform
-                ]
+            normalized["platform"] = self._flatten_platforms(platform)
 
         # Normalize scope
         if "scope" in normalized and isinstance(normalized["scope"], str):
             normalized["scope"] = normalized["scope"].lower()
+
+        # Normalize variables
+        if "variables" in normalized and isinstance(normalized["variables"], dict):
+            variables = {}
+            for name, value in normalized["variables"].items():
+                norm_name = str(name).lower()
+                norm_value = self._normalize_variable_value(value)
+                variables[norm_name] = norm_value
+            normalized["variables"] = variables
 
         return normalized
 

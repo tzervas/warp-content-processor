@@ -23,10 +23,18 @@ class DocumentSplitter(SimpleParser):
     KISS: Clear, predictable splitting with multiple strategies.
     """
 
-    def __init__(self):
+    def __init__(
+        self,
+        use_markdown_headers: bool = True,
+        min_content_length: int = 10,
+        min_block_size: int = 20,
+    ):
         super().__init__()
         self.split_count = 0
         self.multi_document_count = 0
+        self.use_markdown_headers = use_markdown_headers
+        self.min_content_length = min_content_length
+        self.min_block_size = min_block_size
 
     @property
     def parser_name(self) -> str:
@@ -61,7 +69,8 @@ class DocumentSplitter(SimpleParser):
                 if len(documents) > 1:
                     self.multi_document_count += 1
                     logger.debug(
-                        f"Split into {len(documents)} documents using {strategy.__name__}"
+                        f"Split into {len(documents)} documents using "
+                        f"{strategy.__name__}"
                     )
                     return documents
             except Exception as e:
@@ -115,12 +124,21 @@ class DocumentSplitter(SimpleParser):
         Fallback for non-YAML content that uses other separators.
         """
         # Additional separator patterns for non-YAML content
-        additional_separators = [
-            r"^#{1,3}\s+[^\n]+\n",  # Markdown headers as separators
-            r"^\*{3,}\s*$",  # Asterisk separators
-            r"^_{3,}\s*$",  # Underscore separators
-            r"^\s*\n\s*\n\s*\n+",  # Multiple blank lines
-        ]
+        additional_separators = []
+
+        # Only include markdown headers if enabled
+        if self.use_markdown_headers:
+            additional_separators.append(
+                r"^#{1,3}\s+[^\n]+\n"
+            )  # Markdown headers as separators
+
+        additional_separators.extend(
+            [
+                r"^\*{3,}\s*$",  # Asterisk separators
+                r"^_{3,}\s*$",  # Underscore separators
+                r"^\s*\n\s*\n\s*\n+",  # Multiple blank lines
+            ]
+        )
 
         for separator_pattern in additional_separators:
             parts = re.split(separator_pattern, content, flags=re.MULTILINE)
@@ -128,7 +146,9 @@ class DocumentSplitter(SimpleParser):
             documents = []
             for part in parts:
                 cleaned = part.strip()
-                if cleaned and len(cleaned) > 10:  # Minimum content length
+                if (
+                    cleaned and len(cleaned) > self.min_content_length
+                ):  # Minimum content length
                     documents.append(cleaned)
 
             if len(documents) > 1:
@@ -157,7 +177,9 @@ class DocumentSplitter(SimpleParser):
                 if blank_line_count >= 2 and current_block:
                     # End of block
                     block_content = "\n".join(current_block).strip()
-                    if block_content and len(block_content) > 20:  # Minimum block size
+                    if (
+                        block_content and len(block_content) > self.min_block_size
+                    ):  # Minimum block size
                         blocks.append(block_content)
                     current_block = []
                     blank_line_count = 0

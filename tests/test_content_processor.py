@@ -149,11 +149,25 @@ class TestContentProcessor:
         assert ContentType.ENV_VAR in result_types
         assert ContentType.NOTEBOOK in result_types
 
-        # Check that files were created in correct directories
-        for content_type in result_types:
-            type_dir = self.output_dir / content_type.value
-            assert type_dir.exists()
-            assert any(type_dir.iterdir())
+        # Check that files were created in correct directories using helper
+        directory_checks = [
+            self._check_type_directory(content_type) for content_type in result_types
+        ]
+        assert all(
+            directory_checks
+        ), "Not all content type directories were created properly"
+
+    def _check_type_directory(self, content_type):
+        """Helper method to check if a content type directory exists and has files."""
+        type_dir = self.output_dir / content_type.value
+        return type_dir.exists() and any(type_dir.iterdir())
+
+    def _prepare_test_content(self, test_content):
+        """Helper method to prepare test content for processing."""
+        # Convert dict content to YAML if needed
+        return (
+            yaml.dump(test_content) if isinstance(test_content, dict) else test_content
+        )
 
     def test_invalid_content_handling(self):
         """Test handling of invalid content."""
@@ -211,11 +225,8 @@ class TestContentProcessor:
 
         processor = self.processor.processors[content_type]
 
-        # Convert dict content to YAML if needed
-        if isinstance(test_content, dict):
-            content = yaml.dump(test_content)
-        else:
-            content = test_content
+        # Convert content using helper to avoid conditionals
+        content = self._prepare_test_content(test_content)
 
         result = processor.process(content)
 

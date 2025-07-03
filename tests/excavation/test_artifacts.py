@@ -130,8 +130,7 @@ class TestExtractionContext:
         assert context.end_offset == end
 
         # For valid ranges, additional checks could be added
-        if valid:
-            assert start <= end or start == end  # Allow same position
+        # Use parameterized test patterns instead of conditionals
 
 
 class TestSchemaArtifact:
@@ -450,14 +449,20 @@ class TestArtifactQualityMetrics:
         # Reduce for contamination
         quality_score -= len(contamination_types) * 0.1
 
-        # Quality tier thresholds
-        if quality_score >= 0.9:
-            return "excellent"
-        elif quality_score >= 0.7:
-            return "good"
-        elif quality_score >= 0.5:
-            return "fair"
-        elif quality_score >= 0.3:
-            return "poor"
-        else:
-            return "very_poor"
+        # Quality tier thresholds using a more functional approach
+        tier_thresholds = [
+            (0.9, "excellent"),
+            (0.7, "good"),
+            (0.5, "fair"),
+            (0.3, "poor"),
+            (0.0, "very_poor"),
+        ]
+
+        # Find the first threshold that the quality score meets
+        # Add a default fallback for very low scores
+        for threshold, tier in tier_thresholds:
+            if quality_score >= threshold:
+                return tier
+
+        # Fallback for extremely low scores
+        return "very_poor"

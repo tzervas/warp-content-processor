@@ -57,7 +57,8 @@ class ContentNormalizer:
             r"^---\s*\n(.*?)\n---\s*(.*)$",  # Without trailing newline
             r"^\+\+\+\s*\n(.*?)\n\+\+\+\s*\n(.*)$",  # TOML-style markers
             r"^\s*---\s*\n(.*?)\n\s*---\s*\n(.*)$",  # With leading whitespace
-            r"^\s*---\s*\n(.*?)\n\s*---\s*(.*)$",  # With leading whitespace, no trailing newline
+            # With leading whitespace, no trailing newline
+            r"^\s*---\s*\n(.*?)\n\s*---\s*(.*)$",
         ]
 
         for pattern in frontmatter_patterns:

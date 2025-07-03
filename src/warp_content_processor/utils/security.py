@@ -79,7 +79,7 @@ class ContentSanitizer:
         try:
             path = Path(file_path).resolve()
         except (OSError, ValueError) as e:
-            raise SecurityValidationError(f"Invalid file path: {e}")
+            raise SecurityValidationError(f"Invalid file path: {e}") from e
 
         # Check file extension
         if path.suffix.lower() not in ALLOWED_EXTENSIONS:

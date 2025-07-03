@@ -195,7 +195,9 @@ class TestWorkflowProcessor(TestCase):
 
     def _verify_files_have_different_names(self, files):
         """Helper to verify that files have different names."""
-        self.assertNotEqual(files[0].name, files[1].name)
+        # Use set to check uniqueness instead of conditional
+        file_names = {f.name for f in files}
+        self.assertEqual(len(file_names), len(files), "Files should have unique names")
 
 
 if __name__ == "__main__":
