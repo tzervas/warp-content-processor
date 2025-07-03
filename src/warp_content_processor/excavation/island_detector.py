@@ -136,7 +136,8 @@ class SchemaIslandDetector:
                 else:
                     current_block_lines.append(line)
             elif is_yaml_separator:
-                # YAML document separator - end current block and potentially start new one
+                # YAML document separator - end current block and potentially
+                # start new one
                 if (
                     current_block_start is not None and len(current_block_lines) >= 1
                 ):  # Allow single line blocks before separator
@@ -354,7 +355,8 @@ class SchemaIslandDetector:
 
             cleaned = "\n".join(cleaned_lines)
 
-        # Don't be too aggressive with whitespace - only collapse 5+ consecutive newlines
+        # Don't be too aggressive with whitespace - only collapse 5+
+        # consecutive newlines
         # But for the test case with 4 newlines, we want to reduce to 3
         cleaned = re.sub(r"\n{4}", "\n\n\n", cleaned)  # 4 newlines -> 3 newlines
         cleaned = re.sub(r"\n{5,}", "\n\n", cleaned)  # 5+ newlines -> 2 newlines
@@ -390,7 +392,7 @@ class SchemaIslandDetector:
                 schema_lines += 1
 
         if len(lines) > 0:
-            schema_ratio = schema_lines / len([l for l in lines if l.strip()])
+            schema_ratio = schema_lines / len([line for line in lines if line.strip()])
             score += schema_ratio * 0.3
 
         # Ensure score is in valid range

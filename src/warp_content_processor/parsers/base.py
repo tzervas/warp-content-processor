@@ -1,7 +1,8 @@
 """
 Base classes for robust content parsing.
 
-Following KISS principle: Simple, predictable interfaces with clear success/failure semantics.
+Following KISS principle: Simple, predictable interfaces with clear
+success/failure semantics.
 Following SRP principle: Each class has exactly one responsibility.
 """
 
@@ -85,7 +86,8 @@ class ErrorTolerantParser:
         Initialize with a list of strategies to try in order.
 
         Args:
-            strategies: List of strategies, ordered from fastest/strictest to slowest/most tolerant
+            strategies: List of strategies, ordered from fastest/strictest to
+                       slowest/most tolerant
         """
         if not strategies:
             raise ValueError("At least one parsing strategy is required")
@@ -107,7 +109,8 @@ class ErrorTolerantParser:
             content: Raw content to parse
 
         Returns:
-            ParseResult: Result from first successful strategy, or failure if all strategies fail
+            ParseResult: Result from first successful strategy, or failure if
+                        all strategies fail
         """
         self.stats["total_attempts"] += 1
 
@@ -131,7 +134,8 @@ class ErrorTolerantParser:
                 else:
                     last_error = result.error_message
                     logger.debug(
-                        f"Strategy {strategy.strategy_name} failed: {result.error_message}"
+                        f"Strategy {strategy.strategy_name} failed: "
+                        f"{result.error_message}"
                     )
             except Exception as e:
                 last_error = str(e)

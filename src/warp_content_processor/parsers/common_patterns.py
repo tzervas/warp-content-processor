@@ -64,7 +64,8 @@ class CommonPatterns:
     # Content type detection patterns
     CONTENT_TYPE_PATTERNS = {
         "workflow": [
-            r"name\s*[：:]\s*.+command\s*[：:]",  # Basic workflow pattern (including unicode colons)
+            r"name\s*[：:]\s*.+command\s*[：:]",  # Basic workflow pattern
+            # (including unicode colons)
             r"shells\s*[：:]\s*[\[\-]",  # Shell specifications
             r"command\s*[：:]\s*.+",  # Command field present
             r"name\s*[：:].*tags\s*[：:]",  # Name and tags (workflow indicators)
@@ -204,7 +205,8 @@ class CommonPatterns:
 
 class MangledContentCleaner:
     """
-    Specialized cleaner for heavily mangled content using intelligent token-based approach.
+    Specialized cleaner for heavily mangled content using intelligent
+    token-based approach.
 
     SRP: Single responsibility - clean up mangled text to make it parseable.
     KISS: Use intelligent cleaner instead of complex regex patterns.
@@ -229,7 +231,8 @@ class MangledContentCleaner:
     @classmethod
     def reconstruct_from_lines(cls, content: str) -> Optional[dict]:
         """
-        Attempt to reconstruct structured data from mangled content using intelligent parsing.
+        Attempt to reconstruct structured data from mangled content using
+        intelligent parsing.
 
         This is the most aggressive parsing strategy - use only as a last resort.
         """
@@ -250,7 +253,7 @@ class MangledContentCleaner:
 
                 parsed_value = yaml.safe_load(value)
                 result[key] = parsed_value
-            except:
+            except (yaml.YAMLError, ValueError, TypeError):
                 # Fall back to string value
                 result[key] = value.strip("\"'")
 

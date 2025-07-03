@@ -1,5 +1,6 @@
 """
-Content Archaeologist - Main orchestrator for extracting schema data from contaminated content.
+Content Archaeologist - Main orchestrator for extracting schema data from
+contaminated content.
 
 Following SRP: This class only coordinates extraction, doesn't do the actual parsing.
 Following KISS: Simple, clear interface for excavating legitimate content.
@@ -81,7 +82,8 @@ class ContentArchaeologist:
         try:
             if len(contaminated_content) > self.max_content_size:
                 logger.warning(
-                    f"Content size {len(contaminated_content)} exceeds limit {self.max_content_size}"
+                    f"Content size {len(contaminated_content)} exceeds limit "
+                    f"{self.max_content_size}"
                 )
                 contaminated_content = contaminated_content[: self.max_content_size]
 
@@ -135,7 +137,8 @@ class ContentArchaeologist:
         processing_time_ms = int((time.time() - start_time) * 1000)
 
         logger.info(
-            f"Excavation complete: {len(artifacts)} artifacts found in {processing_time_ms}ms"
+            f"Excavation complete: {len(artifacts)} artifacts found in "
+            f"{processing_time_ms}ms"
         )
 
         return ExcavationResult(
@@ -163,7 +166,8 @@ class ContentArchaeologist:
         # Convert string to ContentType enum
         content_type = self._map_content_type(content_type_str)
 
-        # Determine extraction confidence based on island quality and detection confidence
+        # Determine extraction confidence based on island quality and
+        # detection confidence
         extraction_confidence = self._calculate_extraction_confidence(
             island, detection_confidence
         )
@@ -208,7 +212,8 @@ class ContentArchaeologist:
         self, island, detection_confidence: float
     ) -> ExtractionConfidence:
         """
-        Calculate extraction confidence based on island quality and detection confidence.
+        Calculate extraction confidence based on island quality and
+        detection confidence.
 
         Args:
             island: ContentIsland with quality metrics
