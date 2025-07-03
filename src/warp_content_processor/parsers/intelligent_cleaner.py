@@ -195,7 +195,7 @@ class ContentTokenizer:
             return TokenType.KEY
 
         # For short text that could be a key, assume it's a key
-        if len(text) <= 20 and not any(char in text for char in ' "()[]{}'):
+        if len(text) <= 20 and all(char not in text for char in ' "()[]{}'):
             return TokenType.KEY
 
         return TokenType.VALUE
@@ -403,9 +403,6 @@ class IntelligentCleaner:
         Returns:
             Tuple of (cleaned_content, fixes_applied, errors_found)
         """
-        if not content or not content.strip():
-            return content, [], []
-
         # Step 1: Tokenize the content
         tokens = self.tokenizer.tokenize(content)
 
@@ -419,11 +416,7 @@ class IntelligentCleaner:
 
     def _reconstruct_content(self, tokens: List[Token]) -> str:
         """Reconstruct content from tokens."""
-        result = []
-
-        for token in tokens:
-            result.append(token.value)
-
+        result = [token.value for token in tokens]
         return "".join(result)
 
     def extract_key_value_pairs(self, content: str) -> List[Tuple[str, str]]:

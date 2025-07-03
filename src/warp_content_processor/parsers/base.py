@@ -195,7 +195,3 @@ class SimpleParser(ABC):
         if self.parse_count == 0:
             return 0.0
         return float(self.success_count) / float(self.parse_count)
-        """Get success rate for monitoring."""
-        if self.parse_count == 0:
-            return 0.0
-        return self.success_count / self.parse_count

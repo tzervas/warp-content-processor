@@ -201,16 +201,15 @@ class TimeoutAnalyzer:
         if len(traces) > 1:
             thread_locks = []
             for trace in traces:
-                for frame in trace["stack_frames"]:
-                    if "with " in frame["code"] and ":" in frame["code"]:
-                        thread_locks.append(
-                            {
-                                "thread": trace["thread_name"],
-                                "location": f"{frame['file']}:{frame['line']}",
-                                "code": frame["code"],
-                            }
-                        )
-
+                thread_locks.extend(
+                    {
+                        "thread": trace["thread_name"],
+                        "location": f"{frame['file']}:{frame['line']}",
+                        "code": frame["code"],
+                    }
+                    for frame in trace["stack_frames"]
+                    if "with " in frame["code"] and ":" in frame["code"]
+                )
             if len(thread_locks) >= 2:
                 analysis["timeout_type"] = "deadlock"
                 analysis["likely_cause"] = thread_locks
@@ -304,10 +303,7 @@ class TimeoutAnalyzer:
         # Analyze hanging operations
         analysis = self.analyze_hanging_operation(traces)
 
-        # Generate report
-        report = self.generate_report(test_path, traces, analysis, log_content)
-
-        return report
+        return self.generate_report(test_path, traces, analysis, log_content)
 
 
 def main():
