@@ -257,4 +257,4 @@ class MangledContentCleaner:
                 # Fall back to string value
                 result[key] = value.strip("\"'")
 
-        return result if result else None
+        return result or None
