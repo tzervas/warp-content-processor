@@ -121,11 +121,24 @@ class NotebookProcessor(SchemaProcessor):
         ):
             front_matter = normalized["front_matter"].copy()
 
-            # Normalize tags to lowercase
-            if "tags" in front_matter and isinstance(front_matter["tags"], list):
+            # Normalize title: strip whitespace and ensure string
+            if "title" in front_matter and isinstance(front_matter["title"], str):
+                front_matter["title"] = front_matter["title"].strip()
+
+            # Normalize description: strip whitespace and ensure string
+            if "description" in front_matter and isinstance(front_matter["description"], str):
+                front_matter["description"] = front_matter["description"].strip()
+
+            # Normalize tags: always a list of lowercased strings
+            if "tags" in front_matter:
+                tags = front_matter["tags"]
+                if isinstance(tags, str):
+                    tags = [tags]
+                elif not isinstance(tags, list):
+                    tags = []
                 front_matter["tags"] = [
-                    tag.lower() if isinstance(tag, str) else tag
-                    for tag in front_matter["tags"]
+                    tag.lower().strip() if isinstance(tag, str) else tag
+                    for tag in tags
                 ]
 
             normalized["front_matter"] = front_matter
