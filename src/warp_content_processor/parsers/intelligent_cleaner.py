@@ -413,11 +413,7 @@ class IntelligentCleaner:
 
     def _reconstruct_content(self, tokens: List[Token]) -> str:
         """Reconstruct content from tokens."""
-        result = []
-
-        for token in tokens:
-            result.append(token.value)
-
+        result = [token.value for token in tokens]
         return "".join(result)
 
     def extract_key_value_pairs(self, content: str) -> List[Tuple[str, str]]:
