@@ -5,6 +5,7 @@ Your development environment is now fully configured with all the code quality a
 ## ✅ What We've Set Up
 
 ### DevContainer Configuration
+
 - **Python 3.11** environment with UV package manager
 - **Complete toolchain**: isort, black, ruff, mypy, trunk, pytest, bandit
 - **VS Code extensions** for optimal Python development
@@ -12,6 +13,7 @@ Your development environment is now fully configured with all the code quality a
 - **Development scripts** for your preferred workflow
 
 ### Key Features
+
 - 🔧 **Auto-fixing**: Scripts that automatically fix formatting and lint issues
 - 🔍 **Quality checks**: Comprehensive code quality analysis
 - 🛡️ **Security scanning**: Bandit and Safety for vulnerability detection
@@ -24,6 +26,7 @@ Your development environment is now fully configured with all the code quality a
 ### Option 1: VS Code (Recommended)
 
 1. **Open project in VS Code**:
+
    ```bash
    code .
    ```
@@ -103,6 +106,7 @@ Following your preferred order: **isort → black → ruff → mypy → trunk �
 ## 🛠️ Development Features
 
 ### VS Code Integration
+
 - **Auto-formatting on save** with Black
 - **Import sorting on save** with isort
 - **Linting integration** with Ruff and Pylint
@@ -110,7 +114,9 @@ Following your preferred order: **isort → black → ruff → mypy → trunk �
 - **Trunk integration** for comprehensive quality checks
 
 ### Pre-commit Hooks
+
 Automatically installed and configured to run:
+
 - isort (import sorting)
 - black (formatting)
 - ruff (linting with auto-fix)
@@ -119,6 +125,7 @@ Automatically installed and configured to run:
 - General quality checks
 
 ### Testing Environment
+
 - **pytest** with coverage reporting
 - **HTML coverage reports** in `htmlcov/`
 - **Parallel test execution** with pytest-xdist
@@ -147,6 +154,7 @@ requirements-dev.txt     # Development dependencies
 ## 🔧 Troubleshooting
 
 ### Container Won't Start
+
 ```bash
 # Check Docker is running
 docker ps
@@ -156,6 +164,7 @@ docker ps
 ```
 
 ### Missing Tools After Setup
+
 ```bash
 # Re-run setup script
 bash .devcontainer/setup.sh
@@ -165,12 +174,14 @@ source ~/.bashrc
 ```
 
 ### Permission Issues
+
 ```bash
 # Fix ownership (run inside container)
 sudo chown -R vscode:vscode /workspaces/warp-content-processor
 ```
 
 ### Python Environment Issues
+
 ```bash
 # Recreate virtual environment
 rm -rf .venv

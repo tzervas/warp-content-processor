@@ -71,6 +71,7 @@ wcp-fix
 ```
 
 This runs:
+
 - `isort` - Import sorting
 - `black` - Code formatting
 - `ruff --fix` - Linting with auto-fixes
@@ -86,8 +87,9 @@ wcp-check
 ```
 
 This runs:
+
 - `isort --check-only --diff`
-- `black --check --diff` 
+- `black --check --diff`
 - `ruff check`
 - `mypy` type checking
 - `trunk check --all`
@@ -102,6 +104,7 @@ wcp-security
 ```
 
 This runs:
+
 - `bandit` - Python security linter
 - `safety` - Dependency vulnerability scanner
 
@@ -115,6 +118,7 @@ wcp-test
 ```
 
 This runs:
+
 - `pytest` with coverage reporting
 - HTML coverage report in `htmlcov/`
 
@@ -148,6 +152,7 @@ This runs all steps in sequence: fix → test → quality → security
 ### Pre-commit Hooks
 
 Pre-commit hooks are automatically installed and will run:
+
 - Code formatting (isort, black)
 - Linting (ruff)
 - Type checking (mypy)
@@ -161,9 +166,9 @@ Pre-commit hooks are automatically installed and will run:
 If the container fails to build:
 
 1. **Check Docker**: Ensure Docker Desktop is running
-2. **Rebuild Container**: 
+2. **Rebuild Container**:
    - Command Palette → "Dev Containers: Rebuild Container"
-3. **Clean Build**: 
+3. **Clean Build**:
    - Command Palette → "Dev Containers: Rebuild Container Without Cache"
 
 ### Permission Issues

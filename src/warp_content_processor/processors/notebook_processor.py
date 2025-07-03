@@ -164,7 +164,7 @@ class NotebookProcessor(SchemaProcessor):
                             expected_str = (
                                 expected_type.__name__
                                 if not isinstance(expected_type, tuple)
-                                else ' or '.join(t.__name__ for t in expected_type)
+                                else " or ".join(t.__name__ for t in expected_type)
                             )
                             error_msg = (
                                 f"Field '{field_name}' contains unexpected "
@@ -178,7 +178,7 @@ class NotebookProcessor(SchemaProcessor):
                         expected_str = (
                             expected_type.__name__
                             if not isinstance(expected_type, tuple)
-                            else ' or '.join(t.__name__ for t in expected_type)
+                            else " or ".join(t.__name__ for t in expected_type)
                         )
                         error_msg = (
                             f"Field '{field_name}' has unexpected type: "

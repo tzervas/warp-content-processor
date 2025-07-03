@@ -15,7 +15,7 @@ Adheres to PEP8, DRY, SRP, and KISS principles.
 
 Usage:
     python scripts/quality_check.py [options]
-    
+
 Options:
     --no-fix   - Run checks without applying fixes
     --verbose  - Show detailed output
@@ -26,13 +26,13 @@ import argparse
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 
 class QualityChecker:
     """Orchestrates code quality checks and fixes."""
 
-    def __init__(self, project_root: Path = None):
+    def __init__(self, project_root: Optional[Path] = None):
         """Initialize quality checker with project root."""
         self.project_root = project_root or Path.cwd()
         self.src_path = self.project_root / "src"
@@ -50,23 +50,26 @@ class QualityChecker:
                 check=False,
             )
             if result.returncode == 0:
-                print(f"🐍 Detected UV package manager: {result.stdout.strip()}")
+                print(f"Detected UV package manager: {result.stdout.strip()}")
                 return True
         except FileNotFoundError:
             pass
-        
-        print("🐍 Using standard Python package management")
+
+        print("Using standard Python package management")
         return False
 
     def run_command(self, cmd: List[str], description: str) -> Tuple[bool, str]:
         """Run a command and return success status and output."""
-        print(f"\n🔧 {description}...")
+        try:
+            print(f"\n🔧 {description}...")
+        except UnicodeEncodeError:
+            print(f"\n{description}...")
         try:
             # Use UV if available for running Python tools
-            if self.use_uv and cmd[0] == "python" and cmd[1] == "-m":
+            if self.use_uv and cmd[0] == sys.executable and cmd[1] == "-m":
                 uv_cmd = ["uv", "run"] + cmd[2:]
                 cmd = uv_cmd
-            
+
             result = subprocess.run(
                 cmd,
                 cwd=self.project_root,
@@ -75,49 +78,58 @@ class QualityChecker:
                 check=False,
             )
             if result.returncode == 0:
-                print(f"✅ {description} completed successfully")
+                try:
+                    print(f"✅ {description} completed successfully")
+                except UnicodeEncodeError:
+                    print(f"{description} completed successfully")
                 return True, result.stdout
-            else:
+
+            try:
                 print(f"❌ {description} failed:")
-                print(result.stderr)
-                return False, result.stderr
+            except UnicodeEncodeError:
+                print(f"{description} failed:")
+            print(result.stderr)
+            return False, result.stderr
         except FileNotFoundError as e:
-            print(f"❌ {description} failed - tool not found: {e}")
+            try:
+                print(f"❌ {description} failed - tool not found: {e}")
+            except UnicodeEncodeError:
+                print(f"{description} failed - tool not found: {e}")
             return False, str(e)
 
     def run_isort(self) -> bool:
         """Run isort to sort imports."""
-        cmd = ["python", "-m", "isort", "--profile", "black"] + self.python_paths
+        cmd = [sys.executable, "-m", "isort", "--profile", "black"] + self.python_paths
         success, _ = self.run_command(cmd, "Import sorting with isort")
         return success
 
     def run_black(self) -> bool:
         """Run black to format code."""
-        cmd = ["python", "-m", "black", "--line-length", "88"] + self.python_paths
+        cmd = [sys.executable, "-m", "black", "--line-length", "88"] + self.python_paths
         success, _ = self.run_command(cmd, "Code formatting with black")
         return success
 
     def run_ruff_fix(self) -> bool:
         """Run ruff with auto-fixes."""
-        cmd = ["python", "-m", "ruff", "check", "--fix"] + self.python_paths
+        cmd = [sys.executable, "-m", "ruff", "check", "--fix"] + self.python_paths
         success, _ = self.run_command(cmd, "Linting with ruff (auto-fix)")
         return success
 
     def run_ruff_check(self) -> bool:
         """Run ruff for final linting check."""
-        cmd = ["python", "-m", "ruff", "check"] + self.python_paths
+        cmd = [sys.executable, "-m", "ruff", "check"] + self.python_paths
         success, _ = self.run_command(cmd, "Final ruff linting check")
         return success
 
     def run_mypy(self) -> bool:
         """Run mypy for type checking."""
-        cmd = ["python", "-m", "mypy"] + self.python_paths
+        cmd = [sys.executable, "-m", "mypy"] + self.python_paths
         success, _ = self.run_command(cmd, "Type checking with mypy")
         return success
 
     def run_pylint(self) -> bool:
         """Run pylint for additional linting."""
-        cmd = ["python", "-m", "pylint"] + self.python_paths
+        cmd = [sys.executable, "-m", "pylint"] + self.python_paths
         success, _ = self.run_command(cmd, "Additional linting with pylint")
         return success
 
@@ -129,13 +141,29 @@ class QualityChecker:
 
     def run_isort_check(self) -> bool:
         """Run isort to check import sorting without fixing."""
-        cmd = ["python", "-m", "isort", "--profile", "black", "--check-only", "--diff"] + self.python_paths
+        cmd = [
+            sys.executable,
+            "-m",
+            "isort",
+            "--profile",
+            "black",
+            "--check-only",
+            "--diff",
+        ] + self.python_paths
         success, _ = self.run_command(cmd, "Import sorting check with isort")
         return success
 
     def run_black_check(self) -> bool:
         """Run black to check code formatting without fixing."""
-        cmd = ["python", "-m", "black", "--line-length", "88", "--check", "--diff"] + self.python_paths
+        cmd = [
+            sys.executable,
+            "-m",
+            "black",
+            "--line-length",
+            "88",
+            "--check",
+            "--diff",
+        ] + self.python_paths
         success, _ = self.run_command(cmd, "Code formatting check with black")
         return success
 
@@ -149,10 +177,14 @@ class QualityChecker:
         """Run all quality checks in the correct order."""
         results = {}
 
-        print("🚀 Starting comprehensive code quality checks...")
-        print(f"📁 Project root: {self.project_root}")
-        print(f"🐍 Python paths: {', '.join(self.python_paths)}")
-        print(f"🔧 Apply fixes: {'Yes' if apply_fixes else 'No'}")
+        print(
+            "🚀 Starting comprehensive code quality checks..."
+            if sys.platform != "win32"
+            else "Starting comprehensive code quality checks..."
+        )
+        print(f"Project root: {self.project_root}")
+        print(f"Python paths: {', '.join(self.python_paths)}")
+        print(f"Apply fixes: {'Yes' if apply_fixes else 'No'}")
 
         if apply_fixes:
             # Step 1: Import sorting (must come first)
@@ -188,11 +220,11 @@ class QualityChecker:
     def print_summary(self, results: Dict[str, bool]) -> None:
         """Print summary of all quality check results."""
         print("\n" + "=" * 60)
-        print("📊 QUALITY CHECK SUMMARY")
+        print("QUALITY CHECK SUMMARY")
         print("=" * 60)
 
         for check, success in results.items():
-            status = "✅ PASS" if success else "❌ FAIL"
+            status = "PASS" if success else "FAIL"
             print(f"{check.ljust(15)}: {status}")
 
         total_checks = len(results)
@@ -200,25 +232,27 @@ class QualityChecker:
         print(f"\nOverall: {passed_checks}/{total_checks} checks passed")
 
         if passed_checks == total_checks:
-            print("🎉 All quality checks passed!")
+            print("All quality checks passed!")
         else:
-            print("⚠️  Some quality checks failed. Please review the output above.")
+            print("Some quality checks failed. Please review the output above.")
 
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description='Code Quality Checker')
-    parser.add_argument('--no-fix', action='store_true', help='Run checks without applying fixes')
-    parser.add_argument('--verbose', action='store_true', help='Show detailed output')
-    
+    parser = argparse.ArgumentParser(description="Code Quality Checker")
+    parser.add_argument(
+        "--no-fix", action="store_true", help="Run checks without applying fixes"
+    )
+    parser.add_argument("--verbose", action="store_true", help="Show detailed output")
+
     return parser.parse_args()
 
 
-def main():
+def main() -> None:
     """Main entry point for quality checking."""
     args = parse_arguments()
     checker = QualityChecker()
-    
+
     # Run checks with or without fixes based on arguments
     apply_fixes = not args.no_fix
     results = checker.run_all_checks(apply_fixes=apply_fixes)

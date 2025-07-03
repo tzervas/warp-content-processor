@@ -80,6 +80,7 @@ warp-content-processor/
 ## Development
 
 This project uses:
+
 - Python 3.8+
 - PyYAML for YAML processing
 - pytest for testing

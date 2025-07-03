@@ -409,8 +409,7 @@ class SchemaIslandDetector:
 
         for island in sorted_islands:
             overlaps = any(
-                self._islands_overlap(island, selected)
-                for selected in non_overlapping
+                self._islands_overlap(island, selected) for selected in non_overlapping
             )
             if not overlaps:
                 non_overlapping.append(island)
