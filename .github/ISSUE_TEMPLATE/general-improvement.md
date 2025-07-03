@@ -1,35 +1,48 @@
 ---
-name: General Improvement
-about: Propose a general improvement to the project
-title: '[IMPROVEMENT] '
+name: Enhancement Request
+about: Propose an enhancement or improvement to the project
+title: '[ENHANCEMENT] '
 labels: enhancement
 assignees: ''
 
 ---
 
 ## Category
-Please select the type of improvement:
+Please select the type of enhancement:
 - [ ] Performance
 - [ ] Documentation
 - [ ] Tests
 - [ ] Feature
+- [ ] User Experience
+- [ ] Other
 
-## Description
-### Current Situation
+## Current Situation
+<!-- Describe the current state and why it needs improvement -->
 
-### Problem Statement
+## Problem Statement
+<!-- What specific problems or limitations are you addressing? -->
 
-### Proposed Changes
+## Proposed Enhancement
+<!-- Describe your suggested improvements in detail -->
 
-## Expected Behavior
-### User Experience
+## Expected Benefits
+<!-- What are the expected benefits of this enhancement? -->
+### User Impact
+<!-- How will this improve the user experience? -->
 
-### System Behavior
+### Technical Impact
+<!-- What technical improvements will this bring? -->
 
-### Performance Metrics (if applicable)
+### Performance Impact (if applicable)
+<!-- Any expected performance improvements? Include metrics if possible -->
+
+## Implementation Considerations
+<!-- Any specific technical considerations or potential challenges? -->
 
 ## Environment
 - OS: [e.g., Linux, Windows, macOS]
-- Browser/Runtime: [if applicable]
 - Version: [current version]
 - Dependencies: [relevant dependencies]
+
+## Additional Context
+<!-- Add any other context, examples, or screenshots about the enhancement request here -->

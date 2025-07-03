@@ -1,31 +1,37 @@
 ---
-name: Bug report
-about: Create a report to help us improve
+name: Bug Report
+about: Report a bug or unexpected behavior
 title: '[BUG] '
 labels: bug
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Bug Description
+<!-- Provide a clear and concise description of the bug -->
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Use the following input file '...'
-2. Run command '....'
-3. See error
+## Steps to Reproduce
+1. <!-- First Step -->
+2. <!-- Second Step -->
+3. <!-- Additional Steps -->
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Expected Behavior
+<!-- What did you expect to happen? -->
 
-**Example Files**
-If applicable, add example files that demonstrate the issue.
+## Actual Behavior
+<!-- What actually happened? Include any error messages, stack traces, or unexpected output -->
 
-**Environment (please complete the following information):**
- - OS: [e.g. Ubuntu 20.04]
- - Python Version: [e.g. 3.8]
- - Project Version: [e.g. commit hash or version tag]
+## Example Files
+<!-- If applicable, provide example files that demonstrate the issue -->
 
-**Additional context**
-Add any other context about the problem here.
+## Environment
+- OS: [e.g., Ubuntu 20.04]
+- Python Version: [e.g., 3.8]
+- Project Version: [e.g., commit hash or version tag]
+- Dependencies: [list any relevant dependencies]
+
+## Additional Context
+<!-- Add any other context about the problem here -->
+
+## Possible Solution
+<!-- Optional: If you have any ideas about how to fix this, let us know -->
