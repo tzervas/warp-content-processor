@@ -195,7 +195,7 @@ class ContentTokenizer:
             return TokenType.KEY
 
         # For short text that could be a key, assume it's a key
-        if len(text) <= 20 and not any(char in text for char in ' "()[]{}'):
+        if len(text) <= 20 and all(char not in text for char in ' "()[]{}'):
             return TokenType.KEY
 
         return TokenType.VALUE
