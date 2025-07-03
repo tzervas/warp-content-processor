@@ -159,7 +159,7 @@ class ContentNormalizer:
         frontmatter, remaining = ContentNormalizer.normalize_yaml_frontmatter(content)
 
         # Start with frontmatter or empty dict
-        workflow = frontmatter if frontmatter else {}
+        workflow = frontmatter or {}
 
         # Try to parse remaining content as YAML
         if remaining:
