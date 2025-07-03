@@ -5,17 +5,10 @@ Implements various strategies for extracting structured data from malformed cont
 """
 
 import re
-from typing import Dict, List, Optional, Tuple
 
 import yaml
 
 from .base import ParseResult, SimpleParser
-from .common_patterns import CommonPatterns
-from .yaml_strategies import (
-    CleanedYAMLStrategy,
-    MangledYAMLStrategy,
-    StandardYAMLStrategy,
-)
 
 
 class RobustParser(SimpleParser):
