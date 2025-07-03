@@ -278,9 +278,9 @@ class ReconstructedYAMLStrategy(ParsingStrategy):
                 )
 
             # Additional validation: ensure we have at least one meaningful key-value pair
-            meaningful_keys = sum(
-                1 for k, v in reconstructed.items() if k and v and not k.startswith("_")
-            )
+            meaningful_keys = sum(bool(k and v and not k.startswith("_"))
+                              for k, v in reconstructed.items())
+
             if meaningful_keys < 1:
                 return ParseResult.failure_result(
                     "No meaningful key-value pairs found", content
