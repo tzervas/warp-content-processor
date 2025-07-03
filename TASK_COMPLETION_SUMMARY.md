@@ -7,11 +7,12 @@
 ### 1. ✅ Replace content-type switching logic with `@pytest.mark.parametrize` for each processor
 
 **Before:**
+
 ```python
 def _test_content_type_validation(self, content_type):
     if content_type not in self.processor.processors:
         pytest.skip(f"No processor available for {content_type}")
-    
+
     processor = self.processor.processors[content_type]
     content_type_test_data = self.get_content_type_test_data()
     content = content_type_test_data[content_type]
@@ -20,7 +21,7 @@ def _test_content_type_validation(self, content_type):
         content = yaml.dump(content)
 
     result = processor.process(content)
-    
+
     self.assertTrue(result.is_valid, f"Validation failed for {content_type}: {result.errors}")
 
 def test_workflow_validation(self):
@@ -33,7 +34,8 @@ def test_prompt_validation(self):
 ```
 
 **After:**
-```python
+
+````python
 CONTENT_TYPE_PARAMETERS = [
     pytest.param(ContentType.WORKFLOW, {"name": "test", "command": "echo test"}, id="workflow"),
     pytest.param(ContentType.PROMPT, {"name": "test", "prompt": "do {{action}}"}, id="prompt"),
@@ -46,7 +48,7 @@ CONTENT_TYPE_PARAMETERS = [
 @pytest.mark.timeout(90)
 def test_content_type_validation(self, content_type, test_content):
     # Single test function with parameters - no conditionals
-```
+````
 
 ### 2. ✅ Define a parameter set for each content type and its minimal valid input
 
@@ -61,15 +63,16 @@ Each content type now has a clearly defined minimal valid input:
 ### 3. ✅ Plan to isolate assertion logic into a single test function driven by parameters
 
 **Centralized Assertion Logic:**
+
 ```python
 @pytest.mark.parametrize("content_type,test_content", CONTENT_TYPE_PARAMETERS)
 def test_content_type_validation(self, content_type, test_content):
     # Skip if no processor is available for this content type
     if content_type not in self.processor.processors:
         pytest.skip(f"No processor available for {content_type}")
-    
+
     processor = self.processor.processors[content_type]
-    
+
     # Convert dict content to YAML if needed
     if isinstance(test_content, dict):
         content = yaml.dump(test_content)

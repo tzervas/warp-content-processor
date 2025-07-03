@@ -7,18 +7,21 @@ This implementation provides a comprehensive solution for parsing extremely mang
 ## 🧭 Design Principles Applied
 
 ### **KISS (Keep It Simple, Stupid)**
+
 - **Single-purpose functions**: Each parser has one clear, predictable responsibility
 - **Simple interfaces**: Clear success/failure semantics with minimal complexity
 - **Progressive strategies**: Start with simple approaches, fall back to more complex ones only when needed
 - **Readable code**: Self-documenting with clear naming and minimal abstraction
 
-### **SRP (Single Responsibility Principle)** 
+### **SRP (Single Responsibility Principle)**
+
 - **ContentDetector**: Only detects content types (with confidence scores)
 - **DocumentSplitter**: Only splits documents at boundaries
 - **Parsing Strategies**: Each strategy handles exactly one parsing approach
 - **Content Cleaners**: Only responsible for cleaning/normalizing content
 
 ### **DRY (Don't Repeat Yourself)**
+
 - **CommonPatterns**: Shared regex patterns and utilities across all parsers
 - **MangledContentCleaner**: Reusable cleaning rules for mangled content
 - **ErrorTolerantParser**: Unified strategy execution framework
@@ -43,6 +46,7 @@ src/warp_content_processor/parsers/
 ## 🔧 Core Components
 
 ### **ParseResult** (KISS)
+
 Simple container for parsing results with clear success/failure semantics:
 
 ```python
@@ -55,13 +59,14 @@ class ParseResult:
 ```
 
 ### **ErrorTolerantParser** (KISS + DRY)
+
 Executes parsing strategies in order until one succeeds:
 
 ```python
 class ErrorTolerantParser:
     def __init__(self, strategies: List[ParsingStrategy]):
         self.strategies = strategies
-    
+
     def parse(self, content: str) -> ParseResult:
         # Try each strategy until one succeeds
         for strategy in self.strategies:
@@ -72,6 +77,7 @@ class ErrorTolerantParser:
 ```
 
 ### **ContentDetector** (SRP)
+
 **Single Responsibility**: Detect content types with confidence scores.
 
 ```python
@@ -81,11 +87,13 @@ content_type, confidence = detector.detect(mangled_content)
 ```
 
 **Features:**
+
 - Confidence scoring for detection quality
 - Minimum confidence thresholds
 - Multiple content type scoring for debugging
 
-### **DocumentSplitter** (SRP)  
+### **DocumentSplitter** (SRP)
+
 **Single Responsibility**: Split documents at boundaries.
 
 ```python
@@ -95,11 +103,13 @@ documents = splitter.split(multi_doc_content)
 ```
 
 **Progressive Strategies:**
+
 1. YAML separators (`---`, `+++`)
-2. Markdown headers and other separators  
+2. Markdown headers and other separators
 3. Content block detection by blank lines
 
 ### **CommonPatterns** (DRY)
+
 **Shared utilities** to avoid code duplication:
 
 ```python
@@ -117,6 +127,7 @@ content_type, confidence = CommonPatterns.detect_content_type(content)
 ```
 
 ### **YAML Parsing Strategies** (KISS)
+
 Progressive parsing strategies from fast/strict to slow/tolerant:
 
 1. **StandardYAMLStrategy**: Direct `yaml.safe_load()` - fastest
@@ -140,7 +151,7 @@ result = yaml_parser.parse(extremely_mangled_yaml)
 ```yaml
 # Input: Extremely mangled content
 name：工作流程測試          # Unicode colon, mixed languages
-command：echo"hello"&&ls-la   # Missing spaces, concatenated commands  
+command：echo"hello"&&ls-la   # Missing spaces, concatenated commands
 tags：[git，test，broken]]    # Unicode commas, extra bracket
 shells：bash，zsh，fish      # Unicode commas throughout
 arguments：
@@ -165,11 +176,12 @@ arguments：
 # Before cleaning
 "name：Test，command：echo\"test\""
 
-# After cleaning  
+# After cleaning
 "name: Test, command: echo \"test\""
 ```
 
 **Cleaning Rules Applied:**
+
 - Unicode punctuation → ASCII (：→ :, ，→ ,)
 - Missing spaces after colons and operators
 - Broken brackets/braces removal
@@ -181,18 +193,21 @@ arguments：
 ## 📊 Performance & Robustness
 
 ### **Progressive Parsing** (KISS)
+
 - **Valid content**: Uses fastest strategy (standard YAML parsing)
 - **Slightly mangled**: Basic cleaning, still fast
 - **Heavily mangled**: Aggressive cleaning, slower but thorough
 - **Severely broken**: Reconstruction/partial extraction, slowest but most tolerant
 
 ### **Performance Benchmarks**
+
 - ✅ Parse 10MB of mangled content in <5 seconds
-- ✅ Handle 1000 mixed documents in <1 second  
+- ✅ Handle 1000 mixed documents in <1 second
 - ✅ Memory usage under 100MB for large documents
 - ✅ 95%+ success rate on mangled content
 
 ### **Error Handling** (KISS)
+
 - **Clear error messages**: Specific failure reasons for debugging
 - **Graceful degradation**: Partial results when possible
 - **No crashes**: All exceptions caught and converted to failure results
@@ -203,6 +218,7 @@ arguments：
 ## 🧪 Testing
 
 ### **Comprehensive Test Coverage**
+
 ```bash
 # Run the robust parsing tests
 python -m pytest tests/test_robust_parsing.py -v
@@ -234,7 +250,7 @@ assert detector.detect(mangled_workflow)[0] == ContentType.WORKFLOW
 # Test aggressive YAML cleaning
 apes_yaml = """
 name：工作流程測試
-command：echo"hello"&&ls-la  
+command：echo"hello"&&ls-la
 tags：[git，broken]]
 """
 result = yaml_parser.parse(apes_yaml)
@@ -253,7 +269,7 @@ from warp_content_processor.parsers.yaml_strategies import create_yaml_parser
 
 # Set up parsers
 detector = ContentDetector()
-splitter = DocumentSplitter()  
+splitter = DocumentSplitter()
 yaml_parser = create_yaml_parser()
 
 # Process mangled content
@@ -299,11 +315,13 @@ print(f"Multi-document rate: {split_stats['multi_document_rate']:.1%}")
 The new robust parsing system is designed to **complement** the existing codebase:
 
 ### **Backward Compatibility**
+
 - Existing `ContentSplitter` and `ContentProcessor` interfaces preserved
 - New parsers can be used as drop-in replacements
 - All security validation and normalization features maintained
 
 ### **Migration Path**
+
 ```python
 # Old approach
 from warp_content_processor import ContentSplitter
@@ -316,6 +334,7 @@ documents = splitter.split(content)
 ```
 
 ### **Enhanced Pipeline**
+
 The new parsers can be integrated into the existing `ContentProcessor`:
 
 ```python
@@ -325,12 +344,12 @@ class EnhancedContentProcessor(ContentProcessor):
         self.robust_detector = ContentDetector()
         self.robust_splitter = DocumentSplitter()
         self.robust_yaml_parser = create_yaml_parser()
-    
+
     def process_file(self, file_path):
         # Use robust parsing for better error handling
         content = file_path.read_text()
         documents = self.robust_splitter.split(content)
-        
+
         results = []
         for doc in documents:
             content_type, confidence = self.robust_detector.detect(doc)
@@ -338,7 +357,7 @@ class EnhancedContentProcessor(ContentProcessor):
                 # Use existing processors for validated content
                 result = self.processors[content_type].process(doc)
                 results.append(result)
-        
+
         return results
 ```
 
@@ -347,20 +366,23 @@ class EnhancedContentProcessor(ContentProcessor):
 ## 📈 Success Metrics
 
 ### **Code Quality Improvements**
+
 - ✅ **50% reduction** in cyclomatic complexity
-- ✅ **Zero code duplication** in parsing logic  
+- ✅ **Zero code duplication** in parsing logic
 - ✅ **100% test coverage** on new parsing components
 - ✅ **Clear single responsibilities** for each class
 
-### **Robustness Improvements**  
+### **Robustness Improvements**
+
 - ✅ **95%+ success rate** on mangled content (vs ~60% before)
 - ✅ **Graceful degradation** for unparseable content
 - ✅ **Clear error messages** for debugging
 - ✅ **Performance within 2x** of previous implementation
 
 ### **Maintainability Improvements**
+
 - ✅ **New content types** can be added in <1 day
-- ✅ **Parsing issues** can be debugged in <30 minutes  
+- ✅ **Parsing issues** can be debugged in <30 minutes
 - ✅ **Self-documenting code** with clear naming
 - ✅ **Minimal dependencies** and well-defined interfaces
 
@@ -381,7 +403,7 @@ class EnhancedContentProcessor(ContentProcessor):
 When adding new parsing capabilities:
 
 1. **Follow KISS**: Keep implementations simple and focused
-2. **Respect SRP**: Each class/function should have one clear responsibility  
+2. **Respect SRP**: Each class/function should have one clear responsibility
 3. **Embrace DRY**: Use shared utilities in `CommonPatterns`
 4. **Add tests**: Comprehensive test coverage for all new functionality
 5. **Document**: Clear docstrings and examples

@@ -15,6 +15,7 @@ This PR implements a comprehensive solution for timeout management, security val
 ## 🚀 **Key Features Implemented**
 
 ### 1. **Timeout Management & Debugging** 🕒
+
 - **Added pytest-timeout plugin** with 60-second test timeouts
 - **Thread-based timeout handling** configured in `pyproject.toml`
 - **Timeout analysis tools** (`analyze_timeout.py`) for debugging hanging tests
@@ -22,6 +23,7 @@ This PR implements a comprehensive solution for timeout management, security val
 - **Fixed original hanging test** that was causing CI issues
 
 ### 2. **Security & Input Validation** 🛡️
+
 - **New `utils/security.py` module** with comprehensive security utilities:
   - File path validation preventing directory traversal attacks
   - Content sanitization removing dangerous patterns (XSS, script injection)
@@ -32,6 +34,7 @@ This PR implements a comprehensive solution for timeout management, security val
 - **Secure YAML operations** throughout the codebase
 
 ### 3. **Content Normalization & Robust Parsing** 🧹
+
 - **New `utils/normalizer.py` module** with advanced content processing:
   - Handles poorly formatted Markdown and YAML gracefully
   - Extracts and cleans frontmatter from mixed content
@@ -44,6 +47,7 @@ This PR implements a comprehensive solution for timeout management, security val
 ## 🔧 **Core Improvements**
 
 ### **Enhanced Processing Pipeline**
+
 - ✅ Integrated security validation into `ContentSplitter` and `ContentProcessor`
 - ✅ Updated document splitting to handle indented YAML separators
 - ✅ Fixed ContentType enum usage throughout codebase (`.value` vs `str()`)
@@ -51,6 +55,7 @@ This PR implements a comprehensive solution for timeout management, security val
 - ✅ Added `normalize_content()` abstract method to all processor classes
 
 ### **Critical Bug Fixes**
+
 - 🐛 Fixed ProcessorFactory ContentType string conversion issues
 - 🐛 Resolved workflow processor indentation and logic flow bugs
 - 🐛 Fixed missing constructor parameters in all processor classes
@@ -62,12 +67,14 @@ This PR implements a comprehensive solution for timeout management, security val
 ## 📋 **Testing & Quality Assurance**
 
 ### **New Test Suites**
+
 - **`test_security_normalization.py`**: 20 tests covering security validation and content normalization
 - **`test_messy_content_integration.py`**: 8 integration tests for end-to-end messy content processing
 - **Enhanced test fixtures** with proper content formatting
 - **Timeout demo tests** for various hanging scenarios
 
 ### **Quality Metrics**
+
 - ✅ **50/50 tests passing** (100% success rate)
 - ✅ **70% code coverage** across the codebase
 - ✅ **Performance testing** for large content processing
@@ -78,35 +85,39 @@ This PR implements a comprehensive solution for timeout management, security val
 
 ## 🛡️ **Security Enhancements**
 
-| Security Feature | Implementation | Status |
-|------------------|----------------|--------|
-| Path Traversal Prevention | File path validation in `utils/security.py` | ✅ Implemented |
-| Script Injection Protection | XSS and command injection filtering | ✅ Implemented |
-| Control Character Filtering | Unicode normalization and sanitization | ✅ Implemented |
-| Safe YAML Operations | Secure loading/dumping with size limits | ✅ Implemented |
-| Input Validation | Content type and structure validation | ✅ Implemented |
+| Security Feature            | Implementation                              | Status         |
+| --------------------------- | ------------------------------------------- | -------------- |
+| Path Traversal Prevention   | File path validation in `utils/security.py` | ✅ Implemented |
+| Script Injection Protection | XSS and command injection filtering         | ✅ Implemented |
+| Control Character Filtering | Unicode normalization and sanitization      | ✅ Implemented |
+| Safe YAML Operations        | Secure loading/dumping with size limits     | ✅ Implemented |
+| Input Validation            | Content type and structure validation       | ✅ Implemented |
 
 ---
 
 ## 📊 **Files Modified**
 
 ### **Core Processing**
+
 - `src/warp_content_processor/schema_processor.py`
 - `src/warp_content_processor/workflow_processor.py`
 - `src/warp_content_processor/processor_factory.py`
 - All processor classes (`env_var`, `notebook`, `prompt`, `rule`)
 
 ### **New Security & Utility Modules**
+
 - `src/warp_content_processor/utils/security.py` ⭐ **NEW**
 - `src/warp_content_processor/utils/normalizer.py` ⭐ **NEW**
 
 ### **Testing & Documentation**
+
 - `tests/test_security_normalization.py` ⭐ **NEW**
 - `tests/test_messy_content_integration.py` ⭐ **NEW**
 - `timeout_analysis_guide.md` ⭐ **NEW**
 - `analyze_timeout.py` ⭐ **NEW**
 
 ### **Configuration**
+
 - `pyproject.toml` (pytest-timeout configuration)
 - `scripts/run_tests.sh` (timeout and debug flags)
 - `uv.lock` (dependency updates)
@@ -134,16 +145,19 @@ TOTAL: 1284 lines, 384 missed, 70% coverage
 ## 🎯 **Review Focus Areas**
 
 ### **High Priority**
+
 1. **Security Implementation** - Review `utils/security.py` for comprehensive input validation
 2. **Content Normalization** - Examine `utils/normalizer.py` for robust parsing logic
 3. **Test Coverage** - Validate new test suites for security and integration scenarios
 
 ### **Medium Priority**
+
 4. **Performance** - Review timeout configurations and large content handling
 5. **Error Handling** - Check graceful degradation and error recovery mechanisms
 6. **API Consistency** - Verify consistent ContentType usage across all processors
 
 ### **Documentation Review**
+
 7. **Timeout Analysis Guide** - Review debugging documentation completeness
 8. **Security Documentation** - Validate security feature explanations
 
@@ -152,6 +166,7 @@ TOTAL: 1284 lines, 384 missed, 70% coverage
 ## ✅ **Ready for Review**
 
 This PR is **ready for review** with:
+
 - ✅ All tests passing
 - ✅ Comprehensive documentation
 - ✅ Security validation implemented

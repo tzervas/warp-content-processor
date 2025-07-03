@@ -9,12 +9,10 @@ This script helps analyze pytest timeout failures by:
 """
 
 import argparse
-import json
 import re
 import subprocess
-import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 
 class TimeoutAnalyzer:
@@ -236,7 +234,7 @@ class TimeoutAnalyzer:
 """
 
         if analysis["likely_cause"]:
-            report += f"""
+            report += """
 ## Likely Cause
 """
             for cause in analysis["likely_cause"]:
@@ -256,7 +254,7 @@ class TimeoutAnalyzer:
 """
 
         if analysis["recommendations"]:
-            report += f"""
+            report += """
 ## Recommendations
 """
             for rec in analysis["recommendations"]:

@@ -8,7 +8,7 @@ Following SRP principle: Each class has exactly one responsibility.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, TypeVar
 
 T = TypeVar("T", bound="ParseResult")
 

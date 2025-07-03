@@ -9,30 +9,21 @@ description = "Content processor for Warp Terminal"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
-authors = [
-    { name = "Warp Content Processor Contributors" },
-]
-dependencies = [
-    "pytest-cov>=5.0.0",
-    "pytest-timeout>=2.4.0",
-    "PyYAML>=6.0",
-]
+authors = [{ name = "Warp Content Processor Contributors" }]
+dependencies = ["pytest-cov>=5.0.0", "pytest-timeout>=2.4.0", "PyYAML>=6.0"]
 
 [project.optional-dependencies]
-test = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.1.0",
-]
+test = ["pytest>=7.0.0", "pytest-cov>=4.1.0"]
 dev = [
-    "black>=23.9.1",
-    "isort>=5.12.0",
-    "pylint>=2.17.5",
-    "ruff>=0.1.9",
-    "mypy>=1.5.1",
-    "types-PyYAML>=6.0.12",
-    "bandit>=1.7.5",
-    "yamllint>=1.32.0",
-    "pip-audit>=2.7.0"
+  "black>=23.9.1",
+  "isort>=5.12.0",
+  "pylint>=2.17.5",
+  "ruff>=0.1.9",
+  "mypy>=1.5.1",
+  "types-PyYAML>=6.0.12",
+  "bandit>=1.7.5",
+  "yamllint>=1.32.0",
+  "pip-audit>=2.7.0",
 ]
 
 [project.urls]
@@ -62,10 +53,10 @@ line_length = 88
 
 [tool.pylint.messages_control]
 disable = [
-    "C0111",  # missing-docstring
-    "C0103",  # invalid-name
-    "C0330",  # bad-continuation
-    "C0326",  # bad-whitespace
+  "C0111", # missing-docstring
+  "C0103", # invalid-name
+  "C0330", # bad-continuation
+  "C0326", # bad-whitespace
 ]
 
 [tool.pylint.format]
@@ -91,10 +82,10 @@ target-version = "py38"
 
 [tool.ruff.lint]
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "C",   # flake8-comprehensions
-    "B",   # flake8-bugbear
+  "E", # pycodestyle errors
+  "W", # pycodestyle warnings
+  "F", # pyflakes
+  "I", # isort
+  "C", # flake8-comprehensions
+  "B", # flake8-bugbear
 ]

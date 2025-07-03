@@ -17,7 +17,7 @@ This document outlines the design and implementation of parametrized test cases 
 
 Each content type is defined with its minimal valid input:
 
-```python
+````python
 CONTENT_TYPE_PARAMETERS = [
     pytest.param(
         ContentType.WORKFLOW,
@@ -49,7 +49,7 @@ CONTENT_TYPE_PARAMETERS = [
         id="rule"
     ),
 ]
-```
+````
 
 ### 2. Parametrized Test Function
 
@@ -60,16 +60,16 @@ Replaced multiple individual test methods with a single parametrized test:
 @pytest.mark.timeout(90)
 def test_content_type_validation(self, content_type, test_content):
     """Test validation of content for each supported content type.
-    
+
     This parametrized test replaces individual validation test methods
     to avoid conditionals in tests and centralize assertion logic.
     """
     # Skip if no processor is available for this content type
     if content_type not in self.processor.processors:
         pytest.skip(f"No processor available for {content_type}")
-    
+
     processor = self.processor.processors[content_type]
-    
+
     # Convert dict content to YAML if needed
     if isinstance(test_content, dict):
         content = yaml.dump(test_content)
@@ -88,11 +88,12 @@ def test_content_type_validation(self, content_type, test_content):
 ### 1. Eliminated Conditionals
 
 **Before:**
+
 ```python
 def _test_content_type_validation(self, content_type):
     if content_type not in self.processor.processors:
         pytest.skip(f"No processor available for {content_type}")
-    
+
     processor = self.processor.processors[content_type]
     content_type_test_data = self.get_content_type_test_data()
     content = content_type_test_data[content_type]
@@ -110,6 +111,7 @@ def test_prompt_validation(self):
 ```
 
 **After:**
+
 ```python
 @pytest.mark.parametrize("content_type,test_content", CONTENT_TYPE_PARAMETERS)
 def test_content_type_validation(self, content_type, test_content):
@@ -147,6 +149,7 @@ Each content type parameter includes the absolute minimum required fields for va
 ### Parameter IDs
 
 Each parameter has a descriptive `id` that appears in test output:
+
 - `workflow`, `prompt`, `notebook`, `env_var`, `rule`
 
 This makes it easy to identify which content type failed during test runs.

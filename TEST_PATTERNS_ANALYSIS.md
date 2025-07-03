@@ -1,13 +1,15 @@
 # Test Patterns and Conditional Violations Analysis
 
 ## Overview
+
 This document analyzes conditional statements and control flow patterns found in test files, identifying violations of the "No-Conditionals-In-Tests" rule and suggesting refactoring patterns.
 
 ## Analysis Summary
 
 ### Files Analyzed
+
 - `tests/test_content_processor.py`
-- `tests/test_messy_content_integration.py` 
+- `tests/test_messy_content_integration.py`
 - `tests/test_workflow_processor.py`
 - `tests/test_security_normalization.py`
 - `tests/excavation/test_island_detector.py`
@@ -34,6 +36,7 @@ if isinstance(content, dict):
 
 **Pattern**: Content-type branching based on processor availability and data format
 **Refactoring Opportunities**:
+
 - **Parametrization**: Convert to pytest parametrize with filtering
 - **Fixtures**: Create separate fixtures for each content type
 - **Helper Functions**: Move conditional logic to setup methods
@@ -52,13 +55,14 @@ if not output_dir.exists():
 for output_file in output_files:
     # Validation logic inside loop
 
-# VIOLATION: Document type validation loop  
+# VIOLATION: Document type validation loop
 for doc_type, _ in documents:
     self.assertEqual(doc_type.value, "workflow")
 ```
 
 **Pattern**: Collection iteration with validation
 **Refactoring Opportunities**:
+
 - **Helper Functions**: Extract validation logic to separate methods
 - **Parametrization**: Use pytest.mark.parametrize for multiple validations
 - **Fixtures**: Create validation fixtures that handle collections
@@ -82,6 +86,7 @@ self.assertTrue(any("second_test" in str(file) for file in output_files))
 
 **Pattern**: File existence and content validation
 **Refactoring Opportunities**:
+
 - **Fixtures**: Create file validation fixtures
 - **Helper Functions**: Extract file checking logic
 - **Parametrization**: Test different file patterns separately
@@ -110,6 +115,7 @@ if contamination_types:
 
 **Pattern**: Security validation with conditional checks
 **Refactoring Opportunities**:
+
 - **Fixtures**: Create contamination type fixtures
 - **Parametrization**: Test each security validation separately
 - **Helper Functions**: Move validation logic to dedicated methods
@@ -141,6 +147,7 @@ else:
 
 **Pattern**: Optional island processing with quality checks
 **Refactoring Opportunities**:
+
 - **Parametrization**: Test quality ranges separately for each case
 - **Fixtures**: Create island fixtures with known qualities
 - **Helper Functions**: Extract island validation logic
@@ -169,6 +176,7 @@ def _calculate_quality_tier(self, confidence, contamination_types):
 
 **Pattern**: Quality scoring with threshold-based conditionals
 **Refactoring Opportunities**:
+
 - **Parametrization**: Test each quality tier separately
 - **Fixtures**: Create quality fixtures for different tiers
 - **Helper Functions**: Move scoring logic to production code
@@ -196,6 +204,7 @@ self.assertTrue(result.success)
 
 **Pattern**: Performance testing with large data generation
 **Refactoring Opportunities**:
+
 - **Fixtures**: Create performance test fixtures
 - **Parametrization**: Test different performance scenarios
 - **Helper Functions**: Move content generation to setup
@@ -205,16 +214,18 @@ self.assertTrue(result.success)
 ### 1. Convert to Parametrized Tests
 
 **Before** (Conditional):
+
 ```python
 def _test_content_type_validation(self, content_type):
     if content_type not in self.processor.processors:
         pytest.skip(f"No processor available for {content_type}")
-    
+
     if isinstance(content, dict):
         content = yaml.dump(content)
 ```
 
 **After** (Parametrized):
+
 ```python
 @pytest.mark.parametrize("content_type,content_data", [
     (ContentType.WORKFLOW, {"name": "test", "command": "echo test"}),
@@ -231,6 +242,7 @@ def test_content_type_validation(self, content_type, content_data):
 ### 2. Extract to Helper Functions
 
 **Before** (Loop in test):
+
 ```python
 def test_output_validation(self):
     output_files = list(self.output_dir.rglob("*.yaml"))
@@ -243,12 +255,13 @@ def test_output_validation(self):
 ```
 
 **After** (Helper function):
+
 ```python
 def _assert_valid_yaml_files(self, directory):
     """Assert all YAML files in directory are valid."""
     if not directory.exists():
         return
-    
+
     for yaml_file in directory.rglob("*.yaml"):
         with open(yaml_file) as f:
             yaml.safe_load(f)  # Will raise exception if invalid
@@ -260,6 +273,7 @@ def test_output_validation(self):
 ### 3. Create Validation Fixtures
 
 **Before** (Conditional validation):
+
 ```python
 def test_island_quality(self):
     islands = detector.find_islands(content)
@@ -269,6 +283,7 @@ def test_island_quality(self):
 ```
 
 **After** (Fixture):
+
 ```python
 @pytest.fixture
 def quality_island(self, detector):
@@ -285,6 +300,7 @@ def test_island_quality_range(self, quality_island):
 ### 4. Use Pytest Features for Complex Scenarios
 
 **Before** (Complex conditional):
+
 ```python
 def test_contamination_detection(self):
     for contamination_type in expected_types:
@@ -295,6 +311,7 @@ def test_contamination_detection(self):
 ```
 
 **After** (Pytest features):
+
 ```python
 @pytest.mark.parametrize("expected_contamination", [
     ContaminationType.LOG_PREFIXES,
@@ -310,26 +327,31 @@ def test_individual_contamination_detection(self, detector, contaminated_content
 ## Test Pattern Categories
 
 ### Category 1: Content-Type Branching ⚠️ High Priority
+
 - **Files**: `test_content_processor.py`
 - **Pattern**: Conditional logic based on content types
 - **Solution**: Parametrization with content type fixtures
 
-### Category 2: Collection Processing ⚠️ Medium Priority  
+### Category 2: Collection Processing ⚠️ Medium Priority
+
 - **Files**: `test_messy_content_integration.py`, `test_workflow_processor.py`
 - **Pattern**: Loops with conditional validation
 - **Solution**: Helper functions and assertion methods
 
 ### Category 3: Optional Value Testing ⚠️ Medium Priority
+
 - **Files**: `test_island_detector.py`, `test_artifacts.py`
 - **Pattern**: Conditional checks for optional results
 - **Solution**: Fixtures with guaranteed state
 
 ### Category 4: Performance Testing ⚠️ Low Priority
+
 - **Files**: `test_robust_parsing.py`, `test_security_normalization.py`
 - **Pattern**: Large data generation with loops
 - **Solution**: Fixtures for performance test data
 
 ### Category 5: Validation Helpers ⚠️ Low Priority
+
 - **Files**: Multiple files
 - **Pattern**: Helper methods with conditional logic
 - **Solution**: Move to production code or dedicated test utilities

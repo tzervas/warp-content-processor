@@ -2,8 +2,6 @@ import threading
 import time
 from unittest.mock import Mock
 
-import pytest
-
 
 class TestTimeoutScenarios:
     """Test cases that demonstrate different timeout scenarios for analysis."""
