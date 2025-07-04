@@ -37,9 +37,41 @@ packages = ["src/warp_content_processor"]
 packages = ["src/warp_content_processor"]
 
 [tool.pytest.ini_options]
-addopts = "--cov=src --cov-report=term-missing --timeout=60 -vv --log-cli-level=DEBUG --timeout-method=thread"
+addopts = [
+  "--cov=src/warp_content_processor",
+  "--cov-report=term-missing",
+  "--cov-report=html:htmlcov",
+  "--cov-report=xml:coverage.xml",
+  "--cov-fail-under=80",
+  "--timeout=60",
+  "-v",
+  "--tb=short",
+  "--strict-markers",
+  "--strict-config",
+  "--log-cli-level=INFO",
+  "--timeout-method=thread",
+  "--durations=10",
+]
 timeout = 60
 testpaths = ["tests"]
+minversion = "7.0"
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+filterwarnings = [
+  "error",
+  "ignore::UserWarning",
+  "ignore::DeprecationWarning",
+  "ignore::PendingDeprecationWarning",
+]
+markers = [
+  "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+  "integration: marks tests as integration tests",
+  "unit: marks tests as unit tests",
+  "smoke: marks tests as smoke tests",
+  "security: marks tests as security tests",
+  "performance: marks tests as performance tests",
+]
 
 [tool.black]
 line-length = 88
