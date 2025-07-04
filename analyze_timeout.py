@@ -114,6 +114,7 @@ class TimeoutAnalyzer:
             return result.stdout, log_content, result.returncode
 
         except subprocess.TimeoutExpired:
+            print("Subprocess timed out while running the command: {}".format(" ".join(cmd)))
             return "", "", -1
 
     def parse_stack_trace(self, output: str) -> List[Dict]:
