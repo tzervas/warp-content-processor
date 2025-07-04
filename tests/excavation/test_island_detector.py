@@ -1,17 +1,69 @@
-<<<<<<< ours
-"""
-Tests for SchemaIslandDetector - Following KISS principles with parameterized tests.
-
-Tests focus on specific behaviors without complex loops in test logic.
-"""
+"""Test suite for schema island detector."""
 
 import pytest
+from typing import List, Set
 
 from warp_content_processor.excavation.artifacts import ContaminationType
 from warp_content_processor.excavation.island_detector import (
     ContentIsland,
     SchemaIslandDetector,
 )
+
+class TestContentCleaning:
+    """Test content cleaning with various contamination types."""
+
+    @pytest.fixture
+    def detector(self):
+        """Create a SchemaIslandDetector instance."""
+        return SchemaIslandDetector()
+
+    @pytest.mark.parametrize(
+        "contaminated_content,expected_cleaned",
+        [
+            ("name: test", "name: test"),  # No cleaning needed
+            ("2024-01-01 [INFO] name: test", "name: test"),  # Log prefix removal
+            (
+                "INFO: name: test\nDEBUG: value: 123",
+                "name: test\nvalue: 123",
+            ),  # Multiple log lines
+            ("name: test\x00\x01removed", "name: testremoved"),  # Binary removal
+            (
+                "name: test\n\n\n\nvalue: 123",
+                "name: test\n\n\nvalue: 123",
+            ),  # Only collapse 5+ newlines
+        ],
+    )
+    def test_content_cleaning(self, detector, contaminated_content, expected_cleaned):
+        """Test content cleaning with various contamination types."""
+        contamination_types = set()
+
+        # Detect contamination types using helper method
+        contamination_types = self._detect_contamination_types(
+            detector, contaminated_content
+        )
+
+        cleaned_content, warnings = detector._clean_content(
+            contaminated_content, contamination_types
+        )
+
+        # Check cleaning result
+        assert cleaned_content.strip() == expected_cleaned.strip()
+
+    def _detect_contamination_types(self, detector, content):
+        """Helper to detect contamination types in content."""
+        contamination_types = set()
+        for cont_type, pattern in detector.contamination_patterns.items():
+            if pattern.search(content):
+                contamination_types.add(cont_type)
+        return contamination_types
+
+
+    def _validate_cleaning_warnings(self, contamination_types, warnings):
+        """Helper to validate cleaning warnings based on contamination."""
+        if contamination_types:
+            assert len(warnings) > 0
+        else:
+            assert len(warnings) == 0
 
 
 class TestSchemaIslandDetectorInitialization:
@@ -195,64 +247,6 @@ class TestContaminationDetection:
         if islands:
             island = islands[0]
             assert island.contamination_types == expected_contamination_types
-
-
-class TestContentCleaning:
-    """Test content cleaning functionality."""
-
-    @pytest.fixture
-    def detector(self):
-        return SchemaIslandDetector()
-
-    @pytest.mark.parametrize(
-        "contaminated_content,expected_cleaned",
-        [
-            ("name: test", "name: test"),  # No cleaning needed
-            ("2024-01-01 [INFO] name: test", "name: test"),  # Log prefix removal
-            (
-                "INFO: name: test\nDEBUG: value: 123",
-                "name: test\nvalue: 123",
-            ),  # Multiple log lines
-            ("name: test\x00\x01removed", "name: testremoved"),  # Binary removal
-            (
-                "name: test\n\n\n\nvalue: 123",
-                "name: test\n\n\nvalue: 123",
-            ),  # Fixed: Only collapse 5+ newlines
-        ],
-    )
-    def test_content_cleaning(self, detector, contaminated_content, expected_cleaned):
-        """Test content cleaning with various contamination types."""
-        contamination_types = set()
-
-        # Detect contamination types using helper method
-        contamination_types = self._detect_contamination_types(
-            detector, contaminated_content
-        )
-
-        cleaned_content, warnings = detector._clean_content(
-            contaminated_content, contamination_types
-        )
-
-        # Check cleaning result
-        assert cleaned_content.strip() == expected_cleaned.strip()
-
-        # Should have warnings if cleaning was done
-        self._validate_cleaning_warnings(contamination_types, warnings)
-
-    def _detect_contamination_types(self, detector, content):
-        """Helper to detect contamination types in content."""
-        contamination_types = set()
-        for cont_type, pattern in detector.contamination_patterns.items():
-            if pattern.search(content):
-                contamination_types.add(cont_type)
-        return contamination_types
-
-    def _validate_cleaning_warnings(self, contamination_types, warnings):
-        """Helper to validate cleaning warnings based on contamination."""
-        if contamination_types:
-            assert len(warnings) > 0
-        else:
-            assert len(warnings) == 0
 
 
 class TestQualityScoring:
@@ -456,62 +450,44 @@ class TestIntegrationScenarios:
 
             # But should still contain the valid YAML structure
             assert "workflow" in island.content or "recovery" in island.content
-||||||| base
-=======
-"""Test suite for schema island detector."""
 
-import pytest
-
-from warp_content_processor.excavation.island_detector import SchemaIslandDetector
-from warp_content_processor.excavation.artifacts import ContaminationType
-
-class TestContentCleaning:
-    """Test content cleaning with various contamination types."""
+class TestJsonIslandDetection:
+    """Test JSON island detection functionality."""
 
     @pytest.fixture
     def detector(self):
-        """Create a SchemaIslandDetector instance."""
         return SchemaIslandDetector()
 
     @pytest.mark.parametrize(
-        "contaminated_content,expected_cleaned",
+        "content,expected_count",
         [
-            ("name: test", "name: test"),  # No cleaning needed
-            ("2024-01-01 [INFO] name: test", "name: test"),  # Log prefix removal
-            (
-                "INFO: name: test\nDEBUG: value: 123",
-                "name: test\nvalue: 123",
-            ),  # Multiple log lines
-            ("name: test\x00\x01removed", "name: testremoved"),  # Binary removal
-            (
-                "name: test\n\n\n\nvalue: 123",
-                "name: test\n\n\nvalue: 123",
-            ),  # Only collapse 5+ newlines
+            ("", 0),  # Empty
+            ("{}", 0),  # Empty object (no JSON-like patterns)
+            ('{"name": "test"}', 1),  # Valid JSON
+            ('{"name": "test", "value": 123}', 1),  # JSON with number
+            ('{"data": [1, 2, 3]}', 1),  # JSON with array
+            ('text before {"name": "test"} text after', 1),  # Embedded JSON
+            ('{"first": 1} random text {"second": 2}', 2),  # Multiple JSON blocks
+            ("just text without json", 0),  # No JSON
+            ('{"unclosed": "object"', 0),  # Malformed JSON (unclosed)
         ],
     )
-    def test_content_cleaning(self, detector, contaminated_content, expected_cleaned):
-        """Test content cleaning with various contamination types."""
-        contamination_types = set()
+    def test_json_island_detection_count(self, detector, content, expected_count):
+        """Test JSON island detection with various content types."""
+        islands = detector.find_islands(content)
+        json_islands = [i for i in islands if i.extraction_method == "json_block"]
+        assert len(json_islands) == expected_count
 
-        # Detect contamination types using helper method
-        contamination_types = self._detect_contamination_types(
-            detector, contaminated_content
-        )
+    def test_nested_json_detection(self, detector):
+        """Test detection of nested JSON structures."""
+        nested_content = '{"outer": {"inner": {"deep": "value"}}}'
+        islands = detector.find_islands(nested_content)
 
-        cleaned_content, warnings = detector._clean_content(
-            contaminated_content, contamination_types
-        )
+        # Should find the complete outer structure, not inner parts
+        json_islands = [i for i in islands if i.extraction_method == "json_block"]
+        assert len(json_islands) == 1
 
-        # Check cleaning result
-        assert cleaned_content.strip() == expected_cleaned.strip()
-
-    def _detect_contamination_types(
-        self, detector: SchemaIslandDetector, content: str
-    ) -> Set[ContaminationType]:
-        """Helper to detect contamination types in content."""
-        return {
-            ctype
-            for ctype, pattern in detector.contamination_patterns.items()
-            if pattern.search(content)
-        }
->>>>>>> theirs
+        if json_islands:
+            island = json_islands[0]
+            assert "outer" in island.content
+            assert "deep" in island.content
