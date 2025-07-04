@@ -49,8 +49,8 @@ class TestContentCleaning:
         self, detector: SchemaIslandDetector, content: str
     ) -> Set[ContaminationType]:
         """Helper to detect contamination types in content."""
-        types = set()
-        for ctype, pattern in detector.contamination_patterns.items():
-            if pattern.search(content):
-                types.add(ctype)
-        return types
+        return {
+            ctype
+            for ctype, pattern in detector.contamination_patterns.items()
+            if pattern.search(content)
+        }
