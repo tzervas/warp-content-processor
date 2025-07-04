@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from warp_content_processor.schema_processor import ContentSplitter
+from warp_content_processor.processors.schema_processor import ContentSplitter
 from warp_content_processor.utils.normalizer import ContentNormalizer
 from warp_content_processor.utils.security import (
     ContentSanitizer,
