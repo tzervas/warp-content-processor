@@ -136,12 +136,10 @@ class TimeoutAnalyzer:
             )
 
             for thread_name, thread_id, stack_content in thread_stacks:
-                # Extract file/line information
-                file_lines = re.findall(
+                # Extract file/line information using named expression
+                if file_lines := re.findall(
                     r'File "([^"]+)", line (\d+), in (\w+)\n\s*(.+)', stack_content
-                )
-
-                if file_lines:
+                ):
                     traces.append(
                         {
                             "thread_name": thread_name.strip(),
@@ -153,14 +151,50 @@ class TimeoutAnalyzer:
                                     "function": func_name,
                                     "code": code_line.strip(),
                                 }
-                                for file_path, line_num, func_name, code_line in (
-                                    file_lines
-                                )
+                                for file_path, line_num, func_name, code_line in file_lines
                             ],
                         }
                     )
 
         return traces
+
+    def _analyze_single_trace(self, trace: Dict) -> Tuple[str, Dict]:
+        """Analyze a single trace for timeout patterns."""
+        if not trace.get("stack_frames"):
+            return None, None
+
+        last_frame = trace["stack_frames"][-1]
+        code_line = last_frame.get("code", "")
+
+        for pattern_name, pattern in self.timeout_patterns.items():
+            if re.search(pattern, code_line):
+                cause = {
+                    "type": pattern_name,
+                    "location": f"{last_frame.get('file', 'unknown')}:{last_frame.get('line', 'unknown')}",
+                    "code": code_line,
+                    "thread": trace.get("thread_name", "unknown"),
+                }
+                return pattern_name, cause
+
+        return None, None
+
+    def _detect_deadlock(self, traces: List[Dict]) -> Tuple[bool, List[Dict]]:
+        """Detect potential deadlocks from multiple traces."""
+        if len(traces) <= 1:
+            return False, []
+
+        thread_locks = [
+            {
+                "thread": trace.get("thread_name", "unknown"),
+                "location": f"{frame.get('file', 'unknown')}:{frame.get('line', 'unknown')}",
+                "code": frame.get("code", ""),
+            }
+            for trace in traces
+            for frame in trace.get("stack_frames", [])
+            if "with " in frame.get("code", "") and ":" in frame.get("code", "")
+        ]
+
+        return len(thread_locks) >= 2, thread_locks
 
     def analyze_hanging_operation(self, traces: List[Dict]) -> Dict:
         """Analyze stack traces to identify type of hanging operation."""
@@ -171,49 +205,22 @@ class TimeoutAnalyzer:
             "recommendations": [],
         }
 
+        # Analyze individual traces
         for trace in traces:
-            if not trace["stack_frames"]:
-                continue
+            pattern_name, cause = self._analyze_single_trace(trace)
+            if pattern_name and cause:
+                analysis["timeout_type"] = pattern_name
+                analysis["likely_cause"].append(cause)
 
-            # Analyze the last frame (where execution was when timeout occurred)
-            last_frame = trace["stack_frames"][-1]
-            code_line = last_frame["code"]
+        # Check for deadlocks
+        is_deadlock, thread_locks = self._detect_deadlock(traces)
+        if is_deadlock:
+            analysis["timeout_type"] = "deadlock"
+            analysis["likely_cause"] = thread_locks
 
-            # Check against patterns
-            for pattern_name, pattern in self.timeout_patterns.items():
-                if re.search(pattern, code_line):
-                    analysis["timeout_type"] = pattern_name
-                    analysis["likely_cause"].append(
-                        {
-                            "type": pattern_name,
-                            "location": f"{last_frame['file']}:{last_frame['line']}",
-                            "code": code_line,
-                            "thread": trace["thread_name"],
-                        }
-                    )
-
-                    if pattern_name in self.recommendations:
-                        analysis["recommendations"].extend(
-                            self.recommendations[pattern_name]
-                        )
-
-        # Special analysis for deadlocks
-        if len(traces) > 1:
-            thread_locks = []
-            for trace in traces:
-                thread_locks.extend(
-                    {
-                        "thread": trace["thread_name"],
-                        "location": f"{frame['file']}:{frame['line']}",
-                        "code": frame["code"],
-                    }
-                    for frame in trace["stack_frames"]
-                    if "with " in frame["code"] and ":" in frame["code"]
-                )
-            if len(thread_locks) >= 2:
-                analysis["timeout_type"] = "deadlock"
-                analysis["likely_cause"] = thread_locks
-                analysis["recommendations"] = self.recommendations["threading"]
+        # Set recommendations based on final timeout_type
+        if analysis["timeout_type"] in self.recommendations:
+            analysis["recommendations"] = self.recommendations[analysis["timeout_type"]]
 
         return analysis
 
