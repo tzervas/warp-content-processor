@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """
 Tests for SchemaIslandDetector - Following KISS principles with parameterized tests.
 
@@ -201,6 +202,21 @@ class TestContentCleaning:
 
     @pytest.fixture
     def detector(self):
+=======
+"""Test suite for schema island detector."""
+
+import pytest
+
+from warp_content_processor.excavation.island_detector import SchemaIslandDetector
+from warp_content_processor.excavation.artifacts import ContaminationType
+
+class TestContentCleaning:
+    """Test content cleaning with various contamination types."""
+
+    @pytest.fixture
+    def detector(self):
+        """Create a SchemaIslandDetector instance."""
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
         return SchemaIslandDetector()
 
     @pytest.mark.parametrize(
@@ -216,7 +232,11 @@ class TestContentCleaning:
             (
                 "name: test\n\n\n\nvalue: 123",
                 "name: test\n\n\nvalue: 123",
+<<<<<<< HEAD
             ),  # Fixed: Only collapse 5+ newlines
+=======
+            ),  # Only collapse 5+ newlines
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
         ],
     )
     def test_content_cleaning(self, detector, contaminated_content, expected_cleaned):
@@ -235,6 +255,7 @@ class TestContentCleaning:
         # Check cleaning result
         assert cleaned_content.strip() == expected_cleaned.strip()
 
+<<<<<<< HEAD
         # Should have warnings if cleaning was done
         self._validate_cleaning_warnings(contamination_types, warnings)
 
@@ -455,3 +476,14 @@ class TestIntegrationScenarios:
 
             # But should still contain the valid YAML structure
             assert "workflow" in island.content or "recovery" in island.content
+=======
+    def _detect_contamination_types(
+        self, detector: SchemaIslandDetector, content: str
+    ) -> Set[ContaminationType]:
+        """Helper to detect contamination types in content."""
+        return {
+            ctype
+            for ctype, pattern in detector.contamination_patterns.items()
+            if pattern.search(content)
+        }
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a

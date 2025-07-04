@@ -62,8 +62,12 @@ class ContentNormalizer:
         ]
 
         for pattern in frontmatter_patterns:
+<<<<<<< HEAD
             match = re.match(pattern, content, re.DOTALL)
             if match:
+=======
+            if match := re.match(pattern, content, re.DOTALL):
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
                 yaml_content, remaining = match.groups()
                 try:
                     frontmatter = secure_yaml_load(yaml_content)
@@ -451,10 +455,14 @@ class ContentNormalizer:
             return "env_var"
 
         # Check for notebook indicators
+<<<<<<< HEAD
         if "title" in data and ("tags" in data or "description" in data):
             return "notebook"
 
         return "unknown"
+=======
+        return "notebook" if "title" in data and "tags" in data else "unknown"
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
     @staticmethod
     def _detect_text_content_type(text: str) -> str:

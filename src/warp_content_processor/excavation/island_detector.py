@@ -117,14 +117,33 @@ class SchemaIslandDetector:
     def _find_yaml_islands(
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
+<<<<<<< HEAD
         """Find YAML-like content islands."""
         islands = []
 
         # Look for blocks that have multiple YAML-like lines together
+=======
+        """Find YAML-like content islands.
+        
+        This method detects and extracts YAML-like content blocks by looking for:
+        1. Lines matching YAML patterns (key: value, lists)
+        2. YAML document separators (---)
+        3. Consecutive YAML-like lines
+        
+        Args:
+            content: The string content to search for YAML islands
+            source_hint: Optional hint about the content source
+            
+        Returns:
+            List of ContentIsland objects containing YAML-like content
+        """
+        islands: List[ContentIsland] = []
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
         lines = content.split("\n")
         current_block_start = None
         current_block_lines = []
 
+<<<<<<< HEAD
         for i, line in enumerate(lines):
             is_yaml_like = any(pattern.search(line) for pattern in self.yaml_patterns)
             is_yaml_separator = line.strip() == "---"
@@ -181,20 +200,74 @@ class SchemaIslandDetector:
             )
             if island:
                 islands.append(island)
+=======
+        def add_block_if_valid(end_line: int, min_lines: int = 2) -> None:
+            """Helper to add block if it meets criteria and reset block state."""
+            nonlocal current_block_start, current_block_lines, islands
+            
+            if current_block_start is not None and len(current_block_lines) >= min_lines:
+                if (island := self._create_island_from_lines(
+                    lines,
+                    current_block_start,
+                    end_line,
+                    "yaml_block",
+                    source_hint or "unknown"
+                )):
+                    islands.append(island)
+            
+            current_block_start = None
+            current_block_lines = []
+
+        for i, line in enumerate(lines):
+            if any(pattern.search(line) for pattern in self.yaml_patterns):
+                # Start new block or add to existing
+                if current_block_start is None:
+                    current_block_start = i
+                current_block_lines.append(line)
+                
+            elif line.strip() == "---":  # YAML document separator
+                # Allow single line blocks before separator
+                add_block_if_valid(i - 1, min_lines=1)
+                
+            else:  # Non-YAML line
+                add_block_if_valid(i - 1)
+
+        # Handle final block (allow single line at EOF)
+        add_block_if_valid(len(lines) - 1, min_lines=1)
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
         return islands
 
     def _find_json_islands(
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
+<<<<<<< HEAD
         """Find JSON-like content islands."""
         islands = []
 
         # Look for balanced braces that might contain JSON
+=======
+        """Find JSON-like content islands.
+        
+        This method detects potential JSON content by:
+        1. Finding balanced brace pairs
+        2. Validating content against JSON-like patterns
+        3. Creating islands from valid JSON blocks
+        
+        Args:
+            content: The string content to search for JSON islands
+            source_hint: Optional hint about the content source
+            
+        Returns:
+            List of ContentIsland objects containing JSON-like content
+        """
+        islands: List[ContentIsland] = []
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
         brace_depth = 0
         start_pos = None
 
         for i, char in enumerate(content):
+<<<<<<< HEAD
             if char == "{":
                 if brace_depth == 0:
                     start_pos = i
@@ -221,6 +294,24 @@ class SchemaIslandDetector:
                             islands.append(island)
 
                     start_pos = None
+=======
+            if char == "{" and (brace_depth := brace_depth + 1) == 1:
+                start_pos = i
+            elif char == "}" and (brace_depth := brace_depth - 1) == 0 and start_pos is not None:
+                # Found complete JSON-like block
+                if (json_candidate := content[start_pos:i + 1]) and \
+                   any(pattern.search(json_candidate) for pattern in self.json_patterns) and \
+                   (island := self._create_island_from_content(
+                        json_candidate,
+                        start_pos,
+                        i + 1,
+                        "json_block",
+                        source_hint or "unknown",
+                        content
+                    )):
+                    islands.append(island)
+                start_pos = None
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
         return islands
 
@@ -409,7 +500,12 @@ class SchemaIslandDetector:
 
         for island in sorted_islands:
             overlaps = any(
+<<<<<<< HEAD
                 self._islands_overlap(island, selected) for selected in non_overlapping
+=======
+                self._islands_overlap(island, selected)
+                for selected in non_overlapping
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
             )
             if not overlaps:
                 non_overlapping.append(island)

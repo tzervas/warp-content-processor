@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """Tests for the notebook processor module."""
 
 import pytest
@@ -15,6 +16,22 @@ def processor():
 
 class TestValidate:
     """Test the validate method with various scenarios."""
+=======
+"""Tests for notebook processor validation."""
+
+import pytest
+
+from warp_content_processor.processors.notebook_processor import NotebookProcessor
+
+
+class TestValidate:
+    """Test validation functionality."""
+
+    @pytest.fixture
+    def processor(self):
+        """Create a NotebookProcessor instance."""
+        return NotebookProcessor()
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
     @pytest.mark.parametrize(
         "front_matter,expected_valid",
@@ -47,8 +64,11 @@ class TestValidate:
         }
         is_valid, errors, warnings = processor.validate(data)
         assert is_valid == expected_valid
+<<<<<<< HEAD
         if not expected_valid:
             assert len(errors) > 0
+=======
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
     @pytest.mark.parametrize(
         "tags,expected_warnings",
@@ -74,6 +94,7 @@ class TestValidate:
         assert is_valid  # Should be valid but may have warnings
         assert len(warnings) == expected_warnings
 
+<<<<<<< HEAD
     @pytest.mark.parametrize(
         "content,expected_valid,expected_warnings",
         [
@@ -106,6 +127,8 @@ class TestValidate:
         assert is_valid == expected_valid
         assert len(warnings) == expected_warnings
 
+=======
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
     def test_validate_missing_data(self, processor):
         """Test validation with missing data fields."""
         # Missing front matter
@@ -115,6 +138,7 @@ class TestValidate:
         assert any("Missing front matter" in error for error in errors)
 
         # Missing content
+<<<<<<< HEAD
         data = {"front_matter": {"title": "Test"}}
         is_valid, errors, warnings = processor.validate(data)
         assert not is_valid
@@ -588,3 +612,9 @@ class TestParametrizedValidation:
         else:
             assert not result.is_valid
             assert any("Invalid front matter YAML" in error for error in result.errors)
+=======
+        data = {"front_matter": {"title": "Test"}, "content": ""}
+        is_valid, errors, warnings = processor.validate(data)
+        assert not is_valid
+        assert any("empty" in error.lower() for error in errors)
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a

@@ -153,7 +153,11 @@ class PromptProcessor(SchemaProcessor):
                         warnings.warn(
                             "Argument is missing a 'name' field. "
                             f"Assigned unique placeholder: {arg['name']}",
+<<<<<<< HEAD
                             stacklevel=2,
+=======
+                            stacklevel=2
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
                         )
                     if "type" not in arg:
                         arg["type"] = "text"
