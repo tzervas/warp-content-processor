@@ -14,7 +14,7 @@ from ..content_type import ContentType
 class RuleProcessor(SchemaProcessor):
     """Processor for rule files."""
 
-    def __init__(self) -> None:
+    def __init__(self, output_dir=None) -> None:
         super().__init__()
         self.required_fields = {"title", "description"}
         self.optional_fields = {
@@ -26,6 +26,7 @@ class RuleProcessor(SchemaProcessor):
             "category",
             "tags",
         }
+        self.output_dir = output_dir
 
         # Regex patterns
         self.title_pattern = re.compile(r"^[A-Z][\w\s-]*[a-zA-Z0-9]$")
@@ -132,6 +133,23 @@ class RuleProcessor(SchemaProcessor):
                     warnings.append(f"Invalid tag format: {invalid_tags}")
 
         return len(errors) == 0, errors, warnings
+
+    def normalize_content(self, data: Dict) -> Dict:
+        """Normalize rule content to consistent format."""
+        normalized = data.copy()
+
+        # Normalize tags to lowercase
+        if "tags" in normalized and isinstance(normalized["tags"], list):
+            normalized["tags"] = [
+                tag.lower() if isinstance(tag, str) else tag
+                for tag in normalized["tags"]
+            ]
+
+        # Normalize category to lowercase
+        if "category" in normalized and isinstance(normalized["category"], str):
+            normalized["category"] = normalized["category"].lower()
+
+        return normalized
 
     def process(self, content: str) -> ProcessingResult:
         """Process and validate rule content."""
