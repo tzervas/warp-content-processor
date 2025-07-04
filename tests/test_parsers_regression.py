@@ -21,7 +21,7 @@ from warp_content_processor.parsers.common_patterns import (
     CommonPatterns,
     MangledContentCleaner,
 )
-from warp_content_processor.schema_processor import ContentTypeDetector
+from warp_content_processor.processors.schema_processor import ContentTypeDetector
 from warp_content_processor.parsers.document_splitter import DocumentSplitter
 from warp_content_processor.parsers.intelligent_cleaner import IntelligentCleaner
 from warp_content_processor.parsers.robust_parser import RobustParser

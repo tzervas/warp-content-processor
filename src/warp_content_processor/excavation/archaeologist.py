@@ -12,7 +12,7 @@ import time
 import traceback
 from typing import Any, Dict, Optional, Set
 
-from ..schema_processor import ContentTypeDetector
+from ..processors.schema_processor import ContentTypeDetector
 from ..utils.security import ContentSanitizer, SecurityValidationError
 from ..utils.yaml_parser import parse_yaml_enhanced as create_yaml_parser
 from .artifacts import (

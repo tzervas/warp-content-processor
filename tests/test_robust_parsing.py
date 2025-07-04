@@ -13,7 +13,7 @@ import pytest
 from warp_content_processor.content_type import ContentType
 from warp_content_processor.parsers import (
     CommonPatterns,
-    ContentDetector,
+    ContentTypeDetector,
     DocumentSplitter,
     MangledContentCleaner,
 )
