@@ -1,4 +1,4 @@
-# local dev docs
+# Local development docs
 IMPLEMENTATION_SUMMARY.md
 MASSIVE_MIXED_CONTENT_PLAN.md
 PARAMETRIZED_TEST_DESIGN.md
@@ -95,5 +95,5 @@ ci_reports/
 .env.*.local
 uv.lock
 
-# logs
+# Logs
 logs/*.log

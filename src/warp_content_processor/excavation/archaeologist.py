@@ -9,11 +9,9 @@ Following DRY: Reuses existing robust parsing infrastructure.
 
 import logging
 import time
-from typing import Dict, Optional
 <<<<<<< HEAD
-=======
+from typing import Any, Dict, Optional, Set
 import traceback
->>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
 from ..parsers import ContentDetector
 from ..parsers.yaml_strategies import create_yaml_parser
@@ -25,7 +23,7 @@ from .artifacts import (
     ExtractionContext,
     SchemaArtifact,
 )
-from .island_detector import SchemaIslandDetector
+from .island_detector import SchemaIslandDetector, ContentIsland
 
 logger = logging.getLogger(__name__)
 
@@ -151,7 +149,7 @@ class ContentArchaeologist:
             extraction_stats=extraction_stats,
         )
 
-    def _extract_artifact_from_island(self, island) -> Optional[SchemaArtifact]:
+    def _extract_artifact_from_island(self, island: ContentIsland) -> Optional[SchemaArtifact]:
         """
         Extract a schema artifact from a content island.
 
@@ -256,7 +254,7 @@ class ContentArchaeologist:
         }
         return mapping.get(content_type_str.lower(), ContentType.UNKNOWN)
 
-    def get_extraction_statistics(self) -> Dict[str, any]:
+    def get_extraction_statistics(self) -> Dict[str, Any]:
         """
         Get statistics about extraction performance.
 

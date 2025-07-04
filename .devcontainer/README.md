@@ -71,7 +71,6 @@ wcp-fix
 ```
 
 This runs:
-
 - `isort` - Import sorting
 - `black` - Code formatting
 - `ruff --fix` - Linting with auto-fixes
@@ -87,9 +86,14 @@ wcp-check
 ```
 
 This runs:
+<<<<<<< HEAD
 
 - `isort --check-only --diff`
 - `black --check --diff`
+=======
+- `isort --check-only --diff`
+- `black --check --diff` 
+>>>>>>> 48337ebb904b8762910cfd1eb8149daae59f8709
 - `ruff check`
 - `mypy` type checking
 - `trunk check --all`
@@ -104,7 +108,6 @@ wcp-security
 ```
 
 This runs:
-
 - `bandit` - Python security linter
 - `safety` - Dependency vulnerability scanner
 
@@ -118,7 +121,6 @@ wcp-test
 ```
 
 This runs:
-
 - `pytest` with coverage reporting
 - HTML coverage report in `htmlcov/`
 
@@ -152,7 +154,6 @@ This runs all steps in sequence: fix → test → quality → security
 ### Pre-commit Hooks
 
 Pre-commit hooks are automatically installed and will run:
-
 - Code formatting (isort, black)
 - Linting (ruff)
 - Type checking (mypy)

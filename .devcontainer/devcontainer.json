@@ -50,8 +50,13 @@
         "files.trimFinalNewlines": true,
         "ruff.lint.enable": true,
         "ruff.format.enable": true,
-        "mypy-type-checker.args": ["--ignore-missing-imports", "--strict"],
-        "pylint.args": ["--disable=C0114,C0115,C0116"]
+        "mypy-type-checker.args": [
+          "--ignore-missing-imports",
+          "--strict"
+        ],
+        "pylint.args": [
+          "--disable=C0114,C0115,C0116"
+        ]
       }
     }
   },
