@@ -82,17 +82,14 @@ class NotebookProcessor(SchemaProcessor):
                 if not isinstance(front_matter["tags"], list):
                     errors.append("'tags' must be a list")
                 else:
-                    invalid_tags = [
-                        tag
-                        for tag in front_matter["tags"]
-                        if not isinstance(tag, str)
-                        or not self.valid_tag_pattern.match(tag)
-                    ]
-                    if invalid_tags:
-                        warnings.append(f"Invalid tag format: {invalid_tags}")
+                    for tag in front_matter["tags"]:
+                        if not isinstance(tag, str):
+                            warnings.append(f"Tag '{tag}' is not a string")
+                        elif not self.valid_tag_pattern.match(str(tag)):
+                            warnings.append(f"Tag '{tag}' does not match the required format")
 
         # Validate content
-        if not content.strip():
+        if not content or not content.strip():
             errors.append("Notebook content is empty")
         else:
             # Check code blocks
