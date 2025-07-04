@@ -141,11 +141,27 @@ class PromptProcessor(SchemaProcessor):
 
         # Normalize argument fields
         if "arguments" in normalized and isinstance(normalized["arguments"], list):
+<<<<<<< HEAD
+=======
+            unnamed_arg_counter = 1
+>>>>>>> main
             for arg in normalized["arguments"]:
                 if isinstance(arg, dict):
                     # Ensure required argument fields
                     if "name" not in arg:
+<<<<<<< HEAD
                         arg["name"] = "unnamed_arg"
+=======
+                        arg["name"] = f"unnamed_arg_{unnamed_arg_counter}"
+                        unnamed_arg_counter += 1
+                        import warnings
+
+                        warnings.warn(
+                            "Argument is missing a 'name' field. "
+                            f"Assigned unique placeholder: {arg['name']}",
+                            stacklevel=2
+                        )
+>>>>>>> main
                     if "type" not in arg:
                         arg["type"] = "text"
                     # Convert type to lowercase

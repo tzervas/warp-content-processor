@@ -59,6 +59,7 @@ processed/
 .DS_Store
 Thumbs.db
 
+<<<<<<< HEAD
 =*
 
 # Testing and Coverage
@@ -68,3 +69,4 @@ coverage.xml
 htmlcov/
 .tox/
 nosetests.xml
+uv.lock

@@ -57,12 +57,21 @@ class ContentNormalizer:
             r"^---\s*\n(.*?)\n---\s*(.*)$",  # Without trailing newline
             r"^\+\+\+\s*\n(.*?)\n\+\+\+\s*\n(.*)$",  # TOML-style markers
             r"^\s*---\s*\n(.*?)\n\s*---\s*\n(.*)$",  # With leading whitespace
+<<<<<<< HEAD
             r"^\s*---\s*\n(.*?)\n\s*---\s*(.*)$",  # With leading whitespace, no trailing newline
         ]
 
         for pattern in frontmatter_patterns:
             match = re.match(pattern, content, re.DOTALL)
             if match:
+=======
+            # With leading whitespace, no trailing newline
+            r"^\s*---\s*\n(.*?)\n\s*---\s*(.*)$",
+        ]
+
+        for pattern in frontmatter_patterns:
+            if match := re.match(pattern, content, re.DOTALL):
+>>>>>>> main
                 yaml_content, remaining = match.groups()
                 try:
                     frontmatter = secure_yaml_load(yaml_content)
@@ -159,7 +168,11 @@ class ContentNormalizer:
         frontmatter, remaining = ContentNormalizer.normalize_yaml_frontmatter(content)
 
         # Start with frontmatter or empty dict
+<<<<<<< HEAD
         workflow = frontmatter if frontmatter else {}
+=======
+        workflow = frontmatter or {}
+>>>>>>> main
 
         # Try to parse remaining content as YAML
         if remaining:
@@ -303,7 +316,11 @@ class ContentNormalizer:
         frontmatter, remaining = ContentNormalizer.normalize_yaml_frontmatter(content)
 
         # Start with frontmatter or empty dict
+<<<<<<< HEAD
         prompt = frontmatter if frontmatter else {}
+=======
+        prompt = frontmatter or {}
+>>>>>>> main
 
         # If remaining content exists, try to extract prompt info
         if remaining:
@@ -450,10 +467,14 @@ class ContentNormalizer:
             return "env_var"
 
         # Check for notebook indicators
+<<<<<<< HEAD
         if "title" in data and ("tags" in data or "description" in data):
             return "notebook"
 
         return "unknown"
+=======
+        return "notebook" if "title" in data and "tags" in data else "unknown"
+>>>>>>> main
 
     @staticmethod
     def _detect_text_content_type(text: str) -> str:

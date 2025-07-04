@@ -19,6 +19,7 @@ class TimeoutAnalyzer:
     def __init__(self):
         self.timeout_patterns = {
             "simple_sleep": r"time\.sleep\(",
+<<<<<<< HEAD
             "infinite_loop": r"while\s+True:|for\s+.*\s+in\s+.*:",
             "socket_io": r"socket\.(connect|recv|send|accept)",
             "requests": r"requests\.(get|post|put|delete)",
@@ -69,18 +70,36 @@ class TimeoutAnalyzer:
         self, test_path: str, timeout: int = 10, log_level: str = "DEBUG"
     ) -> Tuple[str, str, int]:
         """Run pytest with timeout and capture output."""
-        log_file = Path(f"timeout_analysis_{Path(test_path).stem}.log")
+<<<<<<< HEAD
+        import shlex
 
+        # Validate and sanitize inputs
+        if not isinstance(test_path, str) or not test_path.strip():
+            raise ValueError("Invalid test_path provided")
+        if timeout <= 0 or timeout > 3600:  # Max 1 hour timeout
+            raise ValueError("Invalid timeout value")
+        if log_level not in ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]:
+            raise ValueError("Invalid log_level provided")
+
+        # Sanitize test_path to prevent injection
+        safe_test_path = shlex.quote(test_path)
+        log_file_name = f"timeout_analysis_{Path(test_path).stem}.log"
+        log_file = Path(log_file_name)
+        safe_log_file = shlex.quote(str(log_file))
+
+        # Use static command array with sanitized inputs
         cmd = [
             "python",
             "-m",
             "pytest",
-            test_path,
+<<<<<<< HEAD
+            safe_test_path,
             f"--timeout={timeout}",
             "--timeout-method=thread",
             "-v",
             "-s",
-            f"--log-file={log_file}",
+<<<<<<< HEAD
+            f"--log-file={safe_log_file}",
             f"--log-level={log_level}",
             "--tb=long",
         ]
@@ -95,14 +114,12 @@ class TimeoutAnalyzer:
                 timeout=timeout + 10,  # Add buffer to pytest timeout
             )
 
-            # Read log file if it exists
-            log_content = ""
-            if log_file.exists():
-                log_content = log_file.read_text()
-
+<<<<<<< HEAD
+            log_content = log_file.read_text() if log_file.exists() else ""
             return result.stdout, log_content, result.returncode
 
         except subprocess.TimeoutExpired:
+            print("Subprocess timed out while running the command: {}".format(" ".join(cmd)))
             return "", "", -1
 
     def parse_stack_trace(self, output: str) -> List[Dict]:
@@ -125,12 +142,11 @@ class TimeoutAnalyzer:
             )
 
             for thread_name, thread_id, stack_content in thread_stacks:
-                # Extract file/line information
-                file_lines = re.findall(
+<<<<<<< HEAD
+                # Extract file/line information using named expression
+                if file_lines := re.findall(
                     r'File "([^"]+)", line (\d+), in (\w+)\n\s*(.+)', stack_content
-                )
-
-                if file_lines:
+                ):
                     traces.append(
                         {
                             "thread_name": thread_name.strip(),
@@ -149,6 +165,45 @@ class TimeoutAnalyzer:
 
         return traces
 
+<<<<<<< HEAD
+
+    def _analyze_single_trace(self, trace: Dict) -> Tuple[str, Dict]:
+        """Analyze a single trace for timeout patterns."""
+        if not trace.get("stack_frames"):
+            return None, None
+
+        last_frame = trace["stack_frames"][-1]
+        code_line = last_frame.get("code", "")
+
+        for pattern_name, pattern in self.timeout_patterns.items():
+            if re.search(pattern, code_line):
+                cause = {
+                    "type": pattern_name,
+                    "location": f"{last_frame.get('file', 'unknown')}:{last_frame.get('line', 'unknown')}",
+                    "code": code_line,
+                    "thread": trace.get("thread_name", "unknown"),
+                }
+                return pattern_name, cause
+
+        return None, None
+
+    def _detect_deadlock(self, traces: List[Dict]) -> Tuple[bool, List[Dict]]:
+        """Detect potential deadlocks from multiple traces."""
+        if len(traces) <= 1:
+            return False, []
+
+        thread_locks = [
+            {
+                "thread": trace.get("thread_name", "unknown"),
+                "location": f"{frame.get('file', 'unknown')}:{frame.get('line', 'unknown')}",
+                "code": frame.get("code", ""),
+            }
+            for trace in traces
+            for frame in trace.get("stack_frames", [])
+            if "with " in frame.get("code", "") and ":" in frame.get("code", "")
+        ]
+
+        return len(thread_locks) >= 2, thread_locks
     def analyze_hanging_operation(self, traces: List[Dict]) -> Dict:
         """Analyze stack traces to identify type of hanging operation."""
         analysis = {
@@ -158,50 +213,23 @@ class TimeoutAnalyzer:
             "recommendations": [],
         }
 
+<<<<<<< HEAD
+        # Analyze individual traces
         for trace in traces:
-            if not trace["stack_frames"]:
-                continue
+            pattern_name, cause = self._analyze_single_trace(trace)
+            if pattern_name and cause:
+                analysis["timeout_type"] = pattern_name
+                analysis["likely_cause"].append(cause)
 
-            # Analyze the last frame (where execution was when timeout occurred)
-            last_frame = trace["stack_frames"][-1]
-            code_line = last_frame["code"]
+        # Check for deadlocks
+        is_deadlock, thread_locks = self._detect_deadlock(traces)
+        if is_deadlock:
+            analysis["timeout_type"] = "deadlock"
+            analysis["likely_cause"] = thread_locks
 
-            # Check against patterns
-            for pattern_name, pattern in self.timeout_patterns.items():
-                if re.search(pattern, code_line):
-                    analysis["timeout_type"] = pattern_name
-                    analysis["likely_cause"].append(
-                        {
-                            "type": pattern_name,
-                            "location": f"{last_frame['file']}:{last_frame['line']}",
-                            "code": code_line,
-                            "thread": trace["thread_name"],
-                        }
-                    )
-
-                    if pattern_name in self.recommendations:
-                        analysis["recommendations"].extend(
-                            self.recommendations[pattern_name]
-                        )
-
-        # Special analysis for deadlocks
-        if len(traces) > 1:
-            thread_locks = []
-            for trace in traces:
-                for frame in trace["stack_frames"]:
-                    if "with " in frame["code"] and ":" in frame["code"]:
-                        thread_locks.append(
-                            {
-                                "thread": trace["thread_name"],
-                                "location": f"{frame['file']}:{frame['line']}",
-                                "code": frame["code"],
-                            }
-                        )
-
-            if len(thread_locks) >= 2:
-                analysis["timeout_type"] = "deadlock"
-                analysis["likely_cause"] = thread_locks
-                analysis["recommendations"] = self.recommendations["threading"]
+        # Set recommendations based on final timeout_type
+        if analysis["timeout_type"] in self.recommendations:
+            analysis["recommendations"] = self.recommendations[analysis["timeout_type"]]
 
         return analysis
 
@@ -260,13 +288,21 @@ class TimeoutAnalyzer:
             for rec in analysis["recommendations"]:
                 report += f"- {rec}\n"
 
+<<<<<<< HEAD
+        def format_log_excerpt(log: str, max_length: int = 1000) -> str:
+            if len(log) <= max_length:
+                return log
+            head_len = max_length // 2
+            tail_len = max_length - head_len
+            head = log[:head_len]
+            tail = log[-tail_len:]
+            return f"{head}\n...\n{tail}"
+
+        LOG_EXCERPT_LENGTH = 1000  # Can be made configurable
+
         if log_content.strip():
             report += f"""
 ## Log Analysis
-```
-{log_content[-1000:]}  # Last 1000 characters
-```
-"""
 
         return report
 
@@ -291,10 +327,8 @@ class TimeoutAnalyzer:
         # Analyze hanging operations
         analysis = self.analyze_hanging_operation(traces)
 
-        # Generate report
-        report = self.generate_report(test_path, traces, analysis, log_content)
-
-        return report
+<<<<<<< HEAD
+        return self.generate_report(test_path, traces, analysis, log_content)
 
 
 def main():
@@ -304,9 +338,19 @@ def main():
         "--timeout", "-t", type=int, default=10, help="Timeout duration in seconds"
     )
     parser.add_argument("--output", "-o", help="Output file for report")
+<<<<<<< HEAD
+
+    parser.add_argument(
+        "--log-level",
+        default="DEBUG",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level (default: DEBUG)",
+    )
 
     args = parser.parse_args()
 
+    import logging
+    logging.basicConfig(level=getattr(logging, args.log_level))
     analyzer = TimeoutAnalyzer()
     report = analyzer.analyze_test(args.test_path, args.timeout)
 
