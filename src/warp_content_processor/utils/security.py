@@ -126,12 +126,6 @@ class ContentSanitizer:
         if content.count("{") > 100 or content.count("[") > 100:
             raise SecurityValidationError("Content contains excessive nesting")
 
-        Returns:
-            str: Sanitized string
-        """
-        if not content:
-            return ""
-
     @staticmethod
     def validate_file_path(file_path: str) -> Path:
         """Validate a file path for security.
