@@ -12,8 +12,8 @@ import time
 from typing import Any, Dict, Optional, Set
 import traceback
 
-from ..parsers import ContentDetector
-from ..parsers.yaml_strategies import create_yaml_parser
+from ..schema_processor import ContentTypeDetector
+from ..utils.yaml_parser import parse_yaml_enhanced as create_yaml_parser
 from ..utils.security import ContentSanitizer, SecurityValidationError
 from .artifacts import (
     ContentType,
@@ -51,7 +51,7 @@ class ContentArchaeologist:
         self.extraction_timeout = extraction_timeout
 
         # Initialize supporting components
-        self.content_detector = ContentDetector()
+        self.content_detector = ContentTypeDetector
         self.island_detector = SchemaIslandDetector()
         self.yaml_parser = create_yaml_parser()
 

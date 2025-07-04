@@ -119,23 +119,6 @@ class WorkflowValidator(SchemaProcessor):
         if unknown_fields:
             warnings.append(f"Unknown fields present: {unknown_fields}")
 
-        # Validate command placeholders match arguments
-        if "command" in data and isinstance(data["command"], str):
-            if "arguments" in data:
-                arg_errors, arg_warnings = validate_placeholders(
-                    data["command"], data.get("arguments", [])
-                )
-                errors.extend(arg_errors)
-                warnings.extend(arg_warnings)
-
-        # Validate tags
-        if "tags" in data:
-            tag_errors, tag_warnings = validate_tags(
-                data.get("tags", []), pattern=self.valid_tag_pattern.pattern
-            )
-            errors.extend(tag_errors)
-            warnings.extend(tag_warnings)
-
         # Validate shells
         if "shells" in data:
             if not isinstance(data["shells"], list):
@@ -155,6 +138,25 @@ class WorkflowValidator(SchemaProcessor):
                     warnings.append(f"Unknown shell types: {unknown_shells}")
                 # Update shells to normalized versions
                 data["shells"] = normalized_shells
+
+        # Validate command placeholders match arguments
+        if "command" in data and isinstance(data["command"], str):
+            if "arguments" in data:
+                arg_errors, arg_warnings = validate_placeholders(
+                    data["command"], data.get("arguments", [])
+                )
+                # Placeholder errors are just warnings
+                warnings.extend(arg_errors)
+                warnings.extend(arg_warnings)
+
+        # Validate tags
+        if "tags" in data:
+            tag_errors, tag_warnings = validate_tags(
+                data.get("tags", []), pattern=self.valid_tag_pattern.pattern
+            )
+            # Tag validation errors are just warnings
+            warnings.extend(tag_errors)
+            warnings.extend(tag_warnings)
 
         # Only return normalized data if validation passed
         # Store normalized data for later use if validation passes

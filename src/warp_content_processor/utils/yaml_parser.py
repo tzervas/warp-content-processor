@@ -1,5 +1,6 @@
 """Enhanced YAML parsing utilities with robust error handling."""
 
+import re
 import yaml
 from typing import Dict, Any, Optional, Tuple, List
 
@@ -101,12 +102,19 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
     if not content or not content.strip():
         return [YAMLParsingResult(error="Empty YAML content")]
 
-    try:
-        # Try parsing as multi-document YAML
-        documents = list(yaml.safe_load_all(content))
-        results = []
-        
-        for doc in documents:
+    # Split content by document separator
+    parts = re.split(r'^---\s*$', content.strip(), flags=re.MULTILINE)
+    results = []
+
+    # Process each part
+    for part in parts:
+        part = part.strip()
+        if not part:
+            results.append(YAMLParsingResult(error="Empty document"))
+            continue
+
+        try:
+            doc = yaml.safe_load(part)
             if doc is None:
                 results.append(YAMLParsingResult(error="Empty document"))
             elif not isinstance(doc, dict):
@@ -117,11 +125,26 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
                 )
             else:
                 results.append(YAMLParsingResult(content=doc))
-                
-        return results or [YAMLParsingResult(error="No valid documents found")]
-        
-    except yaml.YAMLError as e:
-        return [YAMLParsingResult(error=f"YAML parsing error: {str(e)}")]
-        
-    except Exception as e:
-        return [YAMLParsingResult(error=f"Unexpected error parsing YAML: {str(e)}")]
+        except yaml.MarkedYAMLError as e:
+            line = e.problem_mark.line + 1 if e.problem_mark else None
+            col = e.problem_mark.column + 1 if e.problem_mark else None
+            problem = str(e.problem) if e.problem else "Unknown error"
+            context = str(e.context) if e.context else None
+            error = f"YAML error at line {line}, column {col}: {problem}"
+            if context:
+                error += f" ({context})"
+            results.append(
+                YAMLParsingResult(
+                    error=error,
+                    line_number=line,
+                    column=col
+                )
+            )
+        except yaml.YAMLError as e:
+            results.append(YAMLParsingResult(error=f"YAML parsing error: {str(e)}"))
+        except Exception as e:
+            results.append(
+                YAMLParsingResult(error=f"Unexpected error parsing YAML: {str(e)}")
+            )
+
+    return results if results else [YAMLParsingResult(error="No documents found")]
