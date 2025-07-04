@@ -136,22 +136,27 @@ class SchemaIslandDetector:
         current_block_start = None
         current_block_lines = []
 
-        def add_block_if_valid(end_line: int, min_lines: int = 2) -> None:
-            """Helper to add block if it meets criteria and reset block state."""
-            nonlocal current_block_start, current_block_lines, islands
-            
-            if current_block_start is not None and len(current_block_lines) >= min_lines:
-                if (island := self._create_island_from_lines(
-                    lines,
-                    current_block_start,
-                    end_line,
-                    "yaml_block",
-                    source_hint or "unknown"
-                )):
-                    islands.append(island)
-            
-            current_block_start = None
-            current_block_lines = []
+            def add_block_if_valid(end_line: int, min_lines: int = 2) -> None:
+                """Helper to add block if it meets criteria and reset block state.
+                
+                Args:
+                    end_line: The ending line number for the block
+                    min_lines: Minimum number of lines required for a valid block
+                """
+                nonlocal current_block_start, current_block_lines, islands
+                
+                if current_block_start is not None and len(current_block_lines) >= min_lines:
+                    if (island := self._create_island_from_lines(
+                        lines,
+                        current_block_start,
+                        end_line,
+                        "yaml_block",
+                        source_hint or "unknown"
+                    )):
+                        islands.append(island)
+                
+                current_block_start = None
+                current_block_lines = []
 
         for i, line in enumerate(lines):
             if any(pattern.search(line) for pattern in self.yaml_patterns):
@@ -407,7 +412,15 @@ class SchemaIslandDetector:
         return non_overlapping
 
     def _islands_overlap(self, island1: ContentIsland, island2: ContentIsland) -> bool:
-        """Check if two islands overlap in their content ranges."""
+        """Check if two islands overlap in their content ranges.
+        
+        Args:
+            island1: First content island to compare
+            island2: Second content island to compare
+            
+        Returns:
+            bool: True if the islands overlap, False otherwise
+        """
         return not (
             island1.end_offset <= island2.start_offset
             or island2.end_offset <= island1.start_offset
