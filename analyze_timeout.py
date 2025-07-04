@@ -12,19 +12,29 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Pattern
 
 
 class TimeoutAnalyzer:
+    """Analyzes test timeouts and provides detailed reports with recommendations.
+    
+    This class provides functionality to:
+    1. Run tests with timeout constraints
+    2. Parse and analyze stack traces
+    3. Detect common timeout patterns
+    4. Generate detailed reports with recommendations
+    """
+    
     def __init__(self):
         self.timeout_patterns = {
             "simple_sleep": r"time\.sleep\(",
-            "infinite_loop": r"while\s+True:",
+            "infinite_loop": r"while\s+True:|for\s+.*\s+in\s+.*:",
             "socket_io": r"socket\.(connect|recv|send|accept)",
             "requests": r"requests\.(get|post|put|delete)",
             "database": r"\.(execute|fetchall|fetchone|commit)",
             "file_io": r"(open|read|write|close)\(",
             "threading": r"(\.join\(|\.acquire\(|with\s+\w+:)",
+            "subprocess": r"subprocess\.(run|call|Popen)"
         }
 
         self.recommendations = {
@@ -62,6 +72,11 @@ class TimeoutAnalyzer:
                 "Check for deadlock patterns",
                 "Use lock ordering",
                 "Add timeout to join() calls",
+            ],
+            "subprocess": [
+                "Add timeout to subprocess calls",
+                "Consider using asyncio subprocesses",
+                "Implement process termination logic",
             ],
         }
 
@@ -109,7 +124,6 @@ class TimeoutAnalyzer:
                 text=True,
                 timeout=timeout + 10,  # Add buffer to pytest timeout
             )
-
             log_content = log_file.read_text() if log_file.exists() else ""
             return result.stdout, log_content, result.returncode
 
@@ -196,7 +210,6 @@ class TimeoutAnalyzer:
         ]
 
         return len(thread_locks) >= 2, thread_locks
-
     def analyze_hanging_operation(self, traces: List[Dict]) -> Dict:
         """Analyze stack traces to identify type of hanging operation."""
         analysis = {
@@ -212,23 +225,32 @@ class TimeoutAnalyzer:
             if pattern_name and cause:
                 analysis["timeout_type"] = pattern_name
                 analysis["likely_cause"].append(cause)
+                if pattern_name in self.recommendations:
+                    analysis["recommendations"].extend(self.recommendations[pattern_name])
 
         # Check for deadlocks
         is_deadlock, thread_locks = self._detect_deadlock(traces)
         if is_deadlock:
             analysis["timeout_type"] = "deadlock"
             analysis["likely_cause"] = thread_locks
-
-        # Set recommendations based on final timeout_type
-        if analysis["timeout_type"] in self.recommendations:
-            analysis["recommendations"] = self.recommendations[analysis["timeout_type"]]
+            analysis["recommendations"] = self.recommendations["threading"]
 
         return analysis
 
     def generate_report(
-        self, test_path: str, traces: List[Dict], analysis: Dict, log_content: str
+        self, test_path: str, traces: List[Dict[str, Any]], analysis: Dict[str, Any], log_content: str
     ) -> str:
-        """Generate comprehensive analysis report."""
+        """Generate comprehensive analysis report.
+        
+        Args:
+            test_path: Path to the test file being analyzed
+            traces: List of stack traces from the timeout
+            analysis: Analysis results containing timeout type and recommendations
+            log_content: Content of the log file during test execution
+            
+        Returns:
+            A formatted string containing the analysis report
+        """
         report = f"""
 # Timeout Analysis Report for {test_path}
 
@@ -279,7 +301,6 @@ class TimeoutAnalyzer:
 """
             for rec in analysis["recommendations"]:
                 report += f"- {rec}\n"
-
         def format_log_excerpt(log: str, max_length: int = 1000) -> str:
             if len(log) <= max_length:
                 return log
@@ -294,11 +315,22 @@ class TimeoutAnalyzer:
         if log_content.strip():
             report += f"""
 ## Log Analysis
-
+{format_log_excerpt(log_content, LOG_EXCERPT_LENGTH) if log_content.strip() else 'No log content available.'}
+"""
         return report
 
     def analyze_test(self, test_path: str, timeout: int = 10) -> str:
-        """Complete analysis workflow for a test."""
+        """Complete analysis workflow for a test.
+        
+        Args:
+            test_path: Path to the test file to analyze
+            timeout: Maximum time in seconds to wait for test completion
+            
+        Returns:
+            A detailed report of the timeout analysis or test completion message
+        """
+        if not Path(test_path).exists():
+            raise FileNotFoundError(f"Test file not found: {test_path}")
         print(f"Analyzing timeout behavior for: {test_path}")
 
         # Run test with timeout
@@ -318,6 +350,7 @@ class TimeoutAnalyzer:
         # Analyze hanging operations
         analysis = self.analyze_hanging_operation(traces)
 
+        # Generate the final report
         return self.generate_report(test_path, traces, analysis, log_content)
 
 
@@ -328,6 +361,7 @@ def main():
         "--timeout", "-t", type=int, default=10, help="Timeout duration in seconds"
     )
     parser.add_argument("--output", "-o", help="Output file for report")
+
     parser.add_argument(
         "--log-level",
         default="DEBUG",
@@ -339,7 +373,6 @@ def main():
 
     import logging
     logging.basicConfig(level=getattr(logging, args.log_level))
-
     analyzer = TimeoutAnalyzer()
     report = analyzer.analyze_test(args.test_path, args.timeout)
 

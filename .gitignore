@@ -59,6 +59,28 @@ processed/
 .DS_Store
 Thumbs.db
 
+# Testing and Coverage
+.coverage
+.coverage.*
+.pytest_cache/
+coverage.xml
+htmlcov/
+.tox/
+nosetests.xml
+uv.lock
+
+# Python package files
+*.whl
+dist/
+build/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+
 uv.lock
 
 =*

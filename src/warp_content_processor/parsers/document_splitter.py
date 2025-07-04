@@ -69,8 +69,12 @@ class DocumentSplitter(SimpleParser):
                 if len(documents) > 1:
                     self.multi_document_count += 1
                     logger.debug(
+<<<<<<< HEAD
+                        f"Split into {len(documents)} documents using {strategy.__name__}"
+=======
                         f"Split into {len(documents)} documents using "
                         f"{strategy.__name__}"
+>>>>>>> main
                     )
                     return documents
             except Exception as e:
@@ -107,7 +111,16 @@ class DocumentSplitter(SimpleParser):
             # Filter out empty parts and clean up
             documents = []
             for part in parts:
+<<<<<<< HEAD
+<<<<<<< HEAD
+                cleaned = part.strip()
+                if cleaned:  # Only include non-empty documents
+=======
                 if cleaned := part.strip():
+>>>>>>> main
+=======
+                if cleaned := part.strip():
+>>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
                     documents.append(cleaned)
 
             # If we found multiple documents, return them
@@ -132,13 +145,11 @@ class DocumentSplitter(SimpleParser):
                 r"^#{1,3}\s+[^\n]+\n"
             )  # Markdown headers as separators
 
-        additional_separators.extend(
-            [
-                r"^\*{3,}\s*$",  # Asterisk separators
-                r"^_{3,}\s*$",  # Underscore separators
-                r"^\s*\n\s*\n\s*\n+",  # Multiple blank lines
-            ]
-        )
+        additional_separators.extend([
+            r"^\*{3,}\s*$",  # Asterisk separators
+            r"^_{3,}\s*$",  # Underscore separators
+            r"^\s*\n\s*\n\s*\n+",  # Multiple blank lines
+        ])
 
         for separator_pattern in additional_separators:
             parts = re.split(separator_pattern, content, flags=re.MULTILINE)
@@ -146,9 +157,13 @@ class DocumentSplitter(SimpleParser):
             documents = []
             for part in parts:
                 cleaned = part.strip()
+<<<<<<< HEAD
+                if cleaned and len(cleaned) > 10:  # Minimum content length
+=======
                 if (
                     cleaned and len(cleaned) > self.min_content_length
                 ):  # Minimum content length
+>>>>>>> main
                     documents.append(cleaned)
 
             if len(documents) > 1:
@@ -166,6 +181,7 @@ class DocumentSplitter(SimpleParser):
         if len(lines) < 3:
             return [content]
 
+        # Look for blocks separated by blank lines
         blocks = []
         current_block = []
         blank_line_count = 0
@@ -174,6 +190,7 @@ class DocumentSplitter(SimpleParser):
             if not line.strip():  # Blank line
                 blank_line_count += 1
                 if blank_line_count >= 2 and current_block:
+                    # End of block
                     block_content = "\n".join(current_block).strip()
                     if block_content and len(block_content) > self.min_block_size:
                         blocks.append(block_content)

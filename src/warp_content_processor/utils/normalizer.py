@@ -57,8 +57,7 @@ class ContentNormalizer:
             r"^---\s*\n(.*?)\n---\s*(.*)$",  # Without trailing newline
             r"^\+\+\+\s*\n(.*?)\n\+\+\+\s*\n(.*)$",  # TOML-style markers
             r"^\s*---\s*\n(.*?)\n\s*---\s*\n(.*)$",  # With leading whitespace
-            # With leading whitespace, no trailing newline
-            r"^\s*---\s*\n(.*?)\n\s*---\s*(.*)$",
+            r"^\s*---\s*\n(.*?)\n\s*---\s*(.*)$",  # With leading whitespace, no trailing newline
         ]
 
         for pattern in frontmatter_patterns:
@@ -159,7 +158,15 @@ class ContentNormalizer:
         frontmatter, remaining = ContentNormalizer.normalize_yaml_frontmatter(content)
 
         # Start with frontmatter or empty dict
+<<<<<<< HEAD
+<<<<<<< HEAD
+        workflow = frontmatter if frontmatter else {}
+=======
         workflow = frontmatter or {}
+>>>>>>> main
+=======
+        workflow = frontmatter or {}
+>>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
 
         # Try to parse remaining content as YAML
         if remaining:
@@ -450,7 +457,10 @@ class ContentNormalizer:
             return "env_var"
 
         # Check for notebook indicators
-        return "notebook" if "title" in data and "tags" in data else "unknown"
+        if "title" in data and ("tags" in data or "description" in data):
+            return "notebook"
+
+        return "unknown"
 
     @staticmethod
     def _detect_text_content_type(text: str) -> str:

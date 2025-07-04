@@ -10,6 +10,7 @@ import tempfile
 from pathlib import Path
 from unittest import TestCase, main
 
+import pytest
 import yaml
 
 from warp_content_processor import WorkflowProcessor, WorkflowValidator
@@ -116,6 +117,7 @@ class TestWorkflowProcessor(TestCase):
         """Clean up temporary directories."""
         shutil.rmtree(self.test_dir)
 
+    @pytest.mark.timeout(90)
     def test_single_workflow_processing(self):
         """Test processing of a single workflow file."""
         # Create test file
@@ -132,6 +134,7 @@ class TestWorkflowProcessor(TestCase):
         self.assertEqual(len(output_files), 1)
         self.assertTrue(any("single_test" in str(file) for file in output_files))
 
+    @pytest.mark.timeout(90)
     def test_multiple_workflow_processing(self):
         """Test processing of a file containing multiple workflows."""
         # Create test file
@@ -164,6 +167,7 @@ class TestWorkflowProcessor(TestCase):
         output_files = list(self.output_dir.glob("*.yaml"))
         self.assertEqual(len(output_files), 0)
 
+    @pytest.mark.timeout(90)
     def test_duplicate_name_handling(self):
         """Test handling of workflows with duplicate names."""
         # Create two workflows with the same name
@@ -187,6 +191,10 @@ class TestWorkflowProcessor(TestCase):
         # Verify both files exist with different names
         files = list(self.output_dir.glob("*.yaml"))
         self.assertEqual(len(files), 2)
+        self._verify_files_have_different_names(files)
+
+    def _verify_files_have_different_names(self, files):
+        """Helper to verify that files have different names."""
         self.assertNotEqual(files[0].name, files[1].name)
 
 

@@ -91,11 +91,14 @@ class SchemaArtifact:
         contamination_penalty = len(self.extraction_context.contamination_types) * 0.05
         score = max(0.0, score - contamination_penalty)
 
+<<<<<<< HEAD
+=======
         # Apply penalties for validation errors and cleaning warnings
         validation_penalty = len(self.validation_errors) * 0.1
         cleaning_penalty = len(self.cleaning_warnings) * 0.05
         score = max(0.0, score - validation_penalty - cleaning_penalty)
 
+>>>>>>> main
         return min(1.0, score)
 
     @property

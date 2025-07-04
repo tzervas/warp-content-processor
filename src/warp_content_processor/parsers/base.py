@@ -66,7 +66,6 @@ class ParsingStrategy(ABC):
         pass
 
     @property
-    @property
     @abstractmethod
     def strategy_name(self) -> str:
         """Name of this parsing strategy for logging."""

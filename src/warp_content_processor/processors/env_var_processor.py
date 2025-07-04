@@ -168,6 +168,8 @@ class EnvVarProcessor(SchemaProcessor):
 
         return len(errors) == 0, errors, warnings
 
+<<<<<<< HEAD
+=======
     def _flatten_list(self, value: Any) -> List[str]:
         """Recursively flatten nested lists and convert elements to strings."""
         if isinstance(value, (str, int, float, bool)):
@@ -213,19 +215,34 @@ class EnvVarProcessor(SchemaProcessor):
             # For any other type, convert to string and lowercase
             return [str(value).lower()]
 
+>>>>>>> main
     def normalize_content(self, data: Dict) -> Dict:
         """Normalize environment variable content to consistent format."""
         normalized = data.copy()
 
+<<<<<<< HEAD
+        # Normalize platform specification
+        if "platform" in normalized:
+            platform = normalized["platform"]
+            if isinstance(platform, str):
+                normalized["platform"] = [platform.lower()]
+            elif isinstance(platform, list):
+                normalized["platform"] = [
+                    p.lower() if isinstance(p, str) else p for p in platform
+                ]
+=======
         # Normalize platform specification using recursive flattening
         if "platform" in normalized:
             platform = normalized["platform"]
             normalized["platform"] = self._flatten_platforms(platform)
+>>>>>>> main
 
         # Normalize scope
         if "scope" in normalized and isinstance(normalized["scope"], str):
             normalized["scope"] = normalized["scope"].lower()
 
+<<<<<<< HEAD
+=======
         # Normalize variables
         if "variables" in normalized and isinstance(normalized["variables"], dict):
             variables = {}
@@ -235,6 +252,7 @@ class EnvVarProcessor(SchemaProcessor):
                 variables[norm_name] = norm_value
             normalized["variables"] = variables
 
+>>>>>>> main
         return normalized
 
     def process(self, content: str) -> ProcessingResult:
@@ -302,8 +320,13 @@ class EnvVarProcessor(SchemaProcessor):
         if len(var_names) > 30:
             import hashlib
 
+<<<<<<< HEAD
+            # Using SHA-256 for non-cryptographic purposes
+            var_hash = hashlib.sha256(var_names.encode()).hexdigest()[:8]
+=======
             # Using MD5 for filename uniqueness (adequate and lightweight)
             var_hash = hashlib.md5(var_names.encode()).hexdigest()[:8]
+>>>>>>> main
             parts.append(var_hash)
         else:
             parts.append(var_names)
