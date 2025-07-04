@@ -130,6 +130,9 @@ class TestParseYAMLDocuments:
         assert len(results) >= 2
         assert results[0].is_valid
         assert not results[1].is_valid
+        # Assert that the error message is present and meaningful for the invalid document
+        assert hasattr(results[1], "error") and results[1].error is not None
+        assert "invalid" in results[1].error or "could not" in results[1].error.lower()
         assert results[2].is_valid if len(results) > 2 else True
 
     def test_empty_documents(self):
