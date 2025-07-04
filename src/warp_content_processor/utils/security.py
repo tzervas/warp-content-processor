@@ -4,6 +4,7 @@ Security utilities for sanitizing and validating content.
 
 import logging
 import re
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 import yaml
