@@ -199,20 +199,58 @@ class TimeoutAnalyzer:
 
         # Special analysis for deadlocks
         if len(traces) > 1:
-            thread_locks = []
+            # Build a wait-for graph: thread -> lock it is waiting for
+            wait_for = {}
+            holds = {}
             for trace in traces:
-                thread_locks.extend(
-                    {
-                        "thread": trace["thread_name"],
-                        "location": f"{frame['file']}:{frame['line']}",
-                        "code": frame["code"],
-                    }
-                    for frame in trace["stack_frames"]
-                    if "with " in frame["code"] and ":" in frame["code"]
-                )
-            if len(thread_locks) >= 2:
+                thread = trace["thread_name"]
+                waiting_lock = None
+                held_locks = set()
+                for frame in trace["stack_frames"]:
+                    code = frame["code"]
+                    # Try to extract lock/resource name from 'with' statement
+                    if code.strip().startswith("with ") and ":" in code:
+                        # e.g., "with lock:" or "with some_lock:"
+                        lock_expr = code.split("with ", 1)[1].split(":", 1)[0].strip()
+                        if not waiting_lock:
+                            waiting_lock = lock_expr
+                        else:
+                            held_locks.add(lock_expr)
+                if waiting_lock:
+                    wait_for[thread] = waiting_lock
+                if held_locks:
+                    holds[thread] = held_locks
+
+            # Invert holds: lock -> set of threads holding it
+            lock_holders = {}
+            for thread, locks in holds.items():
+                for lock in locks:
+                    lock_holders.setdefault(lock, set()).add(thread)
+
+            # Detect cycles: if thread A waits for lock X held by thread B, and thread B waits for lock Y held by thread A, etc.
+            def find_cycle():
+                for t1, lock1 in wait_for.items():
+                    holders = lock_holders.get(lock1, set())
+                    for t2 in holders:
+                        if t2 == t1:
+                            continue
+                        # Is t2 waiting for a lock held by t1?
+                        lock2 = wait_for.get(t2)
+                        if lock2 and t1 in lock_holders.get(lock2, set()):
+                            return [(t1, lock1, t2), (t2, lock2, t1)]
+                return None
+
+            cycle = find_cycle()
+            if cycle:
                 analysis["timeout_type"] = "deadlock"
-                analysis["likely_cause"] = thread_locks
+                analysis["likely_cause"] = [
+                    {
+                        "thread": t,
+                        "waiting_for": lock,
+                        "held_by": other_thread,
+                    }
+                    for (t, lock, other_thread) in cycle
+                ]
                 analysis["recommendations"] = self.recommendations["threading"]
 
         return analysis
