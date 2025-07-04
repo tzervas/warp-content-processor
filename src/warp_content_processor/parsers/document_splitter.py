@@ -166,7 +166,6 @@ class DocumentSplitter(SimpleParser):
         if len(lines) < 3:
             return [content]
 
-        # Look for blocks separated by blank lines
         blocks = []
         current_block = []
         blank_line_count = 0
@@ -175,27 +174,24 @@ class DocumentSplitter(SimpleParser):
             if not line.strip():  # Blank line
                 blank_line_count += 1
                 if blank_line_count >= 2 and current_block:
-                    # End of block
                     block_content = "\n".join(current_block).strip()
-                    if (
-                        block_content and len(block_content) > self.min_block_size
-                    ):  # Minimum block size
+                    if block_content and len(block_content) > self.min_block_size:
                         blocks.append(block_content)
                     current_block = []
                     blank_line_count = 0
-            else:
-                # Non-blank line
+            else:  # Non-blank line
                 if blank_line_count > 0:
-                    current_block.append("")  # Add blank line to block
+                    current_block.append("")  # Preserve a blank line in the block
                 current_block.append(line)
                 blank_line_count = 0
 
-        # Add final block
+        # Handle the final block with the same size check
         if current_block:
-            if block_content := "\n".join(current_block).strip():
+            block_content = "\n".join(current_block).strip()
+            if block_content and len(block_content) > self.min_block_size:
                 blocks.append(block_content)
 
-        # Return blocks if we found multiple, otherwise original content
+        # Return blocks if multiple are found, otherwise original content
         return blocks if len(blocks) > 1 else [content]
 
     def detect_separator_type(self, content: str) -> str:
