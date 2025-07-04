@@ -172,9 +172,8 @@ class NotebookProcessor(SchemaProcessor):
                     else:
                         # Wrong primitive type
                         expected_str = (
-                            expected_type.__name__
-                            if not isinstance(expected_type, tuple)
-                            else ' or '.join(t.__name__ for t in expected_type)
+                            ' or '.join(t.__name__ for t in expected_type) if isinstance(expected_type, tuple) else expected_type.__name__
+
                         )
                         error_msg = (
                             f"Field '{field_name}' has unexpected type: "
