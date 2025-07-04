@@ -212,7 +212,11 @@ fi
 
 # Set up shell aliases for convenience
 echo "📚 Setting up development aliases..."
-cat >> ~/.bashrc << 'EOF'
+# Prevent duplicate alias block by using a unique marker
+ALIAS_MARKER="# >>> WCP DEV ALIASES >>>"
+if ! grep -q "$ALIAS_MARKER" ~/.bashrc; then
+    cat >> ~/.bashrc << 'EOF'
+# >>> WCP DEV ALIASES >>>
 
 # Warp Content Processor development aliases (legacy)
 alias wcp-test='bash scripts/run-tests.sh'
@@ -229,7 +233,12 @@ alias wcp-quality-check='./scripts/wcp quality --no-fix'
 alias wcp-sec='./scripts/wcp security'
 alias wcp-tests='./scripts/wcp test'
 alias wcp-full='./scripts/wcp ci'
+
+# <<< WCP DEV ALIASES <<<
 EOF
+else
+    echo "✅ WCP development aliases already present in ~/.bashrc"
+fi
 
 echo "✅ Development environment setup complete!"
 echo ""

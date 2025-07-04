@@ -59,6 +59,8 @@ processed/
 .DS_Store
 Thumbs.db
 
+uv.lock
+
 =*
 
 # Testing and Coverage

@@ -62,8 +62,7 @@ class ContentNormalizer:
         ]
 
         for pattern in frontmatter_patterns:
-            match = re.match(pattern, content, re.DOTALL)
-            if match:
+            if match := re.match(pattern, content, re.DOTALL):
                 yaml_content, remaining = match.groups()
                 try:
                     frontmatter = secure_yaml_load(yaml_content)
@@ -453,7 +452,6 @@ class ContentNormalizer:
         # Check for notebook indicators
         if "title" in data and ("tags" in data or "description" in data):
             return "notebook"
-
         return "unknown"
 
     @staticmethod

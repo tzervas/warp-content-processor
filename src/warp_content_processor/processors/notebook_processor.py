@@ -84,17 +84,14 @@ class NotebookProcessor(SchemaProcessor):
                 if not isinstance(front_matter["tags"], list):
                     errors.append("'tags' must be a list")
                 else:
-                    invalid_tags = [
-                        tag
-                        for tag in front_matter["tags"]
-                        if not isinstance(tag, str)
-                        or not self.valid_tag_pattern.match(tag)
-                    ]
-                    if invalid_tags:
-                        warnings.append(f"Invalid tag format: {invalid_tags}")
+                    for tag in front_matter["tags"]:
+                        if not isinstance(tag, str):
+                            warnings.append(f"Tag '{tag}' is not a string")
+                        elif not self.valid_tag_pattern.match(str(tag)):
+                            warnings.append(f"Tag '{tag}' does not match the required format")
 
         # Validate content
-        if not content.strip():
+        if not content or not content.strip():
             errors.append("Notebook content is empty")
         else:
             # Check code blocks
@@ -162,9 +159,8 @@ class NotebookProcessor(SchemaProcessor):
                         else:
                             # Unexpected nested structure for non-list fields
                             expected_str = (
-                                expected_type.__name__
-                                if not isinstance(expected_type, tuple)
-                                else ' or '.join(t.__name__ for t in expected_type)
+                                ' or '.join(t.__name__ for t in expected_type) if isinstance(expected_type, tuple) else expected_type.__name__
+
                             )
                             error_msg = (
                                 f"Field '{field_name}' contains unexpected "
@@ -176,9 +172,8 @@ class NotebookProcessor(SchemaProcessor):
                     else:
                         # Wrong primitive type
                         expected_str = (
-                            expected_type.__name__
-                            if not isinstance(expected_type, tuple)
-                            else ' or '.join(t.__name__ for t in expected_type)
+                            ' or '.join(t.__name__ for t in expected_type) if isinstance(expected_type, tuple) else expected_type.__name__
+
                         )
                         error_msg = (
                             f"Field '{field_name}' has unexpected type: "
@@ -221,9 +216,7 @@ class NotebookProcessor(SchemaProcessor):
         ):
             front_matter = normalized["front_matter"].copy()
 
-            # Validate front matter types before normalization
-            type_errors = self._validate_front_matter_types(front_matter)
-            if type_errors:
+            if type_errors := self._validate_front_matter_types(front_matter):
                 # Raise an exception with all type validation errors
                 raise ValueError(
                     f"Front matter type validation failed: {'; '.join(type_errors)}"
