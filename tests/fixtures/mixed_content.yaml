@@ -53,32 +53,32 @@ platform:
 
 ---
 # Notebook
-title: Git Workflow Guide
-description: A guide to common git workflows
-tags:
-  - git
-  - tutorial
----
+front_matter:
+  title: Git Workflow Guide
+  description: A guide to common git workflows
+  tags:
+    - git
+    - tutorial
+content: |
+  # Git Workflow Guide
 
-# Git Workflow Guide
+  This guide covers common git workflows and best practices.
 
-This guide covers common git workflows and best practices.
+  ## Basic Commands
 
-## Basic Commands
+  ```bash
+  # Check repository status
+  git status
 
-```bash
-# Check repository status
-git status
+  # Stage changes
+  git add .
 
-# Stage changes
-git add .
+  # Commit changes
+  git commit -m "feat: add new feature"
+  ```
 
-# Commit changes
-git commit -m "feat: add new feature"
-```
+  ## Best Practices
 
-## Best Practices
-
-- Write clear commit messages
-- Use feature branches
-- Keep commits atomic
+  - Write clear commit messages
+  - Use feature branches
+  - Keep commits atomic

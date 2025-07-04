@@ -83,7 +83,7 @@ def parse_yaml_file(file_path: str) -> List[Dict[str, Any]]:
                     return [single_doc] if single_doc is not None else []
                 except yaml.YAMLError:
                     # If both parsing methods fail, raise the original error
-                    raise e
+                    raise e from None
     except yaml.YAMLError as e:
         print(f"Error parsing {file_path}: {e}", file=sys.stderr)
         return []

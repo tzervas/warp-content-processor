@@ -17,12 +17,24 @@ from .schema_processor import ContentProcessor
 
 def setup_logging() -> None:
     """Configure logging for the application."""
+    # Create logs directory if it doesn't exist and permissions allow
+    try:
+        logs_dir = Path("logs")
+        logs_dir.mkdir(exist_ok=True)
+        log_file = logs_dir / "workflow_processing.log"
+    except (PermissionError, OSError) as e:
+        # Fall back to current directory or temp directory
+        import tempfile
+
+        log_file = Path(tempfile.gettempdir()) / "warp_workflow_processing.log"
+        print(f"Warning: Could not create logs directory ({e}), using {log_file}")
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(message)s",
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler("workflow_processing.log"),
+            logging.FileHandler(log_file),
         ],
     )
 

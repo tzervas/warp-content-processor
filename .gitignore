@@ -1,3 +1,4 @@
+# Local development docs
 IMPLEMENTATION_SUMMARY.md
 MASSIVE_MIXED_CONTENT_PLAN.md
 PARAMETRIZED_TEST_DESIGN.md
@@ -59,8 +60,6 @@ processed/
 .DS_Store
 Thumbs.db
 
-uv.lock
-
 =*
 
 # Testing and Coverage
@@ -94,3 +93,7 @@ ci_reports/
 # Environment files
 .env.local
 .env.*.local
+uv.lock
+
+# Logs
+logs/*.log

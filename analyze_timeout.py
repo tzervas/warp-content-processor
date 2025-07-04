@@ -19,7 +19,11 @@ class TimeoutAnalyzer:
     def __init__(self):
         self.timeout_patterns = {
             "simple_sleep": r"time\.sleep\(",
+<<<<<<< HEAD
+            "infinite_loop": r"while\s+True:|for\s+.*\s+in\s+.*:",
+=======
             "infinite_loop": r"while\s+True:",
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
             "socket_io": r"socket\.(connect|recv|send|accept)",
             "requests": r"requests\.(get|post|put|delete)",
             "database": r"\.(execute|fetchall|fetchone|commit)",
@@ -114,7 +118,10 @@ class TimeoutAnalyzer:
             return result.stdout, log_content, result.returncode
 
         except subprocess.TimeoutExpired:
+<<<<<<< HEAD
+=======
             print("Subprocess timed out while running the command: {}".format(" ".join(cmd)))
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
             return "", "", -1
 
     def parse_stack_trace(self, output: str) -> List[Dict]:
@@ -137,10 +144,19 @@ class TimeoutAnalyzer:
             )
 
             for thread_name, thread_id, stack_content in thread_stacks:
+<<<<<<< HEAD
+                # Extract file/line information
+                file_lines = re.findall(
+                    r'File "([^"]+)", line (\d+), in (\w+)\n\s*(.+)', stack_content
+                )
+
+                if file_lines:
+=======
                 # Extract file/line information using named expression
                 if file_lines := re.findall(
                     r'File "([^"]+)", line (\d+), in (\w+)\n\s*(.+)', stack_content
                 ):
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
                     traces.append(
                         {
                             "thread_name": thread_name.strip(),
@@ -152,13 +168,21 @@ class TimeoutAnalyzer:
                                     "function": func_name,
                                     "code": code_line.strip(),
                                 }
+<<<<<<< HEAD
+                                for file_path, line_num, func_name, code_line in (
+                                    file_lines
+                                )
+=======
                                 for file_path, line_num, func_name, code_line in file_lines
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
                             ],
                         }
                     )
 
         return traces
 
+<<<<<<< HEAD
+=======
     def _analyze_single_trace(self, trace: Dict) -> Tuple[str, Dict]:
         """Analyze a single trace for timeout patterns."""
         if not trace.get("stack_frames"):
@@ -197,6 +221,7 @@ class TimeoutAnalyzer:
 
         return len(thread_locks) >= 2, thread_locks
 
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
     def analyze_hanging_operation(self, traces: List[Dict]) -> Dict:
         """Analyze stack traces to identify type of hanging operation."""
         analysis = {
@@ -206,6 +231,51 @@ class TimeoutAnalyzer:
             "recommendations": [],
         }
 
+<<<<<<< HEAD
+        for trace in traces:
+            if not trace["stack_frames"]:
+                continue
+
+            # Analyze the last frame (where execution was when timeout occurred)
+            last_frame = trace["stack_frames"][-1]
+            code_line = last_frame["code"]
+
+            # Check against patterns
+            for pattern_name, pattern in self.timeout_patterns.items():
+                if re.search(pattern, code_line):
+                    analysis["timeout_type"] = pattern_name
+                    analysis["likely_cause"].append(
+                        {
+                            "type": pattern_name,
+                            "location": f"{last_frame['file']}:{last_frame['line']}",
+                            "code": code_line,
+                            "thread": trace["thread_name"],
+                        }
+                    )
+
+                    if pattern_name in self.recommendations:
+                        analysis["recommendations"].extend(
+                            self.recommendations[pattern_name]
+                        )
+
+        # Special analysis for deadlocks
+        if len(traces) > 1:
+            thread_locks = []
+            for trace in traces:
+                thread_locks.extend(
+                    {
+                        "thread": trace["thread_name"],
+                        "location": f"{frame['file']}:{frame['line']}",
+                        "code": frame["code"],
+                    }
+                    for frame in trace["stack_frames"]
+                    if "with " in frame["code"] and ":" in frame["code"]
+                )
+            if len(thread_locks) >= 2:
+                analysis["timeout_type"] = "deadlock"
+                analysis["likely_cause"] = thread_locks
+                analysis["recommendations"] = self.recommendations["threading"]
+=======
         # Analyze individual traces
         for trace in traces:
             pattern_name, cause = self._analyze_single_trace(trace)
@@ -222,6 +292,7 @@ class TimeoutAnalyzer:
         # Set recommendations based on final timeout_type
         if analysis["timeout_type"] in self.recommendations:
             analysis["recommendations"] = self.recommendations[analysis["timeout_type"]]
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
         return analysis
 
@@ -280,6 +351,15 @@ class TimeoutAnalyzer:
             for rec in analysis["recommendations"]:
                 report += f"- {rec}\n"
 
+<<<<<<< HEAD
+        if log_content.strip():
+            report += f"""
+## Log Analysis
+```
+{log_content[-1000:]}  # Last 1000 characters
+```
+"""
+=======
         def format_log_excerpt(log: str, max_length: int = 1000) -> str:
             if len(log) <= max_length:
                 return log
@@ -294,6 +374,7 @@ class TimeoutAnalyzer:
         if log_content.strip():
             report += f"""
 ## Log Analysis
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
 
         return report
 
@@ -328,6 +409,11 @@ def main():
         "--timeout", "-t", type=int, default=10, help="Timeout duration in seconds"
     )
     parser.add_argument("--output", "-o", help="Output file for report")
+<<<<<<< HEAD
+
+    args = parser.parse_args()
+
+=======
     parser.add_argument(
         "--log-level",
         default="DEBUG",
@@ -340,6 +426,7 @@ def main():
     import logging
     logging.basicConfig(level=getattr(logging, args.log_level))
 
+>>>>>>> f5a6a9e4b1f89224df1fce76e8426692c2b60c5a
     analyzer = TimeoutAnalyzer()
     report = analyzer.analyze_test(args.test_path, args.timeout)
 

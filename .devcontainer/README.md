@@ -86,8 +86,14 @@ wcp-check
 ```
 
 This runs:
+<<<<<<< HEAD
+
+- `isort --check-only --diff`
+- `black --check --diff`
+=======
 - `isort --check-only --diff`
 - `black --check --diff` 
+>>>>>>> 48337ebb904b8762910cfd1eb8149daae59f8709
 - `ruff check`
 - `mypy` type checking
 - `trunk check --all`
@@ -161,9 +167,9 @@ Pre-commit hooks are automatically installed and will run:
 If the container fails to build:
 
 1. **Check Docker**: Ensure Docker Desktop is running
-2. **Rebuild Container**: 
+2. **Rebuild Container**:
    - Command Palette → "Dev Containers: Rebuild Container"
-3. **Clean Build**: 
+3. **Clean Build**:
    - Command Palette → "Dev Containers: Rebuild Container Without Cache"
 
 ### Permission Issues

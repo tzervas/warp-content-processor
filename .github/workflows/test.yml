@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.9, "3.10"]
+        python-version: [3.8, 3.9, "3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v3
@@ -35,3 +35,63 @@ jobs:
     - name: Run linting
       run: |
         pylint src tests
+    - name: Check for conditionals in tests (No-Conditionals-In-Tests rule)
+      run: |
+        echo "Checking for conditionals in test functions..."
+        # Create a Python script to check for conditionals in test methods
+        cat > check_test_conditionals.py <<EOF
+        import ast
+        import os
+        import sys
+        
+        class ConditionalVisitor(ast.NodeVisitor):
+            def __init__(self):
+                self.in_test_function = False
+                self.violations = []
+                self.current_function = None
+        
+            def visit_FunctionDef(self, node):
+                if node.name.startswith('test_'):
+                    old_in_test = self.in_test_function
+                    old_function = self.current_function
+                    self.in_test_function = True
+                    self.current_function = node.name
+                    self.generic_visit(node)
+                    self.in_test_function = old_in_test
+                    self.current_function = old_function
+                else:
+                    self.generic_visit(node)
+        
+            def visit_If(self, node):
+                if self.in_test_function:
+                    self.violations.append(f"  Line {node.lineno}: if statement in {self.current_function}")
+                self.generic_visit(node)
+        
+        violations_found = False
+        for root, dirs, files in os.walk('tests'):
+            for file in files:
+                if file.endswith('.py'):
+                    filepath = os.path.join(root, file)
+                    try:
+                        with open(filepath, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                        tree = ast.parse(content, filename=filepath)
+                        visitor = ConditionalVisitor()
+                        visitor.visit(tree)
+                        if visitor.violations:
+                            violations_found = True
+                            print(f"\nViolations in {filepath}:")
+                            for violation in visitor.violations:
+                                print(violation)
+                    except Exception as e:
+                        print(f"Warning: Could not parse {filepath}: {e}")
+        
+        if violations_found:
+            print("\nERROR: Found conditional statements in test functions.")
+            print("This violates the No-Conditionals-In-Tests rule.")
+            print("Use parametrized tests instead of conditionals in test functions.")
+            sys.exit(1)
+        else:
+            print("✓ No conditionals found in test functions")
+        EOF
+        python check_test_conditionals.py

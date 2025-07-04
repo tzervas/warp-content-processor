@@ -92,10 +92,13 @@ select = [
 
 [dependency-groups]
 dev = [
-    "black>=24.8.0",
-    "isort>=5.13.2",
-    "mypy>=1.14.1",
-    "pytest>=8.3.5",
-    "ruff>=0.12.1",
-    "types-pyyaml>=6.0.12.20241230",
+  "bandit>=1.7.10",
+  "black>=24.8.0",
+  "isort>=5.13.2",
+  "mypy>=1.14.1",
+  "pylint>=3.2.7",
+  "pytest>=8.3.5",
+  "pytest-html>=4.1.1",
+  "ruff>=0.12.1",
+  "types-pyyaml>=6.0.12.20241230",
 ]
