@@ -1,12 +1,14 @@
 {
     "name": "Warp Content Processor Dev",
-    "image": "mcr.microsoft.com/devcontainers/python:3.10",
+    "image": "mcr.microsoft.com/devcontainers/python:3.11",
     "features": {
         "ghcr.io/devcontainers/features/github-cli:1": {},
         "ghcr.io/devcontainers/features/node:1": {
             "version": "22.16.0"
         },
-        "ghcr.io/trunk-io/devcontainer-feature/trunk:1": {}
+        "ghcr.io/trunk-io/devcontainer-feature/trunk:1": {},
+        "ghcr.io/devcontainers/features/git:1": {},
+        "ghcr.io/devcontainers/features/docker-in-docker:2": {}
     },
     "customizations": {
         "vscode": {
@@ -14,31 +16,53 @@
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "ms-python.black-formatter",
+                "ms-python.isort",
+                "charliermarsh.ruff",
+                "ms-python.mypy-type-checker",
                 "trunk.io",
                 "streetsidesoftware.code-spell-checker",
                 "eamodio.gitlens",
                 "visualstudioexptteam.vscodeintellicode",
-                "njpwerner.autodocstring"
+                "njpwerner.autodocstring",
+                "ms-python.pylint",
+                "redhat.vscode-yaml",
+                "tamasfe.even-better-toml"
             ],
             "settings": {
                 "python.defaultInterpreterPath": ".venv/bin/python",
-                "python.analysis.typeCheckingMode": "basic",
+                "python.analysis.typeCheckingMode": "strict",
                 "python.analysis.diagnosticMode": "workspace",
+                "python.analysis.autoImportCompletions": true,
                 "python.linting.enabled": true,
                 "python.linting.pylintEnabled": true,
                 "python.linting.mypyEnabled": true,
+                "python.linting.ruffEnabled": true,
                 "python.formatting.provider": "black",
-                "python.formatting.blackArgs": ["--line-length", "100"],
+                "python.formatting.blackArgs": ["--line-length", "88"],
+                "isort.args": ["--profile", "black"],
                 "editor.formatOnSave": true,
                 "editor.codeActionsOnSave": {
-                    "source.organizeImports": true
+                    "source.organizeImports": "explicit",
+                    "source.fixAll.ruff": "explicit"
                 },
                 "files.trimTrailingWhitespace": true,
                 "files.insertFinalNewLine": true,
-                "files.trimFinalNewlines": true
+                "files.trimFinalNewlines": true,
+                "ruff.lint.enable": true,
+                "ruff.format.enable": true,
+                "mypy-type-checker.args": [
+                    "--ignore-missing-imports",
+                    "--strict"
+                ],
+                "pylint.args": [
+                    "--disable=C0114,C0115,C0116"
+                ]
             }
         }
     },
-    "postCreateCommand": "curl -LsSf https://astral.sh/uv/install.sh | sh && uv pip install --system --managed-python -r requirements.txt",
-    "remoteUser": "vscode"
+    "postCreateCommand": "bash .devcontainer/setup.sh",
+    "remoteUser": "vscode",
+    "mounts": [
+        "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ]
 }

@@ -1,0 +1,48 @@
+# Development dependencies for Warp Content Processor
+# These tools support the complete code quality and security workflow
+
+# Base dependencies (if not already installed)
+-r requirements.txt
+
+# Code formatting and import sorting
+black==24.3.0
+isort==5.13.2
+
+# Linting and static analysis
+ruff==0.1.9
+pylint==3.0.3
+
+# Type checking
+mypy==1.8.0
+types-PyYAML==6.0.12.12
+types-requests==2.31.0.20231231
+
+# Security scanning
+bandit==1.7.5
+safety==2.3.5
+
+# Testing and coverage
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-xdist==3.5.0
+pytest-mock==3.12.0
+
+# Pre-commit hooks
+pre-commit==3.6.0
+
+# Development utilities
+pipdeptree==2.13.1  # Dependency visualization
+tox==4.11.4         # Test automation
+coverage==7.3.2     # Coverage reporting
+
+# Documentation
+sphinx==7.2.6      # Documentation generation
+sphinx-rtd-theme==2.0.0
+
+# Jupyter for interactive development
+jupyter==1.0.0
+ipykernel==6.26.0
+
+# Development server and debugging
+ipdb==0.13.13       # Enhanced debugger
+rich==13.7.0        # Beautiful terminal output

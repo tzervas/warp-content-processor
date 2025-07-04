@@ -136,66 +136,13 @@ class SchemaIslandDetector:
         current_block_start = None
         current_block_lines = []
 
-<<<<<<< HEAD
-        for i, line in enumerate(lines):
-            is_yaml_like = any(pattern.search(line) for pattern in self.yaml_patterns)
-            is_yaml_separator = line.strip() == "---"
-
-            if is_yaml_like:
-                if current_block_start is None:
-                    current_block_start = i
-                    current_block_lines = [line]
-                else:
-                    current_block_lines.append(line)
-            elif is_yaml_separator:
-                # YAML document separator - end current block and potentially
-                # start new one
-                if (
-                    current_block_start is not None and len(current_block_lines) >= 1
-                ):  # Allow single line blocks before separator
-                    island = self._create_island_from_lines(
-                        lines,
-                        current_block_start,
-                        i - 1,
-                        "yaml_block",
-                        source_hint or "unknown",
-                    )
-                    if island:
-                        islands.append(island)
-
-                # Reset for potential next document
-                current_block_start = None
-                current_block_lines = []
-            else:
-                # End of potential YAML block
-                if current_block_start is not None and len(current_block_lines) >= 2:
-                    island = self._create_island_from_lines(
-                        lines,
-                        current_block_start,
-                        i - 1,
-                        "yaml_block",
-                        source_hint or "unknown",
-                    )
-                    if island:
-                        islands.append(island)
-
-                current_block_start = None
-                current_block_lines = []
-
-        # Handle block at end of content (allow single lines here too)
-        if current_block_start is not None and len(current_block_lines) >= 1:
-            island = self._create_island_from_lines(
-                lines,
-                current_block_start,
-                len(lines) - 1,
-                "yaml_block",
-                source_hint or "unknown",
-            )
-            if island:
-                islands.append(island)
-=======
         def add_block_if_valid(end_line: int, min_lines: int = 2) -> None:
-            """Helper to add block if it meets criteria and reset block state."""
+            """Helper to add block if it meets criteria and reset block state.
+            
+            Args:
+                end_line: The ending line number for the block
+                min_lines: Minimum number of lines required for a valid block
+            """
             nonlocal current_block_start, current_block_lines, islands
             
             if current_block_start is not None and len(current_block_lines) >= min_lines:
@@ -227,19 +174,12 @@ class SchemaIslandDetector:
 
         # Handle final block (allow single line at EOF)
         add_block_if_valid(len(lines) - 1, min_lines=1)
->>>>>>> main
 
         return islands
 
     def _find_json_islands(
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
-<<<<<<< HEAD
-        """Find JSON-like content islands."""
-        islands = []
-
-        # Look for balanced braces that might contain JSON
-=======
         """Find JSON-like content islands.
         
         This method detects potential JSON content by:
@@ -255,7 +195,6 @@ class SchemaIslandDetector:
             List of ContentIsland objects containing JSON-like content
         """
         islands: List[ContentIsland] = []
->>>>>>> main
         brace_depth = 0
         start_pos = None
 
@@ -442,15 +381,7 @@ class SchemaIslandDetector:
             elif line.startswith("- "):
                 schema_lines += 1
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-        if len(lines) > 0:
-=======
         if lines:
->>>>>>> main
-=======
-        if lines:
->>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
             schema_ratio = schema_lines / len([line for line in lines if line.strip()])
             score += schema_ratio * 0.3
 
@@ -470,33 +401,25 @@ class SchemaIslandDetector:
         non_overlapping = []
 
         for island in sorted_islands:
-<<<<<<< HEAD
-<<<<<<< HEAD
-            # Check if this island overlaps with any already selected
-            overlaps = False
-            for selected in non_overlapping:
-                if self._islands_overlap(island, selected):
-                    overlaps = True
-                    break
-
-=======
-=======
->>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
             overlaps = any(
                 self._islands_overlap(island, selected)
                 for selected in non_overlapping
             )
-<<<<<<< HEAD
->>>>>>> main
-=======
->>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
             if not overlaps:
                 non_overlapping.append(island)
 
         return non_overlapping
 
     def _islands_overlap(self, island1: ContentIsland, island2: ContentIsland) -> bool:
-        """Check if two islands overlap in their content ranges."""
+        """Check if two islands overlap in their content ranges.
+        
+        Args:
+            island1: First content island to compare
+            island2: Second content island to compare
+            
+        Returns:
+            bool: True if the islands overlap, False otherwise
+        """
         return not (
             island1.end_offset <= island2.start_offset
             or island2.end_offset <= island1.start_offset
