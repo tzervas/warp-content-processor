@@ -10,6 +10,7 @@ Following DRY: Reuses existing robust parsing infrastructure.
 import logging
 import time
 from typing import Dict, Optional
+import traceback
 
 from ..parsers import ContentDetector
 from ..parsers.yaml_strategies import create_yaml_parser
