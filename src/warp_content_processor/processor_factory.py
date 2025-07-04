@@ -54,7 +54,7 @@ class ProcessorFactory:
         cls, content_type: ContentType, output_dir: Union[str, Path]
     ) -> SchemaProcessor:
         """Create a processor instance for the given content type."""
-        processor_class = cls._get_processor_class(str(content_type))
+        processor_class = cls._get_processor_class(content_type.value)
         if not processor_class:
             raise ValueError(f"No processor available for content type: {content_type}")
 

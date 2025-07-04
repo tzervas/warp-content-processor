@@ -100,50 +100,29 @@ class ContentSplitter:
         """
         documents = []
 
-        # First try to split by YAML documents
-        try:
-            yaml_docs = list(yaml.safe_load_all(content))
-            if len(yaml_docs) > 1:
-                for doc in yaml_docs:
-                    if doc:  # Skip empty documents
-                        doc_content = yaml.dump(doc)
-                        doc_type = ContentTypeDetector.detect_type(doc_content)
-                        documents.append((doc_type, doc_content))
-                return documents
-        except yaml.YAMLError:
-            pass
+        # First try to split by YAML documents with explicit separators
+        sections = re.split(r'^---\s*$', content, flags=re.MULTILINE)
+        
+        # Filter out empty sections and process each non-empty one
+        for section in sections:
+            section = section.strip()
+            if not section:
+                continue
 
-        # If YAML splitting fails, try pattern-based splitting
-        current_pos = 0
-        content_length = len(content)
-
-        while current_pos < content_length:
-            # Try to find the next document boundary
-            next_doc_start = content_length
-            detected_type = None
-
-            for content_type, pattern in cls.DOCUMENT_PATTERNS.items():
-                match = re.search(
-                    pattern, content[current_pos:], re.MULTILINE | re.DOTALL
-                )
-                if match and match.start() + current_pos < next_doc_start:
-                    next_doc_start = match.start() + current_pos
-                    detected_type = content_type
-
-            if detected_type:
-                # Extract document content
-                doc_content = content[current_pos:next_doc_start].strip()
-                if doc_content:  # Don't add empty documents
+            try:
+                # Try to parse as YAML first
+                doc = yaml.safe_load(section)
+                if doc and isinstance(doc, dict):
+                    doc_content = yaml.dump(doc)
                     doc_type = ContentTypeDetector.detect_type(doc_content)
                     documents.append((doc_type, doc_content))
-                current_pos = next_doc_start
-            else:
-                # No more boundaries found, add remaining content if any
-                remaining = content[current_pos:].strip()
-                if remaining:
-                    doc_type = ContentTypeDetector.detect_type(remaining)
-                    documents.append((doc_type, remaining))
-                break
+                    continue
+            except yaml.YAMLError:
+                pass
+
+            # If not valid YAML, detect type from content patterns
+            doc_type = ContentTypeDetector.detect_type(section)
+            documents.append((doc_type, section))
 
         return documents
 

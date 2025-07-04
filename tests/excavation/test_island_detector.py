@@ -4,6 +4,8 @@ Tests for SchemaIslandDetector - Following KISS principles with parameterized te
 Tests focus on specific behaviors without complex loops in test logic.
 """
 
+from typing import Set
+
 import pytest
 
 from warp_content_processor.excavation.artifacts import ContaminationType
