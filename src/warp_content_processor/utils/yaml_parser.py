@@ -118,7 +118,7 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
             else:
                 results.append(YAMLParsingResult(content=doc))
                 
-        return results if results else [YAMLParsingResult(error="No valid documents found")]
+        return results or [YAMLParsingResult(error="No valid documents found")]
         
     except yaml.YAMLError as e:
         return [YAMLParsingResult(error=f"YAML parsing error: {str(e)}")]
