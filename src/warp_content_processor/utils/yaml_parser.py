@@ -147,4 +147,4 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
                 YAMLParsingResult(error=f"Unexpected error parsing YAML: {str(e)}")
             )
 
-    return results if results else [YAMLParsingResult(error="No documents found")]
+    return results or [YAMLParsingResult(error="No documents found")]

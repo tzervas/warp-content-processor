@@ -52,7 +52,7 @@ class ContentSanitizer:
         normalized = []
         for line in lines:
             # Preserve leading whitespace
-            leading = re.match(r"^[\t ]*", line).group(0)
+            leading = re.match(r"^[\t ]*", line)[0]
             # Strip other whitespace and control chars
             cleaned = re.sub(r"[\t ]+", " ", line.strip())
             normalized.append(leading + cleaned if cleaned else "")
