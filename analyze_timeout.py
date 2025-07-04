@@ -310,13 +310,20 @@ class TimeoutAnalyzer:
             for rec in analysis["recommendations"]:
                 report += f"- {rec}\n"
 
+        def format_log_excerpt(log: str, max_length: int = 1000) -> str:
+            if len(log) <= max_length:
+                return log
+            head_len = max_length // 2
+            tail_len = max_length - head_len
+            head = log[:head_len]
+            tail = log[-tail_len:]
+            return f"{head}\n...\n{tail}"
+
+        LOG_EXCERPT_LENGTH = 1000  # Can be made configurable
+
         if log_content.strip():
             report += f"""
 ## Log Analysis
-```
-{log_content[-1000:]}  # Last 1000 characters
-```
-"""
 
         return report
 
