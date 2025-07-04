@@ -9,8 +9,7 @@ Following DRY: Reuses existing robust parsing infrastructure.
 
 import logging
 import time
-from typing import Any, Dict, Optional, Set
-import traceback
+from typing import Any, Dict, Optional
 
 from ..parsers import ContentDetector
 from ..parsers.yaml_strategies import create_yaml_parser
@@ -22,7 +21,7 @@ from .artifacts import (
     ExtractionContext,
     SchemaArtifact,
 )
-from .island_detector import SchemaIslandDetector, ContentIsland
+from .island_detector import ContentIsland, SchemaIslandDetector
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +110,7 @@ class ContentArchaeologist:
 
         # Extract and validate artifacts from each island
         artifacts = []
-        extraction_stats = {}
+        extraction_stats: Dict[str, int] = {}
 
         for island in islands:
             try:
@@ -148,7 +147,9 @@ class ContentArchaeologist:
             extraction_stats=extraction_stats,
         )
 
-    def _extract_artifact_from_island(self, island: ContentIsland) -> Optional[SchemaArtifact]:
+    def _extract_artifact_from_island(
+        self, island: ContentIsland
+    ) -> Optional[SchemaArtifact]:
         """
         Extract a schema artifact from a content island.
 
@@ -209,7 +210,7 @@ class ContentArchaeologist:
         return artifact
 
     def _calculate_extraction_confidence(
-        self, island, detection_confidence: float
+        self, island: ContentIsland, detection_confidence: float
     ) -> ExtractionConfidence:
         """
         Calculate extraction confidence based on island quality and
@@ -273,7 +274,7 @@ class ContentArchaeologist:
             "extraction_timeout": self.extraction_timeout,
         }
 
-    def reset_statistics(self):
+    def reset_statistics(self) -> None:
         """Reset extraction statistics."""
         self.extraction_stats.clear()
         self.total_extractions = 0

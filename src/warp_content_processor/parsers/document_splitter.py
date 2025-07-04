@@ -167,7 +167,7 @@ class DocumentSplitter(SimpleParser):
             return [content]
 
         blocks = []
-        current_block = []
+        current_block: List[str] = []
         blank_line_count = 0
 
         for line in lines:

@@ -44,7 +44,7 @@ class SchemaIslandDetector:
     KISS: Uses simple pattern matching and heuristics.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the island detector with common patterns."""
         # YAML-like patterns
         self.yaml_patterns = [
@@ -118,45 +118,49 @@ class SchemaIslandDetector:
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
         """Find YAML-like content islands.
-        
+
         This method detects and extracts YAML-like content blocks by looking for:
         1. Lines matching YAML patterns (key: value, lists)
         2. YAML document separators (---)
         3. Consecutive YAML-like lines
-        
+
         Args:
             content: The string content to search for YAML islands
             source_hint: Optional hint about the content source
-            
+
         Returns:
             List of ContentIsland objects containing YAML-like content
         """
         islands: List[ContentIsland] = []
         lines = content.split("\n")
         current_block_start = None
-        current_block_lines = []
+        current_block_lines: List[str] = []
 
-            def add_block_if_valid(end_line: int, min_lines: int = 2) -> None:
-                """Helper to add block if it meets criteria and reset block state.
-                
-                Args:
-                    end_line: The ending line number for the block
-                    min_lines: Minimum number of lines required for a valid block
-                """
-                nonlocal current_block_start, current_block_lines, islands
-                
-                if current_block_start is not None and len(current_block_lines) >= min_lines:
-                    if (island := self._create_island_from_lines(
-                        lines,
-                        current_block_start,
-                        end_line,
-                        "yaml_block",
-                        source_hint or "unknown"
-                    )):
-                        islands.append(island)
-                
-                current_block_start = None
-                current_block_lines = []
+        def add_block_if_valid(end_line: int, min_lines: int = 2) -> None:
+            """Helper to add block if it meets criteria and reset block state.
+
+            Args:
+                end_line: The ending line number for the block
+                min_lines: Minimum number of lines required for a valid block
+            """
+            nonlocal current_block_start, current_block_lines, islands
+
+            if (
+                current_block_start is not None
+                and len(current_block_lines) >= min_lines
+            ):
+                island = self._create_island_from_lines(
+                    lines,
+                    current_block_start,
+                    end_line,
+                    "yaml_block",
+                    source_hint or "unknown",
+                )
+                if island is not None:
+                    islands.append(island)
+
+            current_block_start = None
+            current_block_lines = []
 
         for i, line in enumerate(lines):
             if any(pattern.search(line) for pattern in self.yaml_patterns):
@@ -164,11 +168,11 @@ class SchemaIslandDetector:
                 if current_block_start is None:
                     current_block_start = i
                 current_block_lines.append(line)
-                
+
             elif line.strip() == "---":  # YAML document separator
                 # Allow single line blocks before separator
                 add_block_if_valid(i - 1, min_lines=1)
-                
+
             else:  # Non-YAML line
                 add_block_if_valid(i - 1)
 
@@ -181,16 +185,16 @@ class SchemaIslandDetector:
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
         """Find JSON-like content islands.
-        
+
         This method detects potential JSON content by:
         1. Finding balanced brace pairs
         2. Validating content against JSON-like patterns
         3. Creating islands from valid JSON blocks
-        
+
         Args:
             content: The string content to search for JSON islands
             source_hint: Optional hint about the content source
-            
+
         Returns:
             List of ContentIsland objects containing JSON-like content
         """
@@ -201,18 +205,28 @@ class SchemaIslandDetector:
         for i, char in enumerate(content):
             if char == "{" and (brace_depth := brace_depth + 1) == 1:
                 start_pos = i
-            elif char == "}" and (brace_depth := brace_depth - 1) == 0 and start_pos is not None:
+            elif (
+                char == "}"
+                and (brace_depth := brace_depth - 1) == 0
+                and start_pos is not None
+            ):
                 # Found complete JSON-like block
-                if (json_candidate := content[start_pos:i + 1]) and \
-                   any(pattern.search(json_candidate) for pattern in self.json_patterns) and \
-                   (island := self._create_island_from_content(
-                        json_candidate,
-                        start_pos,
-                        i + 1,
-                        "json_block",
-                        source_hint or "unknown",
-                        content
-                    )):
+                if (
+                    (json_candidate := content[start_pos : i + 1])
+                    and any(
+                        pattern.search(json_candidate) for pattern in self.json_patterns
+                    )
+                    and (
+                        island := self._create_island_from_content(
+                            json_candidate,
+                            start_pos,
+                            i + 1,
+                            "json_block",
+                            source_hint or "unknown",
+                            content,
+                        )
+                    )
+                ):
                     islands.append(island)
                 start_pos = None
 
@@ -399,12 +413,11 @@ class SchemaIslandDetector:
         # Sort by quality (best first)
         sorted_islands = sorted(islands, key=lambda i: i.quality_score, reverse=True)
 
-        non_overlapping = []
+        non_overlapping: List[ContentIsland] = []
 
         for island in sorted_islands:
             overlaps = any(
-                self._islands_overlap(island, selected)
-                for selected in non_overlapping
+                self._islands_overlap(island, selected) for selected in non_overlapping
             )
             if not overlaps:
                 non_overlapping.append(island)
@@ -413,11 +426,11 @@ class SchemaIslandDetector:
 
     def _islands_overlap(self, island1: ContentIsland, island2: ContentIsland) -> bool:
         """Check if two islands overlap in their content ranges.
-        
+
         Args:
             island1: First content island to compare
             island2: Second content island to compare
-            
+
         Returns:
             bool: True if the islands overlap, False otherwise
         """

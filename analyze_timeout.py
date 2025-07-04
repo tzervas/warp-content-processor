@@ -12,14 +12,14 @@ import argparse
 import re
 import subprocess
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 
 class TimeoutAnalyzer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.timeout_patterns = {
             "simple_sleep": r"time\.sleep\(",
-            "infinite_loop": r"while\s+True:",
+            "infinite_loop": r"while\s+True:|for\s+.*\s+in\s+.*:",
             "socket_io": r"socket\.(connect|recv|send|accept)",
             "requests": r"requests\.(get|post|put|delete)",
             "database": r"\.(execute|fetchall|fetchone|commit)",
@@ -114,10 +114,14 @@ class TimeoutAnalyzer:
             return result.stdout, log_content, result.returncode
 
         except subprocess.TimeoutExpired:
-            print("Subprocess timed out while running the command: {}".format(" ".join(cmd)))
+            print(
+                "Subprocess timed out while running the command: {}".format(
+                    " ".join(cmd)
+                )
+            )
             return "", "", -1
 
-    def parse_stack_trace(self, output: str) -> List[Dict]:
+    def parse_stack_trace(self, output: str) -> List[Dict[str, Any]]:
         """Parse stack traces from pytest timeout output."""
         traces = []
 
@@ -152,14 +156,21 @@ class TimeoutAnalyzer:
                                     "function": func_name,
                                     "code": code_line.strip(),
                                 }
-                                for file_path, line_num, func_name, code_line in file_lines
+                                for (
+                                    file_path,
+                                    line_num,
+                                    func_name,
+                                    code_line,
+                                ) in file_lines
                             ],
                         }
                     )
 
         return traces
 
-    def _analyze_single_trace(self, trace: Dict) -> Tuple[str, Dict]:
+    def _analyze_single_trace(
+        self, trace: Dict[str, Any]
+    ) -> Tuple[Optional[str], Optional[Dict[str, str]]]:
         """Analyze a single trace for timeout patterns."""
         if not trace.get("stack_frames"):
             return None, None
@@ -171,7 +182,10 @@ class TimeoutAnalyzer:
             if re.search(pattern, code_line):
                 cause = {
                     "type": pattern_name,
-                    "location": f"{last_frame.get('file', 'unknown')}:{last_frame.get('line', 'unknown')}",
+                    "location": (
+                        f"{last_frame.get('file', 'unknown')}:"
+                        f"{last_frame.get('line', 'unknown')}"
+                    ),
                     "code": code_line,
                     "thread": trace.get("thread_name", "unknown"),
                 }
@@ -179,7 +193,9 @@ class TimeoutAnalyzer:
 
         return None, None
 
-    def _detect_deadlock(self, traces: List[Dict]) -> Tuple[bool, List[Dict]]:
+    def _detect_deadlock(
+        self, traces: List[Dict[str, Any]]
+    ) -> Tuple[bool, List[Dict[str, Any]]]:
         """Detect potential deadlocks from multiple traces."""
         if len(traces) <= 1:
             return False, []
@@ -187,7 +203,9 @@ class TimeoutAnalyzer:
         thread_locks = [
             {
                 "thread": trace.get("thread_name", "unknown"),
-                "location": f"{frame.get('file', 'unknown')}:{frame.get('line', 'unknown')}",
+                "location": (
+                    f"{frame.get('file', 'unknown')}:" f"{frame.get('line', 'unknown')}"
+                ),
                 "code": frame.get("code", ""),
             }
             for trace in traces
@@ -197,14 +215,24 @@ class TimeoutAnalyzer:
 
         return len(thread_locks) >= 2, thread_locks
 
-    def analyze_hanging_operation(self, traces: List[Dict]) -> Dict:
+    def analyze_hanging_operation(self, traces: List[Dict[str, Any]]) -> Dict[str, Any]:
+        # Actual return type:
+        # {
+        #     "timeout_type": str,
+        #     "likely_cause": List[Dict[str, str]],
+        #     "hanging_location": Optional[str],
+        #     "recommendations": List[str]
+        # }
         """Analyze stack traces to identify type of hanging operation."""
-        analysis = {
-            "timeout_type": "unknown",
-            "likely_cause": [],
-            "hanging_location": None,
-            "recommendations": [],
-        }
+        analysis = cast(
+            Dict[str, Any],
+            {
+                "timeout_type": "unknown",
+                "likely_cause": [],
+                "hanging_location": None,
+                "recommendations": [],
+            },
+        )
 
         # Analyze individual traces
         for trace in traces:
@@ -226,7 +254,11 @@ class TimeoutAnalyzer:
         return analysis
 
     def generate_report(
-        self, test_path: str, traces: List[Dict], analysis: Dict, log_content: str
+        self,
+        test_path: str,
+        traces: List[Dict[str, Any]],
+        analysis: Dict[str, Any],
+        log_content: str,
     ) -> str:
         """Generate comprehensive analysis report."""
         report = f"""
@@ -280,21 +312,13 @@ class TimeoutAnalyzer:
             for rec in analysis["recommendations"]:
                 report += f"- {rec}\n"
 
-        def format_log_excerpt(log: str, max_length: int = 1000) -> str:
-            if len(log) <= max_length:
-                return log
-            head_len = max_length // 2
-            tail_len = max_length - head_len
-            head = log[:head_len]
-            tail = log[-tail_len:]
-            return f"{head}\n...\n{tail}"
-
-        LOG_EXCERPT_LENGTH = 1000  # Can be made configurable
-
         if log_content.strip():
             report += f"""
 ## Log Analysis
-
+```
+{log_content[-1000:]}  # Last 1000 characters
+```
+"""
         return report
 
     def analyze_test(self, test_path: str, timeout: int = 10) -> str:
@@ -321,7 +345,7 @@ class TimeoutAnalyzer:
         return self.generate_report(test_path, traces, analysis, log_content)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Analyze pytest timeout failures")
     parser.add_argument("test_path", help="Path to test file or specific test")
     parser.add_argument(
@@ -338,6 +362,7 @@ def main():
     args = parser.parse_args()
 
     import logging
+
     logging.basicConfig(level=getattr(logging, args.log_level))
 
     analyzer = TimeoutAnalyzer()

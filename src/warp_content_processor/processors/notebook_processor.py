@@ -88,7 +88,9 @@ class NotebookProcessor(SchemaProcessor):
                         if not isinstance(tag, str):
                             warnings.append(f"Tag '{tag}' is not a string")
                         elif not self.valid_tag_pattern.match(str(tag)):
-                            warnings.append(f"Tag '{tag}' does not match the required format")
+                            warnings.append(
+                                f"Tag '{tag}' does not match the required format"
+                            )
 
         # Validate content
         if not content or not content.strip():
@@ -159,8 +161,9 @@ class NotebookProcessor(SchemaProcessor):
                         else:
                             # Unexpected nested structure for non-list fields
                             expected_str = (
-                                ' or '.join(t.__name__ for t in expected_type) if isinstance(expected_type, tuple) else expected_type.__name__
-
+                                " or ".join(t.__name__ for t in expected_type)
+                                if isinstance(expected_type, tuple)
+                                else expected_type.__name__
                             )
                             error_msg = (
                                 f"Field '{field_name}' contains unexpected "
@@ -172,8 +175,9 @@ class NotebookProcessor(SchemaProcessor):
                     else:
                         # Wrong primitive type
                         expected_str = (
-                            ' or '.join(t.__name__ for t in expected_type) if isinstance(expected_type, tuple) else expected_type.__name__
-
+                            " or ".join(t.__name__ for t in expected_type)
+                            if isinstance(expected_type, tuple)
+                            else expected_type.__name__
                         )
                         error_msg = (
                             f"Field '{field_name}' has unexpected type: "
