@@ -14,10 +14,11 @@ from ..content_type import ContentType
 class PromptProcessor(SchemaProcessor):
     """Processor for prompt files."""
 
-    def __init__(self) -> None:
+    def __init__(self, output_dir=None) -> None:
         super().__init__()
         self.required_fields = {"name", "prompt"}
         self.optional_fields = {"description", "arguments", "tags"}
+        self.output_dir = output_dir
 
         # Regex patterns
         self.placeholder_pattern = re.compile(r"{{[a-zA-Z_][a-zA-Z0-9_]*}}")
@@ -122,6 +123,45 @@ class PromptProcessor(SchemaProcessor):
                 errors=[f"Error processing prompt: {str(e)}"],
                 warnings=[],
             )
+
+    def normalize_content(self, data: Dict) -> Dict:
+        """Normalize prompt content to consistent format."""
+        normalized = data.copy()
+
+        # Normalize tags to lowercase
+        if "tags" in normalized and isinstance(normalized["tags"], list):
+            normalized["tags"] = [
+                tag.lower() if isinstance(tag, str) else tag
+                for tag in normalized["tags"]
+            ]
+
+        # Ensure arguments is a list
+        if "arguments" in normalized and not isinstance(normalized["arguments"], list):
+            normalized["arguments"] = []
+
+        # Normalize argument fields
+        if "arguments" in normalized and isinstance(normalized["arguments"], list):
+            unnamed_arg_counter = 1
+            for arg in normalized["arguments"]:
+                if isinstance(arg, dict):
+                    # Ensure required argument fields
+                    if "name" not in arg:
+                        arg["name"] = f"unnamed_arg_{unnamed_arg_counter}"
+                        unnamed_arg_counter += 1
+                        import warnings
+
+                        warnings.warn(
+                            "Argument is missing a 'name' field. "
+                            f"Assigned unique placeholder: {arg['name']}",
+                            stacklevel=2
+                        )
+                    if "type" not in arg:
+                        arg["type"] = "text"
+                    # Convert type to lowercase
+                    if isinstance(arg["type"], str):
+                        arg["type"] = arg["type"].lower()
+
+        return normalized
 
     def generate_filename(self, data: Dict) -> str:
         """Generate filename for prompt content."""
