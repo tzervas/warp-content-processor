@@ -45,7 +45,7 @@ class SecurityScanner:
                 return True
         except FileNotFoundError:
             pass
-        
+
         print("🐍 Using standard Python package management")
         return False
 
@@ -59,7 +59,7 @@ class SecurityScanner:
             if self.use_uv and cmd[0] == "python" and cmd[1] == "-m":
                 uv_cmd = ["uv", "run"] + cmd[2:]
                 cmd = uv_cmd
-            
+
             result = subprocess.run(
                 cmd,
                 cwd=self.project_root,
@@ -84,7 +84,9 @@ class SecurityScanner:
 
     def run_bandit(self) -> Tuple[bool, Optional[Dict]]:
         """Run bandit security scanner."""
-        output_file = self.reports_dir / f"bandit_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        output_file = (
+            self.reports_dir / f"bandit_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
         cmd = [
             "python",
             "-m",
@@ -99,11 +101,13 @@ class SecurityScanner:
             "B101,B601",  # Skip assert_used and shell=True warnings for development
         ]
 
-        success, output = self.run_command(cmd, "Bandit security scanning", capture_json=True)
+        success, output = self.run_command(
+            cmd, "Bandit security scanning", capture_json=True
+        )
 
         if success and output_file.exists():
             try:
-                with open(output_file, 'r') as f:
+                with open(output_file, "r") as f:
                     report = json.load(f)
                 self._print_bandit_summary(report)
                 return True, report
@@ -118,7 +122,7 @@ class SecurityScanner:
         high_severity = metrics.get("SEVERITY.HIGH", 0)
         medium_severity = metrics.get("SEVERITY.MEDIUM", 0)
         low_severity = metrics.get("SEVERITY.LOW", 0)
-        
+
         print(f"   High severity issues: {high_severity}")
         print(f"   Medium severity issues: {medium_severity}")
         print(f"   Low severity issues: {low_severity}")
@@ -126,7 +130,9 @@ class SecurityScanner:
 
     def run_safety(self) -> Tuple[bool, Optional[str]]:
         """Run safety dependency vulnerability scanner."""
-        output_file = self.reports_dir / f"safety_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        output_file = (
+            self.reports_dir / f"safety_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
         cmd = [
             "python",
             "-m",
@@ -137,11 +143,13 @@ class SecurityScanner:
             str(output_file),
         ]
 
-        success, output = self.run_command(cmd, "Safety dependency scanning", capture_json=True)
-        
+        success, output = self.run_command(
+            cmd, "Safety dependency scanning", capture_json=True
+        )
+
         if success and output_file.exists():
             try:
-                with open(output_file, 'r') as f:
+                with open(output_file, "r") as f:
                     report = json.load(f)
                 self._print_safety_summary(report)
                 return True, output
@@ -165,7 +173,9 @@ class SecurityScanner:
 
     def run_pip_audit(self) -> bool:
         """Run pip-audit for package vulnerability scanning."""
-        output_file = self.reports_dir / f"pip_audit_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        output_file = (
+            self.reports_dir / f"pip_audit_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
         cmd = [
             "python",
             "-m",
@@ -175,12 +185,16 @@ class SecurityScanner:
             str(output_file),
         ]
 
-        success, _ = self.run_command(cmd, "Pip-audit package scanning", capture_json=True)
+        success, _ = self.run_command(
+            cmd, "Pip-audit package scanning", capture_json=True
+        )
         return success
 
     def run_trufflehog(self) -> bool:
         """Run trufflehog for secret detection."""
-        output_file = self.reports_dir / f"trufflehog_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        output_file = (
+            self.reports_dir / f"trufflehog_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
         cmd = [
             "trufflehog",
             "filesystem",
@@ -189,22 +203,26 @@ class SecurityScanner:
             "--no-update",
         ]
 
-        success, output = self.run_command(cmd, "TruffleHog secret detection", capture_json=True)
-        
+        success, output = self.run_command(
+            cmd, "TruffleHog secret detection", capture_json=True
+        )
+
         if success and output:
             # Save trufflehog output
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 f.write(output)
-            
+
             # Count secrets found
             secret_count = output.count('"SourceMetadata"')
             print(f"   Potential secrets found: {secret_count}")
-        
+
         return success
 
     def run_osv_scanner(self) -> bool:
         """Run OSV scanner for vulnerability detection."""
-        output_file = self.reports_dir / f"osv_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        output_file = (
+            self.reports_dir / f"osv_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
         cmd = [
             "osv-scanner",
             "--format=json",
@@ -213,7 +231,9 @@ class SecurityScanner:
             str(self.project_root),
         ]
 
-        success, _ = self.run_command(cmd, "OSV vulnerability scanning", capture_json=True)
+        success, _ = self.run_command(
+            cmd, "OSV vulnerability scanning", capture_json=True
+        )
         return success
 
     def run_all_scans(self) -> Dict[str, bool]:
@@ -261,8 +281,10 @@ class SecurityScanner:
 
     def generate_summary_report(self, results: Dict[str, bool]) -> None:
         """Generate a summary security report."""
-        summary_file = self.reports_dir / f"security_summary_{datetime.now():%Y%m%d_%H%M%S}.json"
-        
+        summary_file = (
+            self.reports_dir / f"security_summary_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
+
         summary = {
             "scan_timestamp": datetime.now().isoformat(),
             "project_root": str(self.project_root),
@@ -272,9 +294,9 @@ class SecurityScanner:
             "success_rate": sum(results.values()) / len(results) * 100,
         }
 
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             json.dump(summary, f, indent=2)
-        
+
         print(f"📄 Summary report saved to: {summary_file}")
 
 
@@ -287,8 +309,10 @@ def main():
 
     # Exit with error code if any critical scans failed
     critical_scans = ["bandit", "safety"]
-    critical_failures = [scan for scan in critical_scans if not results.get(scan, False)]
-    
+    critical_failures = [
+        scan for scan in critical_scans if not results.get(scan, False)
+    ]
+
     if critical_failures:
         print(f"\n❌ Critical security scans failed: {', '.join(critical_failures)}")
         sys.exit(1)

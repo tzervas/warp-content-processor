@@ -145,7 +145,10 @@ class SchemaIslandDetector:
             """
             nonlocal current_block_start, current_block_lines, islands
 
-            if current_block_start is not None and len(current_block_lines) >= min_lines:
+            if (
+                current_block_start is not None
+                and len(current_block_lines) >= min_lines
+            ):
                 island = self._create_island_from_lines(
                     lines,
                     current_block_start,

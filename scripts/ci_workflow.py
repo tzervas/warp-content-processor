@@ -13,13 +13,13 @@ Leverages UV for project and package management and venv management.
 
 Usage:
     python scripts/ci_workflow.py [command] [options]
-    
+
 Commands:
     quality   - Run code quality checks and fixes
     security  - Run security scanning
     test      - Run test suite with coverage
     ci        - Run full CI workflow (default)
-    
+
 Options:
     --no-fix  - Skip automated fixes (quality checks only)
     --verbose - Show detailed output
@@ -109,16 +109,15 @@ class CIWorkflow:
             "tests/processors/",
             "tests/excavation/",
         ]
-        
+
         existing_paths = [
-            path for path in critical_test_paths
-            if (self.project_root / path).exists()
+            path for path in critical_test_paths if (self.project_root / path).exists()
         ]
-        
+
         if not existing_paths:
             print("⚠️ No critical test paths found, running all tests")
             return self.run_tests_with_coverage()
-        
+
         cmd = [
             "python",
             "-m",
@@ -127,7 +126,7 @@ class CIWorkflow:
             "-v",
             "--timeout=300",  # 5 minute timeout per test
         ] + existing_paths
-        
+
         success, _ = self.run_command(cmd, "Regression tests for core functionality")
         return success
 
@@ -140,25 +139,25 @@ class CIWorkflow:
             ".trunk/trunk.yaml",
             ".pre-commit-config.yaml",
         ]
-        
+
         missing_files = []
         for file_path in essential_files:
             full_path = self.project_root / file_path
             if not full_path.exists():
                 missing_files.append(file_path)
-        
+
         if missing_files:
             print(f"❌ Missing essential project files: {', '.join(missing_files)}")
             return False
-        
+
         print("✅ Project structure validation passed")
         return True
 
     def generate_ci_report(self, results: Dict[str, bool]) -> None:
         """Generate comprehensive CI report."""
-        from datetime import datetime
         import json
-        
+        from datetime import datetime
+
         report = {
             "ci_run_timestamp": datetime.now().isoformat(),
             "project_root": str(self.project_root),
@@ -168,11 +167,13 @@ class CIWorkflow:
             "success_rate": sum(results.values()) / len(results) * 100,
             "overall_success": all(results.values()),
         }
-        
-        report_file = self.reports_dir / f"ci_report_{datetime.now():%Y%m%d_%H%M%S}.json"
-        with open(report_file, 'w') as f:
+
+        report_file = (
+            self.reports_dir / f"ci_report_{datetime.now():%Y%m%d_%H%M%S}.json"
+        )
+        with open(report_file, "w") as f:
             json.dump(report, f, indent=2)
-        
+
         print(f"📄 CI report saved to: {report_file}")
 
     def run_full_workflow(self) -> Dict[str, bool]:
@@ -239,11 +240,20 @@ class CIWorkflow:
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description='CI Workflow Management')
-    parser.add_argument('command', nargs='?', choices=['quality', 'security', 'test', 'ci'], default='ci',
-                        help='Command to execute: quality, security, test, ci (default: ci)')
-    parser.add_argument('--no-fix', action='store_true', help='Skip automated fixes (only for quality checks)')
-    parser.add_argument('--verbose', action='store_true', help='Show detailed output')
+    parser = argparse.ArgumentParser(description="CI Workflow Management")
+    parser.add_argument(
+        "command",
+        nargs="?",
+        choices=["quality", "security", "test", "ci"],
+        default="ci",
+        help="Command to execute: quality, security, test, ci (default: ci)",
+    )
+    parser.add_argument(
+        "--no-fix",
+        action="store_true",
+        help="Skip automated fixes (only for quality checks)",
+    )
+    parser.add_argument("--verbose", action="store_true", help="Show detailed output")
 
     return parser.parse_args()
 
@@ -257,24 +267,24 @@ def main():
         print("Verbose mode enabled")
 
     command_mapping = {
-        'quality': workflow.run_quality_checks,
-        'security': workflow.run_security_scans,
-        'test': workflow.run_tests_with_coverage,
-        'ci': workflow.run_full_workflow,
+        "quality": workflow.run_quality_checks,
+        "security": workflow.run_security_scans,
+        "test": workflow.run_tests_with_coverage,
+        "ci": workflow.run_full_workflow,
     }
 
-    if args.no_fix and args.command == 'quality':
+    if args.no_fix and args.command == "quality":
         print("Skipping fixes in quality checks")
         # Customize the call if --no-fix
         workflow.run_quality_checks = lambda: workflow.run_command(
-            ['python', str(workflow.scripts_dir / 'quality_check.py'), '--no-fix'],
-            "Code quality checks without fixes"
+            ["python", str(workflow.scripts_dir / "quality_check.py"), "--no-fix"],
+            "Code quality checks without fixes",
         )[0]
 
     # Execute selected command
     results = command_mapping[args.command]()
 
-    if args.command == 'ci':
+    if args.command == "ci":
         workflow.print_workflow_summary(results)
         workflow.generate_ci_report(results)
 

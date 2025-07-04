@@ -7,14 +7,22 @@ Uses pytest fixtures and parameterization to avoid conditionals in tests.
 Follows no-conditionals-in-tests rule and KISS principles.
 """
 
-import pytest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
-from warp_content_processor.parsers.base import ErrorTolerantParser, ParseResult, ParsingStrategy
+import pytest
+
+from warp_content_processor.parsers.base import (
+    ErrorTolerantParser,
+    ParseResult,
+    ParsingStrategy,
+)
+from warp_content_processor.parsers.common_patterns import (
+    CommonPatterns,
+    MangledContentCleaner,
+)
 from warp_content_processor.parsers.content_detector import ContentDetector
 from warp_content_processor.parsers.document_splitter import DocumentSplitter
-from warp_content_processor.parsers.common_patterns import CommonPatterns, MangledContentCleaner
 from warp_content_processor.parsers.intelligent_cleaner import IntelligentCleaner
 from warp_content_processor.parsers.robust_parser import RobustParser
 from warp_content_processor.parsers.yaml_strategies import YamlStrategies
@@ -28,10 +36,7 @@ class TestErrorTolerantParserRegression:
         """Create a mock parsing strategy."""
         strategy = Mock(spec=ParsingStrategy)
         strategy.parse.return_value = ParseResult(
-            success=True,
-            data={"test": "data"},
-            errors=[],
-            warnings=[]
+            success=True, data={"test": "data"}, errors=[], warnings=[]
         )
         return strategy
 
@@ -44,7 +49,7 @@ class TestErrorTolerantParserRegression:
         """Ensure successful parsing behavior is preserved."""
         content = "test content"
         result = parser.parse(content)
-        
+
         assert result.success
         assert result.data == {"test": "data"}
         assert not result.errors
@@ -54,9 +59,9 @@ class TestErrorTolerantParserRegression:
         """Ensure error handling behavior is preserved."""
         mock_strategy.parse.side_effect = Exception("Parse error")
         parser = ErrorTolerantParser([mock_strategy])
-        
+
         result = parser.parse("test content")
-        
+
         assert not result.success
         assert "Parse error" in str(result.errors)
 
@@ -67,24 +72,18 @@ class TestErrorTolerantParserRegression:
         for i in range(strategy_count):
             strategy = Mock(spec=ParsingStrategy)
             strategy.parse.return_value = ParseResult(
-                success=False,
-                data=None,
-                errors=[f"Error {i}"],
-                warnings=[]
+                success=False, data=None, errors=[f"Error {i}"], warnings=[]
             )
             strategies.append(strategy)
-        
+
         # Make the last strategy succeed
         strategies[-1].parse.return_value = ParseResult(
-            success=True,
-            data={"success": True},
-            errors=[],
-            warnings=[]
+            success=True, data={"success": True}, errors=[], warnings=[]
         )
-        
+
         parser = ErrorTolerantParser(strategies)
         result = parser.parse("test content")
-        
+
         assert result.success
         assert result.data == {"success": True}
 
@@ -101,37 +100,31 @@ class TestContentDetectorRegression:
         "content,expected_types",
         [
             # Workflow content detection
-            (
-                "name: Test Workflow\ncommand: echo test\nshells: [bash]",
-                ["workflow"]
-            ),
-            # Prompt content detection  
-            (
-                "name: Test Prompt\nprompt: Do {{action}}\narguments: []",
-                ["prompt"]
-            ),
+            ("name: Test Workflow\ncommand: echo test\nshells: [bash]", ["workflow"]),
+            # Prompt content detection
+            ("name: Test Prompt\nprompt: Do {{action}}\narguments: []", ["prompt"]),
             # Environment variable detection
-            (
-                "variables:\n  TEST_VAR: value\n  DEBUG: true",
-                ["env_var"]
-            ),
+            ("variables:\n  TEST_VAR: value\n  DEBUG: true", ["env_var"]),
             # Multiple content type detection
             (
                 "---\nname: Test\ncommand: echo\n---\nvariables:\n  X: y",
-                ["workflow", "env_var"]
+                ["workflow", "env_var"],
             ),
-        ]
+        ],
     )
     def test_content_type_detection_preserved(self, detector, content, expected_types):
         """Ensure content type detection behavior is preserved."""
         detected_types = detector.detect_content_types(content)
-        
+
         # Convert to strings for comparison
-        detected_strings = [t.value if hasattr(t, 'value') else str(t).lower() 
-                           for t in detected_types]
-        
+        detected_strings = [
+            t.value if hasattr(t, "value") else str(t).lower() for t in detected_types
+        ]
+
         for expected_type in expected_types:
-            assert any(expected_type in detected.lower() for detected in detected_strings)
+            assert any(
+                expected_type in detected.lower() for detected in detected_strings
+            )
 
     def test_empty_content_handling_preserved(self, detector):
         """Ensure empty content handling is preserved."""
@@ -166,7 +159,7 @@ class TestDocumentSplitterRegression:
             ("", 0),
             # Content with noise
             ("junk\n---\nname: Valid\n---\nmore junk", 1),
-        ]
+        ],
     )
     def test_document_splitting_preserved(self, splitter, content, expected_count):
         """Ensure document splitting behavior is preserved."""
@@ -177,7 +170,7 @@ class TestDocumentSplitterRegression:
         """Ensure document boundary detection is preserved."""
         content = "---\nfirst: doc\n---\nsecond: doc\n---\nthird: doc"
         documents = splitter.split_documents(content)
-        
+
         assert len(documents) == 3
         # Ensure each document contains expected content
         contents = [doc.strip() for doc in documents]
@@ -209,9 +202,11 @@ class TestCommonPatternsRegression:
             # URL patterns
             ("https://example.com", "url", True),
             ("not-a-url", "url", False),
-        ]
+        ],
     )
-    def test_pattern_matching_preserved(self, patterns, text, pattern_type, should_match):
+    def test_pattern_matching_preserved(
+        self, patterns, text, pattern_type, should_match
+    ):
         """Ensure pattern matching behavior is preserved."""
         if pattern_type == "yaml_frontmatter":
             result = patterns.has_yaml_frontmatter(text)
@@ -223,7 +218,7 @@ class TestCommonPatternsRegression:
             result = bool(patterns.find_urls(text))
         else:
             pytest.skip(f"Unknown pattern type: {pattern_type}")
-        
+
         assert result == should_match
 
 
@@ -248,16 +243,18 @@ class TestMangledContentCleanerRegression:
             ("word1    word2     word3", ["normalized_spaces"]),
             # Mixed issues
             ("  \r\n  messy\x00\r\n  ", ["comprehensive"]),
-        ]
+        ],
     )
-    def test_content_cleaning_preserved(self, cleaner, mangled_content, expected_improvements):
+    def test_content_cleaning_preserved(
+        self, cleaner, mangled_content, expected_improvements
+    ):
         """Ensure content cleaning behavior is preserved."""
         cleaned = cleaner.clean_content(mangled_content)
-        
+
         # Verify basic cleaning occurred
         assert cleaned != mangled_content or mangled_content.strip() == mangled_content
         assert isinstance(cleaned, str)
-        
+
         # Verify specific improvements based on test case
         if "trimmed" in expected_improvements:
             assert cleaned.strip() == cleaned or not mangled_content.strip()
@@ -284,7 +281,7 @@ class TestIntelligentCleanerRegression:
         """Ensure YAML repair functionality is preserved."""
         broken_yaml = "name: Test\nbroken: yaml: content"
         result = cleaner.repair_yaml(broken_yaml)
-        
+
         assert isinstance(result, str)
         # Should attempt to fix common YAML issues
         assert result != broken_yaml
@@ -293,7 +290,7 @@ class TestIntelligentCleanerRegression:
         """Ensure structure detection is preserved."""
         content = "---\ntitle: Test\n---\n# Content\n```bash\necho test\n```"
         structures = cleaner.detect_structures(content)
-        
+
         assert isinstance(structures, list)
         # Should detect various content structures
         assert len(structures) > 0
@@ -305,12 +302,14 @@ class TestIntelligentCleanerRegression:
             ("notebook", "---\ntitle: Test\n---\n# Content"),
             ("prompt", "name: Test\nprompt: Do {{action}}"),
             ("mixed", "---\nworkflow\n---\nvariables:\n  X: y"),
-        ]
+        ],
     )
-    def test_content_type_specific_cleaning_preserved(self, cleaner, content_type, sample_content):
+    def test_content_type_specific_cleaning_preserved(
+        self, cleaner, content_type, sample_content
+    ):
         """Ensure content-type specific cleaning is preserved."""
         cleaned = cleaner.clean_by_type(sample_content, content_type)
-        
+
         assert isinstance(cleaned, str)
         assert len(cleaned) > 0
 
@@ -328,7 +327,7 @@ class TestRobustParserRegression:
         # Test with content that should trigger fallback strategies
         problematic_content = "invalid: yaml: content: {"
         result = parser.parse_with_fallbacks(problematic_content)
-        
+
         assert isinstance(result, dict)
         # Should have attempted multiple strategies
         assert "strategies_attempted" in result or "errors" in result
@@ -344,12 +343,12 @@ class TestRobustParserRegression:
             ("completely invalid content {{{", False),
             # Empty content
             ("", False),
-        ]
+        ],
     )
     def test_parsing_resilience_preserved(self, parser, content, should_succeed):
         """Ensure parsing resilience is preserved."""
         result = parser.parse_with_fallbacks(content)
-        
+
         if should_succeed:
             assert result.get("success", False) or result.get("data") is not None
         else:
@@ -371,19 +370,19 @@ class TestYamlStrategiesRegression:
             "---\ntitle: Document\n---",
             "list:\n  - item1\n  - item2",
             "nested:\n  key:\n    value: test",
-        ]
+        ],
     )
     def test_safe_yaml_loading_preserved(self, strategies, yaml_content):
         """Ensure safe YAML loading is preserved."""
         result = strategies.safe_load(yaml_content)
-        
+
         assert isinstance(result, (dict, list, type(None)))
 
     def test_yaml_validation_preserved(self, strategies):
         """Ensure YAML validation is preserved."""
         valid_yaml = "name: Test\nvalue: 1"
         invalid_yaml = "invalid: yaml: content: {"
-        
+
         assert strategies.validate_yaml(valid_yaml)
         assert not strategies.validate_yaml(invalid_yaml)
 
@@ -391,7 +390,7 @@ class TestYamlStrategiesRegression:
         """Ensure multiple document handling is preserved."""
         multi_doc = "---\nfirst: doc\n---\nsecond: doc"
         result = strategies.load_multiple_documents(multi_doc)
-        
+
         assert isinstance(result, list)
         assert len(result) >= 2
 
@@ -412,18 +411,18 @@ variables:
   MESSAGE: "Hello World"
   DEBUG: true
 """
-        
+
         # Test document splitting
         splitter = DocumentSplitter()
         documents = splitter.split_documents(content)
         assert len(documents) == 2
-        
+
         # Test content detection on each document
         detector = ContentDetector()
         for doc in documents:
             content_types = detector.detect_content_types(doc)
             assert len(content_types) > 0
-        
+
         # Test content cleaning
         cleaner = MangledContentCleaner()
         for doc in documents:
@@ -438,14 +437,14 @@ variables:
             "name: Test\nbroken: yaml: content",  # Syntax error
             "completely invalid content {{{",  # Completely broken
         ]
-        
+
         parser = RobustParser()
         cleaner = IntelligentCleaner()
-        
+
         for content in problematic_contents:
             # Should not raise exceptions
             cleaned = cleaner.clean_content(content)
             result = parser.parse_with_fallbacks(cleaned)
-            
+
             assert isinstance(cleaned, str)
             assert isinstance(result, dict)

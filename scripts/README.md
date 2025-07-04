@@ -15,9 +15,11 @@ The scripts follow the user's development standards and provide automated toolin
 ### Unified Entry Point
 
 #### `wcp` (Recommended)
+
 Unified cross-platform CI management script that works on Windows, Linux, macOS, and devcontainers.
 
 **Usage:**
+
 ```bash
 # Make executable (Linux/macOS)
 chmod +x scripts/wcp
@@ -35,6 +37,7 @@ python scripts/wcp quality --no-fix
 ```
 
 **Features:**
+
 - ✅ Cross-platform compatibility (Windows, Linux, macOS)
 - ✅ Automatic UV detection and usage
 - ✅ Devcontainer support
@@ -44,25 +47,30 @@ python scripts/wcp quality --no-fix
 ### Core Python Scripts
 
 #### `quality_check.py`
+
 Comprehensive code quality script that runs all formatting, linting, and style checking with safe automated fixes.
 
 **Tools included:**
+
 - `isort` - Import sorting
-- `black` - Code formatting  
+- `black` - Code formatting
 - `ruff` - Linting with auto-fixes
 - `mypy` - Type checking
 - `pylint` - Additional linting
 - `trunk` - Orchestrated quality checks
 
 **Usage:**
+
 ```bash
 python scripts/quality_check.py
 ```
 
 #### `security_scan.py`
+
 Comprehensive security scanning script that runs all security tooling.
 
 **Tools included:**
+
 - `bandit` - Python security scanning
 - `safety` - Dependency vulnerability scanning
 - `trufflehog` - Secret detection
@@ -70,6 +78,7 @@ Comprehensive security scanning script that runs all security tooling.
 - `pip-audit` - Package vulnerability scanning
 
 **Usage:**
+
 ```bash
 python scripts/security_scan.py
 ```
@@ -77,6 +86,7 @@ python scripts/security_scan.py
 **Output:** Creates timestamped reports in `security_reports/` directory.
 
 #### `ci_workflow.py`
+
 Orchestrates all tooling in a single clean workflow:
 
 1. Project structure validation
@@ -86,6 +96,7 @@ Orchestrates all tooling in a single clean workflow:
 5. Full test suite with coverage
 
 **Usage:**
+
 ```bash
 python scripts/ci_workflow.py
 ```
@@ -95,9 +106,11 @@ python scripts/ci_workflow.py
 ### Wrapper Scripts
 
 #### `run_ci.sh` (Linux/macOS)
+
 Shell script wrapper for easy execution of CI workflows.
 
 **Usage:**
+
 ```bash
 # Run full CI workflow
 ./scripts/run_ci.sh
@@ -113,9 +126,11 @@ Shell script wrapper for easy execution of CI workflows.
 ```
 
 #### `run_ci.bat` (Windows)
+
 Windows batch file equivalent of the shell script.
 
 **Usage:**
+
 ```cmd
 REM Run full CI workflow
 scripts\run_ci.bat
@@ -135,7 +150,9 @@ scripts\run_ci.bat help
 The scripts adhere to the following development standards:
 
 ### Code Quality Workflow
+
 Following user's preferred order:
+
 1. `isort` - Import sorting
 2. `black` - Code formatting
 3. `ruff` - Linting with fixes
@@ -145,12 +162,14 @@ Following user's preferred order:
 7. `pytest` - Test suites
 
 ### Security Standards
+
 - Comprehensive scanning with multiple tools
 - Automated report generation
 - Safe failure modes (warnings vs errors)
 - Timestamped output for tracking
 
 ### Testing Standards
+
 - Regression tests to ensure functionality preservation
 - Parametrized tests avoiding conditionals
 - Fixtures for clean test setup
@@ -159,6 +178,7 @@ Following user's preferred order:
 ## Project Integration
 
 ### Pre-commit Hooks
+
 The scripts integrate with the existing `.pre-commit-config.yaml`:
 
 ```yaml
@@ -172,9 +192,11 @@ The scripts integrate with the existing `.pre-commit-config.yaml`:
 ```
 
 ### Trunk Integration
+
 Works with existing `.trunk/trunk.yaml` configuration for orchestrated quality checks.
 
 ### UV Package Management
+
 Leverages UV for project and package management as per user standards:
 
 ```bash
@@ -188,7 +210,9 @@ uv run python scripts/ci_workflow.py
 ## Output Directories
 
 ### `security_reports/`
+
 Contains timestamped security scan reports:
+
 - `bandit_report_YYYYMMDD_HHMMSS.json`
 - `safety_report_YYYYMMDD_HHMMSS.json`
 - `trufflehog_report_YYYYMMDD_HHMMSS.json`
@@ -197,7 +221,9 @@ Contains timestamped security scan reports:
 - `security_summary_YYYYMMDD_HHMMSS.json`
 
 ### `ci_reports/`
+
 Contains comprehensive CI workflow reports:
+
 - `ci_report_YYYYMMDD_HHMMSS.json`
 - `coverage_html/` - HTML coverage reports
 - `coverage.xml` - XML coverage for CI systems
@@ -207,16 +233,19 @@ Contains comprehensive CI workflow reports:
 ## Error Handling
 
 ### Quality Checks
+
 - Fails fast on quality issues
 - Provides detailed error messages
 - Shows summary of all checks
 
 ### Security Scans
+
 - Non-blocking for most security tools
 - Critical scans (bandit, safety) can fail CI
 - Comprehensive reporting regardless of status
 
 ### CI Workflow
+
 - Validates project structure first
 - Stops on critical failures
 - Continues on warnings
@@ -225,6 +254,7 @@ Contains comprehensive CI workflow reports:
 ## Best Practices
 
 ### Running Locally
+
 ```bash
 # Quick quality check before committing
 ./scripts/run_ci.sh quality
@@ -234,6 +264,7 @@ Contains comprehensive CI workflow reports:
 ```
 
 ### CI/CD Integration
+
 ```yaml
 # GitHub Actions example
 - name: Run CI Workflow
@@ -241,6 +272,7 @@ Contains comprehensive CI workflow reports:
 ```
 
 ### Docker Integration
+
 ```dockerfile
 # Install dependencies
 RUN uv sync
@@ -254,18 +286,21 @@ RUN python scripts/ci_workflow.py
 ### Common Issues
 
 #### Tool Not Found
+
 ```bash
 # Install missing tools
 uv sync
 ```
 
 #### Permission Denied (Linux/macOS)
+
 ```bash
 # Make script executable
 chmod +x scripts/run_ci.sh
 ```
 
 #### Python Path Issues
+
 ```bash
 # Ensure Python is in PATH
 which python
@@ -273,6 +308,7 @@ python --version
 ```
 
 ### Debug Mode
+
 Add `--verbose` or check individual tool outputs in the reports directories.
 
 ## Contributing
@@ -288,6 +324,7 @@ When modifying scripts:
 ## Dependencies
 
 All dependencies are managed through:
+
 - `pyproject.toml` - Core dependencies
 - `requirements-dev.txt` - Development dependencies
 - `uv.lock` - Locked dependency versions

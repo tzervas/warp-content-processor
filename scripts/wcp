@@ -9,13 +9,13 @@ across Windows, Linux, and macOS platforms, including devcontainers.
 Usage:
     ./scripts/wcp [command] [options]
     python scripts/wcp [command] [options]
-    
+
 Commands:
     quality   - Run code quality checks and fixes
     security  - Run security scanning
     test      - Run test suite with coverage
     ci        - Run full CI workflow (default)
-    
+
 Options:
     --no-fix   - Skip automated fixes (quality checks only)
     --verbose  - Show detailed output
@@ -27,7 +27,7 @@ Examples:
     ./scripts/wcp quality --no-fix   # Check quality without fixes
     ./scripts/wcp security           # Run only security scans
     ./scripts/wcp test               # Run only tests
-    
+
 This script automatically detects and uses UV package manager when available,
 falling back to standard Python package management otherwise.
 """
@@ -42,35 +42,32 @@ from pathlib import Path
 def detect_platform():
     """Detect the current platform and return appropriate information."""
     import platform
-    
+
     system = platform.system().lower()
     return {
-        'is_windows': system == 'windows',
-        'is_linux': system == 'linux',
-        'is_macos': system == 'darwin',
-        'is_devcontainer': os.environ.get('REMOTE_CONTAINERS') == 'true',
-        'system': system
+        "is_windows": system == "windows",
+        "is_linux": system == "linux",
+        "is_macos": system == "darwin",
+        "is_devcontainer": os.environ.get("REMOTE_CONTAINERS") == "true",
+        "system": system,
     }
 
 
 def find_python_executable():
     """Find the best Python executable to use."""
     # Try different Python executables in order of preference
-    candidates = ['python3', 'python', 'py']
-    
+    candidates = ["python3", "python", "py"]
+
     for candidate in candidates:
         try:
             result = subprocess.run(
-                [candidate, '--version'], 
-                capture_output=True, 
-                text=True, 
-                check=False
+                [candidate, "--version"], capture_output=True, text=True, check=False
             )
-            if result.returncode == 0 and 'Python 3' in result.stdout:
+            if result.returncode == 0 and "Python 3" in result.stdout:
                 return candidate
         except FileNotFoundError:
             continue
-    
+
     # Fallback to sys.executable if all else fails
     return sys.executable
 
@@ -79,17 +76,14 @@ def detect_uv():
     """Check if UV package manager is available."""
     try:
         result = subprocess.run(
-            ['uv', '--version'], 
-            capture_output=True, 
-            text=True, 
-            check=False
+            ["uv", "--version"], capture_output=True, text=True, check=False
         )
         if result.returncode == 0:
             print(f"🐍 Using UV package manager: {result.stdout.strip()}")
             return True
     except FileNotFoundError:
         pass
-    
+
     print("🐍 Using standard Python package management")
     return False
 
@@ -99,21 +93,21 @@ def run_script(script_name, args, project_root):
     platform_info = detect_platform()
     python_exe = find_python_executable()
     use_uv = detect_uv()
-    
-    script_path = project_root / 'scripts' / f'{script_name}.py'
-    
+
+    script_path = project_root / "scripts" / f"{script_name}.py"
+
     if not script_path.exists():
         print(f"❌ Script not found: {script_path}")
         sys.exit(1)
-    
+
     # Build command
     if use_uv:
-        cmd = ['uv', 'run', 'python', str(script_path)] + args
+        cmd = ["uv", "run", "python", str(script_path)] + args
     else:
         cmd = [python_exe, str(script_path)] + args
-    
+
     print(f"🚀 Running: {' '.join(cmd)}")
-    
+
     # Execute the script
     try:
         result = subprocess.run(cmd, cwd=project_root, check=False)
@@ -126,7 +120,7 @@ def run_script(script_name, args, project_root):
 def main():
     """Main entry point for the unified CI script."""
     parser = argparse.ArgumentParser(
-        description='Warp Content Processor CI Management',
+        description="Warp Content Processor CI Management",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -135,66 +129,62 @@ Examples:
   %(prog)s quality --no-fix   # Check quality without fixes
   %(prog)s security           # Run only security scans
   %(prog)s test               # Run only tests
-        """
+        """,
     )
-    
+
     parser.add_argument(
-        'command', 
-        nargs='?', 
-        choices=['quality', 'security', 'test', 'ci'], 
-        default='ci',
-        help='Command to execute: quality, security, test, ci (default: ci)'
+        "command",
+        nargs="?",
+        choices=["quality", "security", "test", "ci"],
+        default="ci",
+        help="Command to execute: quality, security, test, ci (default: ci)",
     )
-    
+
     parser.add_argument(
-        '--no-fix', 
-        action='store_true', 
-        help='Skip automated fixes (quality checks only)'
+        "--no-fix",
+        action="store_true",
+        help="Skip automated fixes (quality checks only)",
     )
-    
-    parser.add_argument(
-        '--verbose', 
-        action='store_true', 
-        help='Show detailed output'
-    )
-    
+
+    parser.add_argument("--verbose", action="store_true", help="Show detailed output")
+
     args = parser.parse_args()
-    
+
     # Get project root directory
     script_dir = Path(__file__).parent
     project_root = script_dir.parent
-    
+
     # Detect platform and environment
     platform_info = detect_platform()
-    
+
     print("🔧 Warp Content Processor CI Management")
     print(f"📁 Project root: {project_root}")
     print(f"🖥️  Platform: {platform_info['system']}")
-    if platform_info['is_devcontainer']:
+    if platform_info["is_devcontainer"]:
         print("📦 Running in devcontainer")
-    
+
     # Build arguments to pass to the underlying script
     script_args = []
-    if args.command != 'ci':
+    if args.command != "ci":
         script_args.append(args.command)
     if args.no_fix:
-        script_args.append('--no-fix')
+        script_args.append("--no-fix")
     if args.verbose:
-        script_args.append('--verbose')
-    
+        script_args.append("--verbose")
+
     # Map commands to scripts
-    if args.command == 'quality':
-        exit_code = run_script('quality_check', script_args[1:], project_root)
-    elif args.command == 'security':
-        exit_code = run_script('security_scan', [], project_root)
-    elif args.command == 'test':
+    if args.command == "quality":
+        exit_code = run_script("quality_check", script_args[1:], project_root)
+    elif args.command == "security":
+        exit_code = run_script("security_scan", [], project_root)
+    elif args.command == "test":
         # For test command, run pytest directly through ci_workflow
-        exit_code = run_script('ci_workflow', ['test'], project_root)
+        exit_code = run_script("ci_workflow", ["test"], project_root)
     else:  # ci command
-        exit_code = run_script('ci_workflow', script_args, project_root)
-    
+        exit_code = run_script("ci_workflow", script_args, project_root)
+
     sys.exit(exit_code)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

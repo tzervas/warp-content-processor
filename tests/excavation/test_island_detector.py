@@ -1,13 +1,15 @@
 """Test suite for schema island detector."""
 
-import pytest
 from typing import List, Set
+
+import pytest
 
 from warp_content_processor.excavation.artifacts import ContaminationType
 from warp_content_processor.excavation.island_detector import (
     ContentIsland,
     SchemaIslandDetector,
 )
+
 
 class TestContentCleaning:
     """Test content cleaning with various contamination types."""
@@ -56,7 +58,6 @@ class TestContentCleaning:
             if pattern.search(content):
                 contamination_types.add(cont_type)
         return contamination_types
-
 
     def _validate_cleaning_warnings(self, contamination_types, warnings):
         """Helper to validate cleaning warnings based on contamination."""
@@ -450,6 +451,7 @@ class TestIntegrationScenarios:
 
             # But should still contain the valid YAML structure
             assert "workflow" in island.content or "recovery" in island.content
+
 
 class TestJsonIslandDetection:
     """Test JSON island detection functionality."""

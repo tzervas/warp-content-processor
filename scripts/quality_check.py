@@ -15,7 +15,7 @@ Adheres to PEP8, DRY, SRP, and KISS principles.
 
 Usage:
     python scripts/quality_check.py [options]
-    
+
 Options:
     --no-fix   - Run checks without applying fixes
     --verbose  - Show detailed output
@@ -54,7 +54,7 @@ class QualityChecker:
                 return True
         except FileNotFoundError:
             pass
-        
+
         print("🐍 Using standard Python package management")
         return False
 
@@ -66,7 +66,7 @@ class QualityChecker:
             if self.use_uv and cmd[0] == "python" and cmd[1] == "-m":
                 uv_cmd = ["uv", "run"] + cmd[2:]
                 cmd = uv_cmd
-            
+
             result = subprocess.run(
                 cmd,
                 cwd=self.project_root,
@@ -129,13 +129,29 @@ class QualityChecker:
 
     def run_isort_check(self) -> bool:
         """Run isort to check import sorting without fixing."""
-        cmd = ["python", "-m", "isort", "--profile", "black", "--check-only", "--diff"] + self.python_paths
+        cmd = [
+            "python",
+            "-m",
+            "isort",
+            "--profile",
+            "black",
+            "--check-only",
+            "--diff",
+        ] + self.python_paths
         success, _ = self.run_command(cmd, "Import sorting check with isort")
         return success
 
     def run_black_check(self) -> bool:
         """Run black to check code formatting without fixing."""
-        cmd = ["python", "-m", "black", "--line-length", "88", "--check", "--diff"] + self.python_paths
+        cmd = [
+            "python",
+            "-m",
+            "black",
+            "--line-length",
+            "88",
+            "--check",
+            "--diff",
+        ] + self.python_paths
         success, _ = self.run_command(cmd, "Code formatting check with black")
         return success
 
@@ -207,10 +223,12 @@ class QualityChecker:
 
 def parse_arguments() -> argparse.Namespace:
     """Parse command-line arguments."""
-    parser = argparse.ArgumentParser(description='Code Quality Checker')
-    parser.add_argument('--no-fix', action='store_true', help='Run checks without applying fixes')
-    parser.add_argument('--verbose', action='store_true', help='Show detailed output')
-    
+    parser = argparse.ArgumentParser(description="Code Quality Checker")
+    parser.add_argument(
+        "--no-fix", action="store_true", help="Run checks without applying fixes"
+    )
+    parser.add_argument("--verbose", action="store_true", help="Show detailed output")
+
     return parser.parse_args()
 
 
@@ -218,7 +236,7 @@ def main():
     """Main entry point for quality checking."""
     args = parse_arguments()
     checker = QualityChecker()
-    
+
     # Run checks with or without fixes based on arguments
     apply_fixes = not args.no_fix
     results = checker.run_all_checks(apply_fixes=apply_fixes)
