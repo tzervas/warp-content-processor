@@ -19,7 +19,7 @@ class TimeoutAnalyzer:
     def __init__(self):
         self.timeout_patterns = {
             "simple_sleep": r"time\.sleep\(",
-            "infinite_loop": r"while\s+True:|for\s+.*\s+in\s+.*:",
+            "infinite_loop": r"while\s+True:",
             "socket_io": r"socket\.(connect|recv|send|accept)",
             "requests": r"requests\.(get|post|put|delete)",
             "database": r"\.(execute|fetchall|fetchone|commit)",
@@ -114,6 +114,7 @@ class TimeoutAnalyzer:
             return result.stdout, log_content, result.returncode
 
         except subprocess.TimeoutExpired:
+            print("Subprocess timed out while running the command: {}".format(" ".join(cmd)))
             return "", "", -1
 
     def parse_stack_trace(self, output: str) -> List[Dict]:
@@ -279,13 +280,20 @@ class TimeoutAnalyzer:
             for rec in analysis["recommendations"]:
                 report += f"- {rec}\n"
 
+        def format_log_excerpt(log: str, max_length: int = 1000) -> str:
+            if len(log) <= max_length:
+                return log
+            head_len = max_length // 2
+            tail_len = max_length - head_len
+            head = log[:head_len]
+            tail = log[-tail_len:]
+            return f"{head}\n...\n{tail}"
+
+        LOG_EXCERPT_LENGTH = 1000  # Can be made configurable
+
         if log_content.strip():
             report += f"""
 ## Log Analysis
-```
-{log_content[-1000:]}  # Last 1000 characters
-```
-"""
 
         return report
 
@@ -320,8 +328,17 @@ def main():
         "--timeout", "-t", type=int, default=10, help="Timeout duration in seconds"
     )
     parser.add_argument("--output", "-o", help="Output file for report")
+    parser.add_argument(
+        "--log-level",
+        default="DEBUG",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level (default: DEBUG)",
+    )
 
     args = parser.parse_args()
+
+    import logging
+    logging.basicConfig(level=getattr(logging, args.log_level))
 
     analyzer = TimeoutAnalyzer()
     report = analyzer.analyze_test(args.test_path, args.timeout)
