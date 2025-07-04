@@ -1,5 +1,7 @@
 """Test suite for schema island detector."""
 
+from typing import Set
+
 import pytest
 
 from warp_content_processor.excavation.island_detector import SchemaIslandDetector
