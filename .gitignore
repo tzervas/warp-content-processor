@@ -1,3 +1,18 @@
+IMPLEMENTATION_SUMMARY.md
+MASSIVE_MIXED_CONTENT_PLAN.md
+PARAMETRIZED_TEST_DESIGN.md
+PR_SUMMARY.md
+ROBUST_PARSING_PLAN.md
+ROBUST_PARSING_README.md
+TASK_COMPLETION_SUMMARY.md
+TEST_PATTERNS_ANALYSIS.md
+deadlock_analysis.md
+timeout_analysis_guide.md
+timeout_analysis_summary.md
+workflows/conversion_report.md
+
+logs/
+
 # Python
 __pycache__/
 *.py[cod]
@@ -25,6 +40,7 @@ venv/
 env/
 ENV/
 .env
+.venv/
 
 # IDE
 .idea/
@@ -44,3 +60,37 @@ processed/
 Thumbs.db
 
 uv.lock
+
+=*
+
+# Testing and Coverage
+.coverage
+.pytest_cache/
+coverage.xml
+htmlcov/
+.tox/
+nosetests.xml
+
+# Code Quality and Security Tools
+.mypy_cache/
+.ruff_cache/
+security_report.json
+.bandit
+.safety-cache/
+.pre-commit-cache/
+
+# Development Scripts (scripts are committed, but logs/reports are not)
+scripts/*.log
+scripts/*.report
+
+# Script output directories
+security_reports/
+ci_reports/
+
+# Trunk Cache
+.trunk/out/
+.trunk/logs/
+
+# Environment files
+.env.local
+.env.*.local
