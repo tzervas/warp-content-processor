@@ -21,7 +21,7 @@ from warp_content_processor.parsers.common_patterns import (
     CommonPatterns,
     MangledContentCleaner,
 )
-from warp_content_processor.parsers.content_detector import ContentDetector
+from warp_content_processor.schema_processor import ContentTypeDetector
 from warp_content_processor.parsers.document_splitter import DocumentSplitter
 from warp_content_processor.parsers.intelligent_cleaner import IntelligentCleaner
 from warp_content_processor.parsers.robust_parser import RobustParser
@@ -89,12 +89,12 @@ class TestErrorTolerantParserRegression:
 
 
 class TestContentDetectorRegression:
-    """Regression tests for ContentDetector functionality."""
+    """Regression tests for ContentTypeDetector functionality."""
 
     @pytest.fixture
     def detector(self):
-        """Create ContentDetector instance."""
-        return ContentDetector()
+        """Create ContentTypeDetector instance."""
+        return ContentTypeDetector()
 
     @pytest.mark.parametrize(
         "content,expected_types",
@@ -418,7 +418,7 @@ variables:
         assert len(documents) == 2
 
         # Test content detection on each document
-        detector = ContentDetector()
+        detector = ContentTypeDetector()
         for doc in documents:
             content_types = detector.detect_content_types(doc)
             assert len(content_types) > 0
