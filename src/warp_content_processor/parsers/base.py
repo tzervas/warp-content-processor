@@ -66,7 +66,6 @@ class ParsingStrategy(ABC):
         pass
 
     @property
-    @property
     @abstractmethod
     def strategy_name(self) -> str:
         """Name of this parsing strategy for logging."""
@@ -195,10 +194,3 @@ class SimpleParser(ABC):
         if self.parse_count == 0:
             return 0.0
         return float(self.success_count) / float(self.parse_count)
-<<<<<<< HEAD
-        """Get success rate for monitoring."""
-        if self.parse_count == 0:
-            return 0.0
-        return self.success_count / self.parse_count
-=======
->>>>>>> main

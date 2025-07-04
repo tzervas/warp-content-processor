@@ -117,12 +117,6 @@ class SchemaIslandDetector:
     def _find_yaml_islands(
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
-<<<<<<< HEAD
-        """Find YAML-like content islands."""
-        islands = []
-
-        # Look for blocks that have multiple YAML-like lines together
-=======
         """Find YAML-like content islands.
         
         This method detects and extracts YAML-like content blocks by looking for:
@@ -138,7 +132,6 @@ class SchemaIslandDetector:
             List of ContentIsland objects containing YAML-like content
         """
         islands: List[ContentIsland] = []
->>>>>>> main
         lines = content.split("\n")
         current_block_start = None
         current_block_lines = []
@@ -267,34 +260,6 @@ class SchemaIslandDetector:
         start_pos = None
 
         for i, char in enumerate(content):
-<<<<<<< HEAD
-            if char == "{":
-                if brace_depth == 0:
-                    start_pos = i
-                brace_depth += 1
-            elif char == "}":
-                brace_depth -= 1
-                if brace_depth == 0 and start_pos is not None:
-                    # Found a complete JSON-like block
-                    json_candidate = content[start_pos : i + 1]
-
-                    # Quick validation - should have some JSON-like patterns
-                    if any(
-                        pattern.search(json_candidate) for pattern in self.json_patterns
-                    ):
-                        island = self._create_island_from_content(
-                            json_candidate,
-                            start_pos,
-                            i + 1,
-                            "json_block",
-                            source_hint or "unknown",
-                            content,
-                        )
-                        if island:
-                            islands.append(island)
-
-                    start_pos = None
-=======
             if char == "{" and (brace_depth := brace_depth + 1) == 1:
                 start_pos = i
             elif char == "}" and (brace_depth := brace_depth - 1) == 0 and start_pos is not None:
@@ -311,8 +276,6 @@ class SchemaIslandDetector:
                     )):
                     islands.append(island)
                 start_pos = None
->>>>>>> main
-
         return islands
 
     def _create_island_from_lines(
@@ -363,22 +326,11 @@ class SchemaIslandDetector:
         if not content.strip():
             return None
 
-<<<<<<< HEAD
-        # Detect contamination types in content and surrounding context
-        contamination_types = set()
-
-        # Check the content itself
-        for cont_type, pattern in self.contamination_patterns.items():
-            if pattern.search(content):
-                contamination_types.add(cont_type)
-
-=======
         contamination_types = {
             cont_type
             for cont_type, pattern in self.contamination_patterns.items()
             if pattern.search(content)
         }
->>>>>>> main
         # Also check surrounding context for contamination indicators
         if surrounding:
             for cont_type, pattern in self.contamination_patterns.items():
@@ -491,10 +443,14 @@ class SchemaIslandDetector:
                 schema_lines += 1
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         if len(lines) > 0:
 =======
         if lines:
 >>>>>>> main
+=======
+        if lines:
+>>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
             schema_ratio = schema_lines / len([line for line in lines if line.strip()])
             score += schema_ratio * 0.3
 
@@ -515,6 +471,7 @@ class SchemaIslandDetector:
 
         for island in sorted_islands:
 <<<<<<< HEAD
+<<<<<<< HEAD
             # Check if this island overlaps with any already selected
             overlaps = False
             for selected in non_overlapping:
@@ -523,11 +480,16 @@ class SchemaIslandDetector:
                     break
 
 =======
+=======
+>>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
             overlaps = any(
                 self._islands_overlap(island, selected)
                 for selected in non_overlapping
             )
+<<<<<<< HEAD
 >>>>>>> main
+=======
+>>>>>>> 6869efdfdbb0020b34451759542c257d283e8c46
             if not overlaps:
                 non_overlapping.append(island)
 

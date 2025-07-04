@@ -10,10 +10,7 @@ Following DRY: Reuses existing robust parsing infrastructure.
 import logging
 import time
 from typing import Dict, Optional
-<<<<<<< HEAD
-=======
 import traceback
->>>>>>> main
 
 from ..parsers import ContentDetector
 from ..parsers.yaml_strategies import create_yaml_parser
@@ -123,12 +120,7 @@ class ContentArchaeologist:
                     logger.warning("Excavation timeout reached, stopping extraction")
                     break
 
-<<<<<<< HEAD
-                artifact = self._extract_artifact_from_island(island)
-                if artifact:
-=======
                 if artifact := self._extract_artifact_from_island(island):
->>>>>>> main
                     artifacts.append(artifact)
 
                     # Update stats
@@ -203,11 +195,7 @@ class ContentArchaeologist:
             is_valid=parse_result.success,
             extraction_context=context,
             validation_errors=(
-<<<<<<< HEAD
-                [parse_result.error_message] if not parse_result.success else []
-=======
                 [] if parse_result.success else [parse_result.error_message]
->>>>>>> main
             ),
             cleaning_warnings=island.cleaning_warnings,
         )

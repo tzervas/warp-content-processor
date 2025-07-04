@@ -219,23 +219,21 @@ class TimeoutAnalyzer:
             "recommendations": [],
         }
 
-<<<<<<< HEAD
         # Analyze individual traces
         for trace in traces:
             pattern_name, cause = self._analyze_single_trace(trace)
             if pattern_name and cause:
                 analysis["timeout_type"] = pattern_name
                 analysis["likely_cause"].append(cause)
+                if pattern_name in self.recommendations:
+                    analysis["recommendations"].extend(self.recommendations[pattern_name])
 
         # Check for deadlocks
         is_deadlock, thread_locks = self._detect_deadlock(traces)
         if is_deadlock:
             analysis["timeout_type"] = "deadlock"
             analysis["likely_cause"] = thread_locks
-
-        # Set recommendations based on final timeout_type
-        if analysis["timeout_type"] in self.recommendations:
-            analysis["recommendations"] = self.recommendations[analysis["timeout_type"]]
+            analysis["recommendations"] = self.recommendations["threading"]
 
         return analysis
 
