@@ -5,7 +5,7 @@
 -r requirements.txt
 
 # Code formatting and import sorting
-black==23.12.1
+black==24.3.0
 isort==5.13.2
 
 # Linting and static analysis
