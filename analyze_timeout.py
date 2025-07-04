@@ -351,8 +351,17 @@ def main():
         "--timeout", "-t", type=int, default=10, help="Timeout duration in seconds"
     )
     parser.add_argument("--output", "-o", help="Output file for report")
+    parser.add_argument(
+        "--log-level",
+        default="DEBUG",
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        help="Set the logging level (default: DEBUG)",
+    )
 
     args = parser.parse_args()
+
+    import logging
+    logging.basicConfig(level=getattr(logging, args.log_level))
 
     analyzer = TimeoutAnalyzer()
     report = analyzer.analyze_test(args.test_path, args.timeout)
