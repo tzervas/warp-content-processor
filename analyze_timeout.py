@@ -19,7 +19,7 @@ class TimeoutAnalyzer:
     def __init__(self):
         self.timeout_patterns = {
             "simple_sleep": r"time\.sleep\(",
-            "infinite_loop": r"while\s+True:|for\s+.*\s+in\s+.*:",
+            "infinite_loop": r"while\s+True:",
             "socket_io": r"socket\.(connect|recv|send|accept)",
             "requests": r"requests\.(get|post|put|delete)",
             "database": r"\.(execute|fetchall|fetchone|commit)",
