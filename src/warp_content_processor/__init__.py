@@ -9,13 +9,13 @@ from .processors import (
     PromptProcessor,
     RuleProcessor,
 )
-from .schema_processor import (
+from .processors.schema_processor import (
     ContentProcessor,
     ContentSplitter,
     ContentType,
     ContentTypeDetector,
 )
-from .workflow_processor import WorkflowProcessor, WorkflowValidator
+from .processors.workflow_processor import WorkflowProcessor, WorkflowValidator
 
 __all__ = [
     # Base classes
