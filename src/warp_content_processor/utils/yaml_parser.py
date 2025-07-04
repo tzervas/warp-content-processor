@@ -110,7 +110,6 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
     for part in parts:
         part = part.strip()
         if not part:
-            results.append(YAMLParsingResult(error="Empty document"))
             continue
 
         try:
