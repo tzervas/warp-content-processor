@@ -13,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityValidationError(Exception):
     """Raised when content fails security validation."""
+
     pass
 
 
@@ -23,8 +24,8 @@ class ContentSanitizer:
     UNSAFE_PATTERNS = [
         r"[\x00-\x08\x0B\x0C\x0E-\x1F]",  # Control characters
         r"javascript:",  # JavaScript protocol
-        r"data:",       # Data URI scheme
-        r"vbscript:",   # VBScript protocol
+        r"data:",  # Data URI scheme
+        r"vbscript:",  # VBScript protocol
         r"&lt;script",  # HTML script tags
         r"&#x?[0-9a-f]+;",  # HTML entities that could hide malicious content
     ]
@@ -80,7 +81,9 @@ class ContentSanitizer:
         # Check for suspicious patterns
         for pattern in cls.UNSAFE_PATTERNS:
             if re.search(pattern, content, re.IGNORECASE):
-                raise SecurityValidationError(f"Content contains unsafe pattern: {pattern}")
+                raise SecurityValidationError(
+                    f"Content contains unsafe pattern: {pattern}"
+                )
 
         # Check for deeply nested structures that could cause DoS
         if content.count("{") > 100 or content.count("[") > 100:

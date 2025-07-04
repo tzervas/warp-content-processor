@@ -101,8 +101,8 @@ class ContentSplitter:
         documents = []
 
         # First try to split by YAML documents with explicit separators
-        sections = re.split(r'^---\s*$', content, flags=re.MULTILINE)
-        
+        sections = re.split(r"^---\s*$", content, flags=re.MULTILINE)
+
         # Filter out empty sections and process each non-empty one
         for section in sections:
             section = section.strip()

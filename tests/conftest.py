@@ -8,11 +8,11 @@ that are shared across all test modules in the test suite.
 import os
 import tempfile
 from pathlib import Path
-from typing import Dict, Any, Generator, List
-import pytest
-import yaml
+from typing import Any, Dict, Generator, List
 from unittest.mock import Mock, patch
 
+import pytest
+import yaml
 
 # Test Data Constants
 TEST_DATA_DIR = Path(__file__).parent / "fixtures"
@@ -31,18 +31,18 @@ SAMPLE_NOTEBOOK_CONTENT = {
             "execution_count": 1,
             "metadata": {},
             "outputs": [],
-            "source": ["print('Hello, World!')"]
+            "source": ["print('Hello, World!')"],
         }
     ],
     "metadata": {
         "kernelspec": {
             "display_name": "Python 3",
             "language": "python",
-            "name": "python3"
+            "name": "python3",
         }
     },
     "nbformat": 4,
-    "nbformat_minor": 4
+    "nbformat_minor": 4,
 }
 
 
@@ -77,21 +77,22 @@ def mock_file_system(tmp_path: Path) -> Generator[Path, None, None]:
     # Create test directory structure
     test_files = tmp_path / "test_files"
     test_files.mkdir()
-    
+
     # Create sample files
     (test_files / "sample.yaml").write_text(SAMPLE_YAML_CONTENT)
     (test_files / "sample.yml").write_text(SAMPLE_YAML_CONTENT)
     (test_files / "empty.yaml").write_text("")
     (test_files / "invalid.yaml").write_text("invalid: yaml: content: [")
-    
+
     # Create notebook file
     import json
+
     (test_files / "sample.ipynb").write_text(json.dumps(SAMPLE_NOTEBOOK_CONTENT))
-    
+
     # Create text files
     (test_files / "sample.txt").write_text("Sample text content")
     (test_files / "readme.md").write_text("# Test README")
-    
+
     yield test_files
 
 
@@ -99,11 +100,7 @@ def mock_file_system(tmp_path: Path) -> Generator[Path, None, None]:
 def yaml_test_data() -> Dict[str, Any]:
     """Return structured test data for YAML processing."""
     return {
-        "valid_yaml": {
-            "key": "value",
-            "list": [1, 2, 3],
-            "nested": {"inner": "value"}
-        },
+        "valid_yaml": {"key": "value", "list": [1, 2, 3], "nested": {"inner": "value"}},
         "invalid_yaml": "invalid: yaml: content: [",
         "empty_yaml": "",
         "complex_yaml": {
@@ -116,13 +113,16 @@ def yaml_test_data() -> Dict[str, Any]:
                             "runs-on": "ubuntu-latest",
                             "steps": [
                                 {"name": "Checkout", "uses": "actions/checkout@v2"},
-                                {"name": "Setup Python", "uses": "actions/setup-python@v2"}
-                            ]
+                                {
+                                    "name": "Setup Python",
+                                    "uses": "actions/setup-python@v2",
+                                },
+                            ],
                         }
-                    }
+                    },
                 }
             ]
-        }
+        },
     }
 
 
@@ -136,18 +136,14 @@ def mock_logger():
 def environment_variables() -> Generator[Dict[str, str], None, None]:
     """Manage environment variables for testing."""
     original_env = os.environ.copy()
-    test_env = {
-        "TEST_MODE": "true",
-        "LOG_LEVEL": "DEBUG",
-        "PYTEST_RUNNING": "true"
-    }
-    
+    test_env = {"TEST_MODE": "true", "LOG_LEVEL": "DEBUG", "PYTEST_RUNNING": "true"}
+
     # Set test environment variables
     for key, value in test_env.items():
         os.environ[key] = value
-    
+
     yield test_env
-    
+
     # Restore original environment
     os.environ.clear()
     os.environ.update(original_env)
@@ -163,7 +159,7 @@ def sample_file_contents() -> Dict[str, str]:
         "markdown": "# Test Markdown\n\nThis is a test markdown file.",
         "python": "def hello():\n    print('Hello, World!')",
         "empty": "",
-        "binary": b"\\x00\\x01\\x02\\x03\\x04\\x05"
+        "binary": b"\\x00\\x01\\x02\\x03\\x04\\x05",
     }
 
 
@@ -175,30 +171,26 @@ def validation_test_cases() -> List[Dict[str, Any]]:
             "name": "valid_basic",
             "data": {"key": "value"},
             "expected": True,
-            "description": "Basic valid data"
+            "description": "Basic valid data",
         },
         {
             "name": "invalid_empty",
             "data": {},
             "expected": False,
-            "description": "Empty data should be invalid"
+            "description": "Empty data should be invalid",
         },
         {
             "name": "invalid_none",
             "data": None,
             "expected": False,
-            "description": "None data should be invalid"
+            "description": "None data should be invalid",
         },
         {
             "name": "valid_complex",
-            "data": {
-                "workflows": [
-                    {"name": "test", "steps": [{"run": "echo test"}]}
-                ]
-            },
+            "data": {"workflows": [{"name": "test", "steps": [{"run": "echo test"}]}]},
             "expected": True,
-            "description": "Complex valid data structure"
-        }
+            "description": "Complex valid data structure",
+        },
     ]
 
 
@@ -245,8 +237,8 @@ def processor_test_config() -> Dict[str, Any]:
         "validation_rules": {
             "required_fields": ["name"],
             "max_depth": 10,
-            "max_items": 100
-        }
+            "max_items": 100,
+        },
     }
 
 
@@ -258,37 +250,28 @@ pytestmark = [
 
 def pytest_configure(config):
     """Configure pytest with custom settings."""
-    config.addinivalue_line(
-        "markers", "smoke: mark test as a smoke test"
-    )
-    config.addinivalue_line(
-        "markers", "integration: mark test as an integration test"
-    )
-    config.addinivalue_line(
-        "markers", "unit: mark test as a unit test"
-    )
-    config.addinivalue_line(
-        "markers", "slow: mark test as slow running"
-    )
-    config.addinivalue_line(
-        "markers", "security: mark test as security related"
-    )
-    config.addinivalue_line(
-        "markers", "performance: mark test as performance related"
-    )
+    config.addinivalue_line("markers", "smoke: mark test as a smoke test")
+    config.addinivalue_line("markers", "integration: mark test as an integration test")
+    config.addinivalue_line("markers", "unit: mark test as a unit test")
+    config.addinivalue_line("markers", "slow: mark test as slow running")
+    config.addinivalue_line("markers", "security: mark test as security related")
+    config.addinivalue_line("markers", "performance: mark test as performance related")
 
 
 def pytest_collection_modifyitems(config, items):
     """Modify test collection to add markers based on test location."""
     for item in items:
         # Add unit marker to all tests by default
-        if not any(mark.name in ["integration", "smoke", "performance"] for mark in item.iter_markers()):
+        if not any(
+            mark.name in ["integration", "smoke", "performance"]
+            for mark in item.iter_markers()
+        ):
             item.add_marker(pytest.mark.unit)
-        
+
         # Add slow marker to tests that might be slow
         if "slow" in item.nodeid.lower() or "performance" in item.nodeid.lower():
             item.add_marker(pytest.mark.slow)
-        
+
         # Add security marker to security tests
         if "security" in item.nodeid.lower() or "validation" in item.nodeid.lower():
             item.add_marker(pytest.mark.security)

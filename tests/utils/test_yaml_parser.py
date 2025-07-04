@@ -4,9 +4,10 @@ import pytest
 
 from warp_content_processor.utils.yaml_parser import (
     YAMLParsingResult,
-    parse_yaml_enhanced,
     parse_yaml_documents,
+    parse_yaml_enhanced,
 )
+
 
 class TestYAMLParsingResult:
     """Test YAMLParsingResult class functionality."""
@@ -31,22 +32,18 @@ class TestYAMLParsingResult:
     def test_result_with_warnings(self):
         """Test parsing result with warnings."""
         result = YAMLParsingResult(
-            content={"key": "value"},
-            warnings=["Warning 1", "Warning 2"]
+            content={"key": "value"}, warnings=["Warning 1", "Warning 2"]
         )
         assert result.is_valid
         assert len(result.warnings) == 2
 
     def test_result_with_position(self):
         """Test parsing result with position information."""
-        result = YAMLParsingResult(
-            error="Test error",
-            line_number=10,
-            column=5
-        )
+        result = YAMLParsingResult(error="Test error", line_number=10, column=5)
         assert not result.is_valid
         assert result.line_number == 10
         assert result.column == 5
+
 
 class TestParseYAMLEnhanced:
     """Test enhanced YAML parsing functionality."""
@@ -64,7 +61,7 @@ class TestParseYAMLEnhanced:
             ("[not a dictionary]", False),
             ("", False),
             ("   ", False),
-        ]
+        ],
     )
     def test_basic_parsing(self, content: str, expected_valid: bool):
         """Test basic YAML parsing scenarios."""
@@ -88,6 +85,7 @@ class TestParseYAMLEnhanced:
         assert result.is_valid
         assert len(result.warnings) > 0
         assert any("empty" in w.lower() for w in result.warnings)
+
 
 class TestParseYAMLDocuments:
     """Test multi-document YAML parsing functionality."""
@@ -113,8 +111,10 @@ class TestParseYAMLDocuments:
         results = parse_yaml_documents(content)
         assert len(results) == 3
         assert all(r.is_valid for r in results)
-        assert [r.content.get("doc1", r.content.get("doc2", r.content.get("doc3"))) 
-                for r in results] == ["value1", "value2", "value3"]
+        assert [
+            r.content.get("doc1", r.content.get("doc2", r.content.get("doc3")))
+            for r in results
+        ] == ["value1", "value2", "value3"]
 
     def test_invalid_documents(self):
         """Test parsing with invalid documents."""
