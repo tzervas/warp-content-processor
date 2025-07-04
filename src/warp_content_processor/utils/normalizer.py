@@ -450,10 +450,7 @@ class ContentNormalizer:
             return "env_var"
 
         # Check for notebook indicators
-        if "title" in data and ("tags" in data or "description" in data):
-            return "notebook"
-
-        return "unknown"
+        return "notebook" if "title" in data and "tags" in data else "unknown"
 
     @staticmethod
     def _detect_text_content_type(text: str) -> str:
