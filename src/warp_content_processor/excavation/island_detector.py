@@ -175,40 +175,41 @@ class SchemaIslandDetector:
     def _find_json_islands(
         self, content: str, source_hint: Optional[str]
     ) -> List[ContentIsland]:
-        """Find JSON-like content islands."""
-        islands = []
-
-        # Look for balanced braces that might contain JSON
+        """Find JSON-like content islands.
+        
+        This method detects potential JSON content by:
+        1. Finding balanced brace pairs
+        2. Validating content against JSON-like patterns
+        3. Creating islands from valid JSON blocks
+        
+        Args:
+            content: The string content to search for JSON islands
+            source_hint: Optional hint about the content source
+            
+        Returns:
+            List of ContentIsland objects containing JSON-like content
+        """
+        islands: List[ContentIsland] = []
         brace_depth = 0
         start_pos = None
 
         for i, char in enumerate(content):
-            if char == "{":
-                if brace_depth == 0:
-                    start_pos = i
-                brace_depth += 1
-            elif char == "}":
-                brace_depth -= 1
-                if brace_depth == 0 and start_pos is not None:
-                    # Found a complete JSON-like block
-                    json_candidate = content[start_pos : i + 1]
-
-                    # Quick validation - should have some JSON-like patterns
-                    if any(
-                        pattern.search(json_candidate) for pattern in self.json_patterns
-                    ):
-                        island = self._create_island_from_content(
-                            json_candidate,
-                            start_pos,
-                            i + 1,
-                            "json_block",
-                            source_hint or "unknown",
-                            content,
-                        )
-                        if island:
-                            islands.append(island)
-
-                    start_pos = None
+            if char == "{" and (brace_depth := brace_depth + 1) == 1:
+                start_pos = i
+            elif char == "}" and (brace_depth := brace_depth - 1) == 0 and start_pos is not None:
+                # Found complete JSON-like block
+                if (json_candidate := content[start_pos:i + 1]) and \
+                   any(pattern.search(json_candidate) for pattern in self.json_patterns) and \
+                   (island := self._create_island_from_content(
+                        json_candidate,
+                        start_pos,
+                        i + 1,
+                        "json_block",
+                        source_hint or "unknown",
+                        content
+                    )):
+                    islands.append(island)
+                start_pos = None
 
         return islands
 
