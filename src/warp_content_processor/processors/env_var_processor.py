@@ -182,8 +182,7 @@ class EnvVarProcessor(SchemaProcessor):
             result = []
             for k, v in value.items():
                 flattened = self._flatten_list(v)
-                for f in flattened:
-                    result.append(f"{k.lower()}={f}")
+                result.extend(f"{k.lower()}={f}" for f in flattened)
             return result
         else:
             # For unsupported types, convert to string and warn
