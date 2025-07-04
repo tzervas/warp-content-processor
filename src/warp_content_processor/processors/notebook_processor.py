@@ -216,9 +216,7 @@ class NotebookProcessor(SchemaProcessor):
         ):
             front_matter = normalized["front_matter"].copy()
 
-            # Validate front matter types before normalization
-            type_errors = self._validate_front_matter_types(front_matter)
-            if type_errors:
+            if type_errors := self._validate_front_matter_types(front_matter):
                 # Raise an exception with all type validation errors
                 raise ValueError(
                     f"Front matter type validation failed: {'; '.join(type_errors)}"
