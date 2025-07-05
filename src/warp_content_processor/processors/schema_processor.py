@@ -9,9 +9,9 @@ from typing import Dict, List, Tuple, Union
 
 import yaml
 
-from .base_processor import ProcessingResult, SchemaProcessor
-from .content_type import ContentType
-from .processor_factory import ProcessorFactory
+from ..base_processor import ProcessingResult, SchemaProcessor
+from ..content_type import ContentType
+from ..processor_factory import ProcessorFactory
 
 logger = logging.getLogger(__name__)
 
@@ -101,8 +101,8 @@ class ContentSplitter:
         documents = []
 
         # First try to split by YAML documents with explicit separators
-        sections = re.split(r'^---\s*$', content, flags=re.MULTILINE)
-        
+        sections = re.split(r"^---\s*$", content, flags=re.MULTILINE)
+
         # Filter out empty sections and process each non-empty one
         for section in sections:
             section = section.strip()

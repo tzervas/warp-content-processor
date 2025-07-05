@@ -1,8 +1,10 @@
 """Enhanced YAML parsing utilities with robust error handling."""
 
 import re
+from typing import Any, Dict, List, Optional, Tuple
+
 import yaml
-from typing import Dict, Any, Optional, Tuple, List
+
 
 class YAMLParsingResult:
     """Result of a YAML parsing operation."""
@@ -25,6 +27,7 @@ class YAMLParsingResult:
     def is_valid(self) -> bool:
         """Return whether the parsing was successful."""
         return self.content is not None and self.error is None
+
 
 def parse_yaml_enhanced(content: str) -> YAMLParsingResult:
     """Parse YAML content with enhanced error handling and validation.
@@ -70,25 +73,22 @@ def parse_yaml_enhanced(content: str) -> YAMLParsingResult:
         # Handle YAML errors with position information
         line = e.problem_mark.line + 1 if e.problem_mark else None
         col = e.problem_mark.column + 1 if e.problem_mark else None
-        
+
         problem = str(e.problem) if e.problem else "Unknown error"
         context = str(e.context) if e.context else None
-        
+
         error_msg = f"YAML error at line {line}, column {col}: {problem}"
         if context:
             error_msg += f" ({context})"
-        
-        return YAMLParsingResult(
-            error=error_msg,
-            line_number=line,
-            column=col
-        )
-        
+
+        return YAMLParsingResult(error=error_msg, line_number=line, column=col)
+
     except yaml.YAMLError as e:
         return YAMLParsingResult(error=f"YAML parsing error: {str(e)}")
-        
+
     except Exception as e:
         return YAMLParsingResult(error=f"Unexpected error parsing YAML: {str(e)}")
+
 
 def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
     """Parse multi-document YAML content.
@@ -103,7 +103,7 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
         return [YAMLParsingResult(error="Empty YAML content")]
 
     # Split content by document separator
-    parts = re.split(r'^---\s*$', content.strip(), flags=re.MULTILINE)
+    parts = re.split(r"^---\s*$", content.strip(), flags=re.MULTILINE)
     results = []
 
     # Process each part
@@ -132,13 +132,7 @@ def parse_yaml_documents(content: str) -> List[YAMLParsingResult]:
             error = f"YAML error at line {line}, column {col}: {problem}"
             if context:
                 error += f" ({context})"
-            results.append(
-                YAMLParsingResult(
-                    error=error,
-                    line_number=line,
-                    column=col
-                )
-            )
+            results.append(YAMLParsingResult(error=error, line_number=line, column=col))
         except yaml.YAMLError as e:
             results.append(YAMLParsingResult(error=f"YAML parsing error: {str(e)}"))
         except Exception as e:
