@@ -25,7 +25,9 @@ from warp_content_processor.processors.schema_processor import ContentTypeDetect
 from warp_content_processor.parsers.document_splitter import DocumentSplitter
 from warp_content_processor.parsers.intelligent_cleaner import IntelligentCleaner
 from warp_content_processor.parsers.robust_parser import RobustParser
-from warp_content_processor.parsers.yaml_strategies import YamlStrategies
+from warp_content_processor.parsers.yaml_strategies import (
+    StandardYAMLStrategy as YamlStrategies
+)
 
 
 class TestErrorTolerantParserRegression:
