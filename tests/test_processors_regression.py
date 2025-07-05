@@ -282,7 +282,7 @@ class TestProcessorIntegrationRegression:
         factory = ProcessorFactory()
 
         for content_type in expected_processors:
-            processor = factory.get_processor(content_type)
+            processor = factory.create_processor(content_type, "/tmp/test_output")
             assert processor is not None
             assert hasattr(processor, "process")
             assert hasattr(processor, "validate")
@@ -307,7 +307,7 @@ class TestProcessorIntegrationRegression:
         from warp_content_processor.processor_factory import ProcessorFactory
 
         factory = ProcessorFactory()
-        processor = factory.get_processor(content_type)
+        processor = factory.create_processor(content_type, "/tmp/test_output")
 
         # Test validation
         is_valid, errors, warnings = processor.validate(sample_data)
@@ -327,7 +327,7 @@ class TestProcessorIntegrationRegression:
         invalid_content = "invalid: yaml: content: {"
 
         for content_type in [ContentType.PROMPT, ContentType.RULE]:
-            processor = factory.get_processor(content_type)
+            processor = factory.create_processor(content_type, "/tmp/test_output")
             result = processor.process(invalid_content)
 
             # All processors should handle invalid content gracefully
