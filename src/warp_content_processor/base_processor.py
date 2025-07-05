@@ -16,7 +16,7 @@ class ProcessingResult:
     warnings: List[str]
 
 
-class SchemaProcessor(ABC):
+class BaseProcessor(ABC):
     """Base class for schema processors."""
 
     def __init__(self) -> None:
