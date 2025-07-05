@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-from .base_processor import ProcessingResult, SchemaProcessor
+from .base_processor import ProcessingResult, BaseProcessor
 from .processors import (
     EnvVarProcessor,
     NotebookProcessor,
@@ -20,7 +20,7 @@ from .processors.workflow_processor import WorkflowProcessor, WorkflowValidator
 __all__ = [
     # Base classes
     "ProcessingResult",
-    "SchemaProcessor",
+    "BaseProcessor",
     # Core functionality
     "ContentProcessor",
     "ContentSplitter",
