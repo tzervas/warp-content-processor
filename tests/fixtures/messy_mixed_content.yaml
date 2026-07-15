@@ -1,0 +1,118 @@
+# Poorly Formatted Mixed Content File
+# This file intentionally has formatting issues to test normalization
+
+---
+# Workflow with spacing issues
+name:Git Status and Diff Workflow
+command:git status&&git diff
+description:Check repository status and show changes
+tags:git,version-control,status
+shells:bash,zsh,fish
+arguments:
+-name:show_diff
+ description:Whether to show diff output
+ default_value:true
+-name:format
+ description:Output format
+ default_value:short
+
+---
+
+# Prompt with mixed formatting
+name:Code Review Assistant
+prompt:Please review the following {{language}} code and provide feedback on {{aspect}}:
+
+{{code}}
+
+Focus on:
+- Code quality
+- Performance
+- Security
+- Best practices
+
+arguments:
+  -name:language
+   description:Programming language of the code
+  -name:code
+   description:Code snippet to review
+  -name:aspect
+   description:Specific aspect to focus on
+   default_value:general quality
+
+---
+# Development Rule without proper indentation
+title:Use Meaningful Variable Names
+description:All variables should have descriptive names that indicate their purpose
+guidelines:
+-Use descriptive names like `userEmail` instead of `e`
+-Avoid abbreviations unless they are widely understood
+-Use camelCase for variables in JavaScript/TypeScript
+-Use snake_case for variables in Python
+category:naming-conventions
+tags:coding-standards,readability
+
+---
+# Environment variables with inconsistent formatting
+variables:
+NODE_ENV:development
+DEBUG:"true"
+LOG_LEVEL:debug
+API_URL:https://api.example.com
+MAX_RETRY_ATTEMPTS:3
+scope:user
+platform:
+-linux
+-macos
+-windows
+
+---
+# Notebook content with mixed Markdown/YAML
+title:Git Workflow Guide
+description:A comprehensive guide to git workflows
+tags:
+-git
+-tutorial
+-workflow
+---
+
+# Git Workflow Guide
+
+This guide covers common git workflows and best practices.
+
+## Basic Commands
+
+```bash
+# Check repository status
+git status
+
+# Stage changes
+git add .
+
+# Commit changes
+git commit -m "feat: add new feature"
+
+# Push to remote
+git push origin main
+```
+
+## Branch Management
+
+```bash
+# Create and switch to new branch
+git checkout -b feature/new-feature
+
+# Merge branch
+git checkout main
+git merge feature/new-feature
+
+# Delete branch
+git branch -d feature/new-feature
+```
+
+## Best Practices
+
+- Write clear, descriptive commit messages
+- Use feature branches for new development
+- Keep commits atomic and focused
+- Review code before merging
+- Use pull requests for collaboration

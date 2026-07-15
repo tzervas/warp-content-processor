@@ -1,10 +1,7 @@
-"""
-Tests for SchemaIslandDetector - Following KISS principles with parameterized tests.
+"""Tests for SchemaIslandDetector - Following KISS principles with parameterized tests.
 
 Tests focus on specific behaviors without complex loops in test logic.
 """
-
-from typing import Set
 
 import pytest
 
@@ -58,7 +55,7 @@ class TestYamlIslandDetection:
         ],
     )
     def test_yaml_island_detection_count(self, detector, content, expected_count):
-        """Test YAML island detection with various content types."""
+        """Test YAML island detection with various cases."""
         islands = detector.find_islands(content)
         yaml_islands = [i for i in islands if i.extraction_method == "yaml_block"]
         assert len(yaml_islands) == expected_count
@@ -203,6 +200,7 @@ class TestContentCleaning:
 
     @pytest.fixture
     def detector(self):
+        """Create a SchemaIslandDetector instance."""
         return SchemaIslandDetector()
 
     @pytest.mark.parametrize(
@@ -218,8 +216,7 @@ class TestContentCleaning:
             (
                 "name: test\n\n\n\nvalue: 123",
                 "name: test\n\n\nvalue: 123",
-<<<<<<< HEAD
-            ),  # Fixed: Only collapse 5+ newlines
+            ),  # Only collapse 5+ newlines
         ],
     )
     def test_content_cleaning(self, detector, contaminated_content, expected_cleaned):
