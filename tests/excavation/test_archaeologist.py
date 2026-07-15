@@ -58,7 +58,7 @@ class TestContentArchaeologistExcavation:
     def mock_dependencies(self):
         """Mock all external dependencies."""
         with patch(
-            "warp_content_processor.excavation.archaeologist.ContentDetector"
+            "warp_content_processor.excavation.archaeologist.ContentTypeDetector"
         ) as mock_detector, patch(
             "warp_content_processor.excavation.archaeologist.SchemaIslandDetector"
         ) as mock_island, patch(

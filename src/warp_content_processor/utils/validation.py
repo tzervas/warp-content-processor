@@ -42,10 +42,7 @@ def validate_placeholders(
     warnings: List[str] = []
 
     if not isinstance(arguments, list):
-        return ValidationResult(
-            is_valid=False,
-            errors=["'arguments' must be a list"]
-        )
+        return ValidationResult(is_valid=False, errors=["'arguments' must be a list"])
 
     # Validate placeholders
     placeholder_pattern = re.compile(pattern)
@@ -88,10 +85,7 @@ def validate_tags(
         Tuple[List[str], List[str]]: (errors, warnings)
     """
     if not isinstance(tags, list):
-        return ValidationResult(
-            is_valid=False,
-            errors=["'tags' must be a list"]
-        )
+        return ValidationResult(is_valid=False, errors=["'tags' must be a list"])
 
     warnings = []
     tag_pattern = re.compile(pattern)

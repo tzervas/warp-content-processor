@@ -12,7 +12,7 @@ from typing import Dict, List, Union
 
 from warp_content_processor.base_processor import ProcessingResult
 
-from .schema_processor import ContentProcessor
+from .processors.schema_processor import ContentProcessor
 
 
 def setup_logging() -> None:

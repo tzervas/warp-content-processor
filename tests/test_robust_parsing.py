@@ -13,7 +13,7 @@ import pytest
 from warp_content_processor.content_type import ContentType
 from warp_content_processor.parsers import (
     CommonPatterns,
-    ContentDetector,
+    ContentTypeDetector,
     DocumentSplitter,
     MangledContentCleaner,
 )
@@ -26,11 +26,11 @@ from warp_content_processor.parsers.yaml_strategies import (
 
 
 class TestContentDetector:
-    """Test the simplified ContentDetector."""
+    """Test the simplified ContentTypeDetector."""
 
     @pytest.fixture(autouse=True)
     def setup_method(self):
-        self.detector = ContentDetector()
+        self.detector = ContentTypeDetector()
 
     def test_simple_workflow_detection(self):
         """Test detection of a simple workflow."""
@@ -440,7 +440,7 @@ class TestEndToEndRobustParsing(unittest.TestCase):
         """
 
         # Full pipeline test
-        detector = ContentDetector()
+        detector = ContentTypeDetector()
         splitter = DocumentSplitter()
         yaml_parser = RobustParser()  # Use RobustParser for mangled content
 

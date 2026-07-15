@@ -2,25 +2,25 @@
 
 __version__ = "0.1.0"
 
-from .base_processor import ProcessingResult, SchemaProcessor
+from .base_processor import ProcessingResult, BaseProcessor
 from .processors import (
     EnvVarProcessor,
     NotebookProcessor,
     PromptProcessor,
     RuleProcessor,
 )
-from .schema_processor import (
+from .processors.schema_processor import (
     ContentProcessor,
     ContentSplitter,
     ContentType,
     ContentTypeDetector,
 )
-from .workflow_processor import WorkflowProcessor, WorkflowValidator
+from .processors.workflow_processor import WorkflowProcessor, WorkflowValidator
 
 __all__ = [
     # Base classes
     "ProcessingResult",
-    "SchemaProcessor",
+    "BaseProcessor",
     # Core functionality
     "ContentProcessor",
     "ContentSplitter",

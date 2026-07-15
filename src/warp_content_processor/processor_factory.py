@@ -25,7 +25,7 @@ class ProcessorFactory:
         """Lazy load processor class to avoid circular imports."""
         if content_type_str not in cls._processors:
             if content_type_str == "workflow":
-                from .workflow_processor import WorkflowProcessor
+                from .processors.workflow_processor import WorkflowProcessor
 
                 cls._processors[content_type_str] = WorkflowProcessor
             elif content_type_str == "prompt":

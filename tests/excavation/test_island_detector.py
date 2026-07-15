@@ -218,7 +218,6 @@ class TestContentCleaning:
             (
                 "name: test\n\n\n\nvalue: 123",
                 "name: test\n\n\nvalue: 123",
-<<<<<<< HEAD
             ),  # Fixed: Only collapse 5+ newlines
         ],
     )

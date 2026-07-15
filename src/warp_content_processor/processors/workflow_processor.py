@@ -10,9 +10,9 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
 
-from .base_processor import ProcessingResult, SchemaProcessor
-from .content_type import ContentType
-from .utils.validation import validate_placeholders, validate_tags
+from ..base_processor import ProcessingResult, SchemaProcessor
+from ..content_type import ContentType
+from ..utils.validation import validate_placeholders, validate_tags
 
 logger = logging.getLogger(__name__)
 
@@ -140,14 +140,17 @@ class WorkflowValidator(SchemaProcessor):
                 data["shells"] = normalized_shells
 
         # Validate command placeholders match arguments
-        if "command" in data and isinstance(data["command"], str) and "arguments" in data:
+        if (
+            "command" in data
+            and isinstance(data["command"], str)
+            and "arguments" in data
+        ):
             arg_errors, arg_warnings = validate_placeholders(
                 data["command"], data.get("arguments", [])
             )
             # Placeholder errors are just warnings
             warnings.extend(arg_errors)
             warnings.extend(arg_warnings)
-
 
         # Validate tags
         if "tags" in data:

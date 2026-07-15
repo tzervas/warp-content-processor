@@ -120,7 +120,7 @@ class TestValidateTags:
         tags = ["UPPERCASE", "invalid@char", "ends-", 123]
         result = validate_tags(tags)
         assert result.is_valid  # Invalid tags generate warnings, not errors
-        
+
         warnings = result.warnings
         assert any("should be lowercase" in w for w in warnings)
         assert any("invalid characters" in w for w in warnings)
