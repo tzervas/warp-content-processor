@@ -62,3 +62,7 @@ class BaseProcessor(ABC):
             Always return a new dictionary with normalized content.
         """
         return data.copy()  # Base implementation returns a shallow copy
+
+
+# Backward compatibility alias for renamed base class
+SchemaProcessor = BaseProcessor

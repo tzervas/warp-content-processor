@@ -14,7 +14,7 @@ from typing import Any, Dict, Optional, Set
 
 from ..processors.schema_processor import ContentTypeDetector
 from ..utils.security import ContentSanitizer, SecurityValidationError
-from ..utils.yaml_parser import create_yaml_parser
+from ..parsers.yaml_strategies import create_yaml_parser
 from .artifacts import (
     ContentType,
     ExcavationResult,

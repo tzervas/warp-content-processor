@@ -106,7 +106,6 @@ class TestValidate:
         assert is_valid == expected_valid
         assert len(warnings) == expected_warnings
 
-
     def test_validate_missing_data(self, processor):
         """Test validation with missing data fields."""
         # Missing front matter
@@ -120,6 +119,8 @@ class TestValidate:
         is_valid, errors, warnings = processor.validate(data)
         assert not is_valid
         assert any("empty" in error.lower() for error in errors)
+
+
 class TestNormalizeContent:
     """Test the normalize_content method."""
 
