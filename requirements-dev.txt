@@ -5,7 +5,7 @@
 -r requirements.txt
 
 # Code formatting and import sorting
-black==24.3.0
+black==26.3.1
 isort==5.13.2
 
 # Linting and static analysis
@@ -22,7 +22,7 @@ bandit==1.7.5
 safety==2.3.5
 
 # Testing and coverage
-pytest==7.4.3
+pytest==9.0.3
 pytest-cov==4.1.0
 pytest-xdist==3.5.0
 pytest-mock==3.12.0
